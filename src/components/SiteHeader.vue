@@ -7,10 +7,11 @@ const progress = ref(0)
 const menuOpen = ref(false)
 
 const nav = [
-  { href: '#services', label: 'Услуги' },
-  { href: '#process', label: 'Процесс' },
-  { href: '#precision', label: 'Производство' },
-  { href: '#geo', label: 'Доставка' },
+  { to: { path: '/', hash: '#services' }, label: 'Услуги' },
+  { to: { path: '/', hash: '#process' }, label: 'Процесс' },
+  { to: { path: '/', hash: '#precision' }, label: 'Производство' },
+  { to: '/projects', label: 'Объекты' },
+  { to: { path: '/', hash: '#geo' }, label: 'Доставка' },
 ]
 
 function onScroll() {
@@ -30,20 +31,25 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   <header class="hdr" :class="{ scrolled }">
     <div class="hdr-progress" :style="{ width: progress + '%' }"></div>
     <div class="container hdr-in">
-      <a href="#top" class="logo" @click="menuOpen = false">
+      <RouterLink to="/" class="logo" @click="menuOpen = false">
         <CompanyLogo variant="light" />
-      </a>
+      </RouterLink>
 
       <nav class="hdr-nav" :class="{ open: menuOpen }">
-        <a v-for="item in nav" :key="item.href" :href="item.href" @click="menuOpen = false">
+        <RouterLink
+          v-for="item in nav"
+          :key="item.label"
+          :to="item.to"
+          @click="menuOpen = false"
+        >
           {{ item.label }}
-        </a>
+        </RouterLink>
         <a href="tel:+79056646665" class="hdr-phone-m">+7 (905) 664-66-65</a>
       </nav>
 
       <div class="hdr-right">
         <a href="tel:+79056646665" class="hdr-phone">+7 (905) 664-66-65</a>
-        <a href="#cta" class="btn hdr-btn">Рассчитать заказ</a>
+        <RouterLink to="/#cta" class="btn hdr-btn" @click="menuOpen = false">Рассчитать заказ</RouterLink>
         <button
           class="burger"
           :class="{ open: menuOpen }"

@@ -6,9 +6,9 @@ import CompanyLogo from './ui/CompanyLogo.vue'
   <footer class="ftr">
     <div class="container ftr-in">
       <div class="ftr-brand">
-        <a href="#top" class="logo">
+        <RouterLink to="/" class="logo">
           <CompanyLogo variant="light" />
-        </a>
+        </RouterLink>
         <p class="ftr-desc">
           Лазерная и плазменная резка, гибка, сварка и металлоконструкции.
           Дзержинск, Нижегородская область — отгрузка по всей России.
@@ -17,10 +17,11 @@ import CompanyLogo from './ui/CompanyLogo.vue'
 
       <nav class="ftr-nav" aria-label="Разделы сайта">
         <p class="ftr-h">Разделы</p>
-        <a href="#services">Услуги</a>
-        <a href="#process">Как мы работаем</a>
-        <a href="#precision">Производство</a>
-        <a href="#geo">Доставка</a>
+        <RouterLink to="/#services">Услуги</RouterLink>
+        <RouterLink to="/#process">Как мы работаем</RouterLink>
+        <RouterLink to="/#precision">Производство</RouterLink>
+        <RouterLink to="/projects">Объекты</RouterLink>
+        <RouterLink to="/#geo">Доставка</RouterLink>
       </nav>
 
       <div class="ftr-contacts">
@@ -33,7 +34,7 @@ import CompanyLogo from './ui/CompanyLogo.vue'
       <div class="ftr-cta">
         <p class="ftr-h">Расчёт заказа</p>
         <p class="ftr-cta-text">Пришлите чертёж или опишите задачу — ответим в течение рабочего дня.</p>
-        <a href="#cta" class="btn">Рассчитать стоимость</a>
+        <RouterLink to="/#cta" class="btn">Рассчитать стоимость</RouterLink>
       </div>
     </div>
 
