@@ -17,12 +17,22 @@ const form = reactive({
 })
 
 const sent = ref(false)
+const sending = ref(false)
 const error = ref('')
 const phoneRef = ref(null)
+const fileRef = ref(null)
 
 function onFile(e) {
   const f = e.target.files?.[0]
   form.fileName = f ? f.name : ''
+}
+
+function setDrawing(value) {
+  form.drawing = value
+  if (value === 'no') {
+    form.fileName = ''
+    if (fileRef.value) fileRef.value.value = ''
+  }
 }
 
 function setPhone(value, cursor) {
@@ -80,7 +90,7 @@ function onPhoneBlur() {
   if (form.phone === '+7') form.phone = ''
 }
 
-function submit() {
+async function submit() {
   if (!isValidRuPhone(form.phone)) {
     error.value = 'Укажите телефон полностью — без него мы не сможем прислать расчёт.'
     return
@@ -90,7 +100,27 @@ function submit() {
     return
   }
   error.value = ''
-  sent.value = true
+  sending.value = true
+  try {
+    const res = await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: form.name,
+        phone: form.phone,
+        drawing: form.drawing,
+        comment: form.comment,
+        file_name: form.fileName,
+        source: window.location.pathname,
+      }),
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    sent.value = true
+  } catch {
+    error.value = 'Не удалось отправить заявку. Позвоните нам: +7 (905) 664-66-65.'
+  } finally {
+    sending.value = false
+  }
 }
 </script>
 
@@ -136,14 +166,29 @@ function submit() {
           <button
             type="button"
             :class="{ active: form.drawing === 'yes' }"
-            @click="form.drawing = 'yes'"
+            @click="setDrawing('yes')"
           >Есть чертёж</button>
           <button
             type="button"
             :class="{ active: form.drawing === 'no' }"
-            @click="form.drawing = 'no'"
+            @click="setDrawing('no')"
           >Нет чертежа</button>
         </div>
+
+        <transition name="lf-file-reveal">
+          <label v-if="form.drawing === 'yes'" class="lf-file" key="file">
+            <input
+              ref="fileRef"
+              type="file"
+              @change="onFile"
+              accept=".pdf,.dwg,.dxf,.jpg,.png,.step,.stp"
+            />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
+            <span>{{ form.fileName || 'Прикрепить чертёж или эскиз' }}</span>
+          </label>
+        </transition>
 
         <template v-if="extended">
           <textarea
@@ -152,14 +197,6 @@ function submit() {
             rows="3"
             placeholder="Комментарий (необязательно)"
           ></textarea>
-
-          <label class="lf-file">
-            <input type="file" @change="onFile" accept=".pdf,.dwg,.dxf,.jpg,.png,.step,.stp" />
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-            </svg>
-            <span>{{ form.fileName || 'Прикрепить чертёж или эскиз' }}</span>
-          </label>
 
           <label class="lf-agree">
             <input type="checkbox" v-model="form.agree" />
@@ -172,7 +209,9 @@ function submit() {
 
         <p v-if="error" class="lf-error">{{ error }}</p>
 
-        <button class="btn btn--block" type="submit">{{ buttonText }}</button>
+        <button class="btn btn--block" type="submit" :disabled="sending">
+          {{ sending ? 'Отправляем…' : buttonText }}
+        </button>
         <p class="btn-note lf-note"><slot>Отвечаем в течение рабочего дня. Ни к чему не обязывает.</slot></p>
       </form>
     </transition>
@@ -225,6 +264,23 @@ function submit() {
 .lf-file input { display: none; }
 .lf-file svg { width: 17px; height: 17px; flex-shrink: 0; }
 .lf-file span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.lf-file-reveal-enter-active,
+.lf-file-reveal-leave-active {
+  transition: opacity 0.25s var(--ease), transform 0.25s var(--ease), max-height 0.25s var(--ease);
+  overflow: hidden;
+}
+.lf-file-reveal-enter-from,
+.lf-file-reveal-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+  max-height: 0;
+  margin-bottom: 0;
+}
+.lf-file-reveal-enter-to,
+.lf-file-reveal-leave-from {
+  max-height: 80px;
+}
 
 .lf-agree {
   display: flex;

@@ -41,7 +41,7 @@ const emit = defineEmits(['error'])
         </svg>
       </div>
       <p class="project-media-placeholder-title">{{ title }}</p>
-      <p class="project-media-placeholder-note">Фотография объекта скоро появится</p>
+      <p class="project-media-placeholder-note">Фото с площадки строительства</p>
     </div>
   </div>
 </template>

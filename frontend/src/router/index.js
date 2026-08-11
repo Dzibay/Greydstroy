@@ -4,6 +4,9 @@ import ProjectsListPage from '../pages/ProjectsListPage.vue'
 import ProjectPage from '../pages/ProjectPage.vue'
 import { getProjectById } from '../data/projects'
 
+// Скрытый путь админки: не упоминается в навигации, sitemap и robots.
+export const ADMIN_PATH = '/gs-panel-x7k2m9'
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -17,6 +20,12 @@ const router = createRouter({
       beforeEnter: (to) => {
         if (!getProjectById(to.params.id)) return { name: 'home' }
       },
+    },
+    {
+      path: ADMIN_PATH,
+      name: 'admin',
+      component: () => import('../pages/AdminLeadsPage.vue'),
+      meta: { bare: true },
     },
   ],
   scrollBehavior(to) {

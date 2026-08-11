@@ -1,5 +1,7 @@
 <script setup>
 import HeroSection from '../components/HeroSection.vue'
+import QuickCallBanner from '../components/QuickCallBanner.vue'
+import CallExpertWidget from '../components/CallExpertWidget.vue'
 import PainsSection from '../components/PainsSection.vue'
 import ServicesSection from '../components/ServicesSection.vue'
 import ProcessSection from '../components/ProcessSection.vue'
@@ -18,6 +20,7 @@ import FinalCtaSection from '../components/FinalCtaSection.vue'
 <template>
   <main>
     <HeroSection />
+    <QuickCallBanner />
     <PainsSection />
     <ServicesSection />
     <ProcessSection />
@@ -31,5 +34,6 @@ import FinalCtaSection from '../components/FinalCtaSection.vue'
     <TeamSection />
     <FaqSection />
     <FinalCtaSection />
+    <CallExpertWidget />
   </main>
 </template>
