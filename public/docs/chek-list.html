@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Чек-лист для расчёта · Грэйдстрой</title>
+  <meta name="description" content="Чек-лист: что подготовить, чтобы получить расчёт стоимости и сроков металлообработки за 1 рабочий день. Чертежи, материал, сроки и логистика." />
+  <link rel="canonical" href="https://greydstroy.ru/docs/chek-list.html" />
+  <link rel="icon" type="image/png" href="/img/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Unbounded:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #12161b;
+      --soft: #49525c;
+      --faint: #8b939d;
+      --acc: #ff5a1f;
+      --line: #d7dde2;
+      --paper: #fff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      color: var(--ink);
+      background: #eceae5;
+      line-height: 1.55;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 14px 20px;
+      background: #0b0e11;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    .toolbar button, .toolbar a {
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px 22px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .toolbar .primary {
+      background: var(--acc);
+      color: #fff;
+    }
+    .toolbar .ghost {
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.2);
+    }
+
+    .pages {
+      max-width: 820px;
+      margin: 28px auto 40px;
+      padding: 0 16px;
+    }
+
+    .page {
+      background: var(--paper);
+      padding: 48px 52px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.12);
+      min-height: 1040px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid var(--ink);
+    }
+    .brand img { width: 44px; height: 52px; object-fit: contain; }
+    .brand-text strong {
+      display: block;
+      font-family: 'Unbounded', sans-serif;
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .brand-text span {
+      font-size: 11px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--faint);
+    }
+
+    h1 {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 26px;
+      line-height: 1.2;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    h1 em { font-style: normal; color: var(--acc); }
+
+    .lead {
+      font-size: 15px;
+      color: var(--soft);
+      margin-bottom: 32px;
+      max-width: 620px;
+    }
+
+    h2 {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--acc);
+      margin: 28px 0 14px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    h2:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
+
+    .items { list-style: none; }
+    .items li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--line);
+      font-size: 14.5px;
+      color: var(--soft);
+    }
+    .items li strong { color: var(--ink); font-weight: 700; }
+    .box {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--ink);
+      border-radius: 3px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .tip {
+      margin-top: 28px;
+      padding: 18px 20px;
+      background: #fff5f0;
+      border-left: 4px solid var(--acc);
+      font-size: 14px;
+      color: var(--soft);
+    }
+    .tip strong { color: var(--ink); }
+
+    .footer-block {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid var(--ink);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .footer-block h3 {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--acc);
+      margin-bottom: 10px;
+    }
+    .footer-block p, .footer-block a {
+      font-size: 14px;
+      color: var(--soft);
+      text-decoration: none;
+    }
+    .footer-block a { font-weight: 700; color: var(--ink); }
+
+    .page-num {
+      margin-top: 40px;
+      text-align: right;
+      font-size: 11px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--faint);
+    }
+
+    @media print {
+      body { background: #fff; }
+      .toolbar { display: none; }
+      .pages { margin: 0; padding: 0; max-width: none; }
+      .page {
+        box-shadow: none;
+        margin: 0;
+        min-height: auto;
+        page-break-after: always;
+        padding: 36px 44px;
+      }
+      .page:last-child { page-break-after: auto; }
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 28px 22px; min-height: auto; }
+      .footer-block { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button class="primary" type="button" onclick="window.print()">Печать</button>
+    <a class="ghost" href="/">← На сайт</a>
+  </div>
+
+  <div class="pages">
+    <!-- Страница 1 -->
+    <article class="page">
+      <div class="brand">
+        <img src="/img/logo.png" alt="Грэйдстрой" />
+        <div class="brand-text">
+          <strong>Грэйдстрой</strong>
+          <span>металлообработка</span>
+        </div>
+      </div>
+
+      <h1>Что подготовить, чтобы мы посчитали <em>стоимость и сроки за 1 день</em></h1>
+      <p class="lead">
+        Заполните чек-лист перед отправкой заявки — так технолог сразу увидит полную картину
+        и ответит с цифрами, а не с «нужно уточнить».
+      </p>
+
+      <h2>1. Чертёж и файлы</h2>
+      <ul class="items">
+        <li><span class="box"></span><span><strong>Файл чертежа</strong> — DWG, DXF, PDF, STEP или STP. Если деталей несколько — все в одном архиве.</span></li>
+        <li><span class="box"></span><span><strong>Актуальная версия</strong> — укажите дату или номер ревизии чертежа.</span></li>
+        <li><span class="box"></span><span><strong>Масштаб и единицы</strong> — миллиметры, без «примерных» размеров на эскизе.</span></li>
+        <li><span class="box"></span><span><strong>3D-модель</strong> — если есть, приложите вместе с 2D-чертежом.</span></li>
+      </ul>
+
+      <h2>2. Материал и обработка</h2>
+      <ul class="items">
+        <li><span class="box"></span><span><strong>Материал</strong> — сталь, нержавейка, алюминий; марка (Ст3, 09Г2С, AISI 304 и т.д.).</span></li>
+        <li><span class="box"></span><span><strong>Толщина</strong> — в миллиметрах, для каждой позиции отдельно.</span></li>
+        <li><span class="box"></span><span><strong>Вид работ</strong> — резка, гибка, сварка или полный цикл на одной площадке.</span></li>
+        <li><span class="box"></span><span><strong>Количество</strong> — штук в партии или общий метраж / площадь раскроя.</span></li>
+        <li><span class="box"></span><span><strong>Допуск</strong> — из чертежа или ГОСТ; если не указан — напишите «по согласованию».</span></li>
+        <li><span class="box"></span><span><strong>Кромка</strong> — как есть после резки / без заусенцев / с зачисткой.</span></li>
+      </ul>
+
+      <h2>3. Сроки и логистика</h2>
+      <ul class="items">
+        <li><span class="box"></span><span><strong>Желаемая дата отгрузки</strong> — или крайний срок под ваш объект.</span></li>
+        <li><span class="box"></span><span><strong>Регион доставки</strong> — город, нужен ли самовывоз или отправка ТК.</span></li>
+        <li><span class="box"></span><span><strong>Частичная отгрузка</strong> — если нужна, укажите порядок партий.</span></li>
+      </ul>
+
+      <p class="page-num">Страница 1 из 2</p>
+    </article>
+
+    <!-- Страница 2 -->
+    <article class="page">
+      <div class="brand">
+        <img src="/img/logo.png" alt="Грэйдстрой" />
+        <div class="brand-text">
+          <strong>Грэйдстрой</strong>
+          <span>металлообработка</span>
+        </div>
+      </div>
+
+      <h1>Если <em>чертежа ещё нет</em></h1>
+      <p class="lead">Это не повод откладывать расчёт. Подготовьте максимум из списка ниже — мы поможем с КМД или проектом с нуля.</p>
+
+      <h2>4. Без готового чертежа</h2>
+      <ul class="items">
+        <li><span class="box"></span><span><strong>Описание задачи</strong> — что должна делать деталь или конструкция.</span></li>
+        <li><span class="box"></span><span><strong>Эскиз или фото</strong> — с ключевыми размерами, хотя бы от руки.</span></li>
+        <li><span class="box"></span><span><strong>КМ или АР</strong> — если есть общий проект объекта, приложите его.</span></li>
+        <li><span class="box"></span><span><strong>Аналог</strong> — фото или образец «как должно быть».</span></li>
+        <li><span class="box"></span><span><strong>Монтаж</strong> — нужен ли выезд и установка в Нижегородской области.</span></li>
+      </ul>
+
+      <h2>5. Контакты для расчёта</h2>
+      <ul class="items">
+        <li><span class="box"></span><span><strong>Телефон</strong> — по которому удобно получить ответ.</span></li>
+        <li><span class="box"></span><span><strong>Контактное лицо</strong> — кто принимает решение по срокам и ТЗ.</span></li>
+        <li><span class="box"></span><span><strong>Компания</strong> — для B2B-заказа, если применимо.</span></li>
+        <li><span class="box"></span><span><strong>Комментарий</strong> — всё, что не вошло в чертёж: покрытие, упаковка, маркировка.</span></li>
+      </ul>
+
+      <div class="tip">
+        <strong>Совет:</strong> чем полнее пакет при первой отправке — тем быстрее расчёт.
+        Не нужно ждать «идеального» чертежа: пришлите то, что есть — уточним вместе в течение рабочего дня.
+      </div>
+
+      <div class="footer-block">
+        <div>
+          <h3>Отправить на расчёт</h3>
+          <p><a href="tel:+79056646665">+7 (905) 664-66-65</a></p>
+          <p><a href="mailto:zakaz@greydstroy.ru">zakaz@greydstroy.ru</a></p>
+          <p style="margin-top:8px;">Форма на сайте: greydstroy.ru</p>
+        </div>
+        <div>
+          <h3>Что получите в ответ</h3>
+          <p>Стоимость, срок изготовления, допуски по вашей детали и вопросы — если чего-то не хватает. Без обязательств с вашей стороны.</p>
+        </div>
+      </div>
+
+      <p class="page-num">Страница 2 из 2 · © Грэйдстрой</p>
+    </article>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,9 @@
+services:
+  web:
+    build: .
+    container_name: greydstroy-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    # HTTPS рекомендуется терминировать на реверс-прокси хоста
+    # (например, nginx + certbot или traefik) и проксировать сюда.
