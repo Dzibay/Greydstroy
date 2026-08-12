@@ -11,7 +11,7 @@ map = {
     'aneliya-sportkompleks': ['Анелия.jpg', 'Анелия 2.jpg'],
     'glavuks-detsad': ['ГлавУКС.jpg', 'ГлавУКС 2.jpg', 'ГлавУКС 3.jpg'],
     'delovye-linii-sklad': ['ДеловыеЛинии.jpg', 'ДеловыеЛинии 2.jpg', 'ДеловыеЛинии 3.jpg'],
-    'pysin-smolensk': [
+    'smolensk-pishchevoe-proizvodstvo': [
         'ИП Пысин.jpg', 'ИП Пысин 2.jpg', 'ИП Пысин 3.jpg',
         'ИП Пысин 4.jpg', 'ИП Пысин 5.jpg', 'ИП Пысин 6.jpg',
     ],

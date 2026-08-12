@@ -236,6 +236,43 @@ ul, ol { list-style: none; }
   text-transform: uppercase;
 }
 
+/* ---------- внутренние страницы ---------- */
+.page-hero {
+  padding-top: 130px;
+  padding-bottom: 64px;
+}
+
+.page-back {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--w-soft);
+  margin-bottom: 36px;
+  transition: color 0.2s;
+}
+.page-back:hover { color: var(--acc-hot); }
+
+.page-title {
+  font-family: var(--font-d);
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 900;
+  line-height: 1.15;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.page-title em {
+  font-style: normal;
+  color: var(--acc-hot);
+}
+
+.page-desc {
+  max-width: 720px;
+  font-size: 16px;
+  color: var(--w-soft);
+  line-height: 1.65;
+}
+
 /* ---------- reveal-анимации ---------- */
 .reveal {
   opacity: 0;

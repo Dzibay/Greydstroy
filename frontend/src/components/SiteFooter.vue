@@ -10,7 +10,7 @@ import CompanyLogo from './ui/CompanyLogo.vue'
           <CompanyLogo variant="light" />
         </RouterLink>
         <p class="ftr-desc">
-          Лазерная и плазменная резка, гибка, сварка и металлоконструкции.
+          Лазерная и плазменная резка, гибка, сварка.
           Дзержинск, Нижегородская область — отгрузка по всей России.
         </p>
       </div>
@@ -18,17 +18,17 @@ import CompanyLogo from './ui/CompanyLogo.vue'
       <nav class="ftr-nav" aria-label="Разделы сайта">
         <p class="ftr-h">Разделы</p>
         <RouterLink to="/#services">Услуги</RouterLink>
-        <RouterLink to="/#process">Как мы работаем</RouterLink>
-        <RouterLink to="/#precision">Производство</RouterLink>
         <RouterLink to="/projects">Объекты</RouterLink>
-        <RouterLink to="/#geo">Доставка</RouterLink>
+        <RouterLink to="/dostavka">Доставка</RouterLink>
+        <RouterLink to="/rekvizity">Реквизиты</RouterLink>
+        <RouterLink to="/kontakty">Контакты</RouterLink>
       </nav>
 
       <div class="ftr-contacts">
         <p class="ftr-h">Контакты</p>
         <a href="tel:+79056646665" class="ftr-phone">+7 (905) 664-66-65</a>
-        <a href="mailto:zakaz@greydstroy.ru">zakaz@greydstroy.ru</a>
-        <p class="ftr-addr">Нижегородская область, г. Дзержинск<br />ул. Заревская объездная, д. 9в</p>
+        <a href="mailto:greydstroy@yandex.ru">greydstroy@yandex.ru</a>
+        <p class="ftr-addr">Нижегородская область, г. Дзержинск<br />дорога Заревская объездная, д. 9В</p>
       </div>
 
       <div class="ftr-cta">

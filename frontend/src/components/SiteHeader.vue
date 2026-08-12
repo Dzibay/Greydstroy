@@ -7,11 +7,10 @@ const progress = ref(0)
 const menuOpen = ref(false)
 
 const nav = [
-  { to: { path: '/', hash: '#services' }, label: 'Услуги' },
-  { to: { path: '/', hash: '#process' }, label: 'Процесс' },
-  { to: { path: '/', hash: '#precision' }, label: 'Производство' },
   { to: '/projects', label: 'Объекты' },
-  { to: { path: '/', hash: '#geo' }, label: 'Доставка' },
+  { to: '/dostavka', label: 'Доставка' },
+  { to: '/rekvizity', label: 'Реквизиты' },
+  { to: '/kontakty', label: 'Контакты' },
 ]
 
 function onScroll() {
