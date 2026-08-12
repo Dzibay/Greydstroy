@@ -9,7 +9,7 @@
       <div class="draft-grid">
         <article class="card draft-card" v-reveal>
           <p class="draft-kicker">Вариант 1</p>
-          <h3>Есть КМ или АР</h3>
+          <h3>Есть КМ</h3>
           <p>Сразу делаем КМД и запускаем в производство — сроки минимальны.</p>
         </article>
         <article class="card draft-card" v-reveal="100">
