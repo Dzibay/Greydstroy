@@ -17,8 +17,7 @@ import CompanyLogo from './ui/CompanyLogo.vue'
 
       <nav class="ftr-nav" aria-label="Разделы сайта">
         <p class="ftr-h">Разделы</p>
-        <RouterLink to="/uslugi">Услуги</RouterLink>
-        <RouterLink to="/kalkulyator">Калькулятор стоимости</RouterLink>
+        <RouterLink to="/metallokonstruktsii">Металлоконструкции</RouterLink>
         <RouterLink to="/projects">Объекты</RouterLink>
         <RouterLink to="/dostavka">Доставка</RouterLink>
         <RouterLink to="/rekvizity">Реквизиты</RouterLink>

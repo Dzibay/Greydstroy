@@ -51,6 +51,7 @@ const needlePos = computed(
 const services = [
   {
     title: 'Лазерная резка металла',
+    slug: 'lazernaya-rezka',
     chips: ['до 20 мм', 'ЧПУ', 'DXF / DWG'],
     lead: 'Сложный контур сегодня — деталь для сборки без доработки напильником.',
     points: [
@@ -64,6 +65,7 @@ const services = [
   },
   {
     title: 'Плазменная резка металла',
+    slug: 'plazmennaya-rezka',
     chips: ['до 50 мм', 'чёрный металл', 'большие форматы'],
     lead: 'Толстый лист и большие объёмы — там, где лазеру работать уже невыгодно.',
     points: [
@@ -77,6 +79,7 @@ const services = [
   },
   {
     title: 'Гибка на листогибе с ЧПУ',
+    slug: 'gibka-metalla',
     chips: ['до 6 мм', 'до 3000 мм', 'повторяемость'],
     lead: 'Деталь №50 гнётся под тем же углом, что и деталь №1.',
     points: [
@@ -90,6 +93,7 @@ const services = [
   },
   {
     title: 'Сварка металлоконструкций',
+    slug: 'svarka',
     chips: ['MIG/MAG', 'TIG', 'РДС'],
     lead: 'От одного шва до объекта под ключ — в Нижегородской области с монтажом.',
     points: [
@@ -149,23 +153,23 @@ const toggleFaq = (i) => {
           <p class="sec-tag"><span class="idx">Производство</span> Услуги</p>
           <h1 class="page-title">Резка, гибка и сварка металла — <em>на одной площадке</em></h1>
           <p class="page-desc">
-            Услуги металлообработки для изготовления металлоконструкций: лазерная и плазменная
-            резка, гибка на ЧПУ-листогибе, сварка. Один договор, один контакт, одна
-            ответственность — от чертежа до отгрузки по всей России.
+            Услуги металлообработки для
+            <RouterLink to="/metallokonstruktsii" class="page-desc-link">изготовления металлоконструкций</RouterLink>:
+            лазерная и плазменная резка, гибка на ЧПУ-листогибе, сварка. Один договор, один
+            контакт, одна ответственность — от чертежа до отгрузки по всей России.
           </p>
         </div>
 
         <div class="usl-anchor-row" v-reveal="140">
-          <a
+          <RouterLink
             v-for="(s, i) in services"
             :key="s.title"
-            href="#uslugi-list"
+            :to="`/uslugi/${s.slug}`"
             class="usl-anchor"
-            @click="openService = i"
           >
             <span class="ua-num">{{ String(i + 1).padStart(2, '0') }}</span>
             {{ s.title.replace(' металла', '').replace(' металлоконструкций', '') }}
-          </a>
+          </RouterLink>
         </div>
       </div>
     </section>
@@ -297,7 +301,10 @@ const toggleFaq = (i) => {
                 </ul>
                 <div class="acc-foot">
                   <p class="acc-fit"><span>Подходит для:</span> {{ s.fit }}</p>
-                  <RouterLink to="/kalkulyator" class="btn btn--ghost acc-btn">Рассчитать</RouterLink>
+                  <div class="acc-actions">
+                    <RouterLink :to="`/uslugi/${s.slug}`" class="acc-more">Подробнее об услуге →</RouterLink>
+                    <RouterLink to="/kalkulyator" class="btn btn--ghost acc-btn">Рассчитать</RouterLink>
+                  </div>
                 </div>
               </div>
             </div>
@@ -350,6 +357,13 @@ const toggleFaq = (i) => {
 <style scoped>
 /* ============ hero ============ */
 .usl-hero { padding-bottom: 72px; }
+
+.page-desc-link {
+  color: var(--acc-hot);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.page-desc-link:hover { color: var(--acc); }
 
 .usl-hero-ghost {
   position: absolute;
@@ -741,6 +755,19 @@ const toggleFaq = (i) => {
   color: var(--ink-faint);
 }
 .acc-fit span { color: var(--acc); text-transform: uppercase; }
+.acc-actions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+.acc-more {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--acc);
+  transition: color 0.2s;
+}
+.acc-more:hover { color: var(--acc-hot); }
 .acc-btn { padding: 13px 26px; }
 
 /* ============ FAQ ============ */

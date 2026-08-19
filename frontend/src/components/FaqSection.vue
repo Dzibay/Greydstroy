@@ -1,7 +1,15 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
-const faq = [
+const props = defineProps({
+  items: { type: Array, default: null },
+  idx: { type: String, default: '/ 14' },
+  tag: { type: String, default: 'FAQ' },
+  title: { type: String, default: 'Вопросы, которые задают' },
+  titleEm: { type: String, default: 'чаще всего' },
+})
+
+const defaultFaq = [
   {
     q: 'Сколько это будет стоить?',
     a: 'Честно — единой цены «за деталь» не существует ни у кого в отрасли, что бы ни было написано на других сайтах. Зависит от металла, толщины, объёма и сложности чертежа. Пришлите ТЗ или опишите задачу — назовём цифру в течение рабочего дня.',
@@ -36,6 +44,8 @@ const faq = [
   },
 ]
 
+const faq = computed(() => props.items ?? defaultFaq)
+
 const open = ref(0)
 
 function toggle(i) {
@@ -47,8 +57,8 @@ function toggle(i) {
   <section id="faq" class="sec sec--dark">
     <div class="container">
       <div class="sec-head" v-reveal>
-        <p class="sec-tag"><span class="idx">/ 14</span> FAQ</p>
-        <h2 class="sec-title">Вопросы, которые задают <em>чаще всего</em></h2>
+        <p class="sec-tag"><span class="idx">{{ idx }}</span> {{ tag }}</p>
+        <h2 class="sec-title">{{ title }} <em>{{ titleEm }}</em></h2>
       </div>
 
       <div class="faq">

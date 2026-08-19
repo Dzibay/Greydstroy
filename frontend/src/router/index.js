@@ -2,6 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '../pages/HomePage.vue'
 import ProjectsListPage from '../pages/ProjectsListPage.vue'
 import UslugiPage from '../pages/UslugiPage.vue'
+import UslugaPage from '../pages/UslugaPage.vue'
+import MetalworkPage from '../pages/MetalworkPage.vue'
+import { uslugi } from '../data/uslugi'
 import CalculatorPage from '../pages/CalculatorPage.vue'
 import ProjectPage from '../pages/ProjectPage.vue'
 import ContactsPage from '../pages/ContactsPage.vue'
@@ -18,6 +21,16 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: HomePage },
     {
+      path: '/metallokonstruktsii',
+      name: 'metalwork',
+      component: MetalworkPage,
+      meta: {
+        title: 'Изготовление металлоконструкций на заказ в Дзержинске — завод Грэйдстрой',
+        description:
+          'Завод металлоконструкций в Дзержинске: каркасы зданий, фермы, балки, лестницы, навесы, ангары. Работы от 55 000 ₽/т, смета за 1 рабочий день, монтаж по Нижегородской области, отгрузка по всей России.',
+      },
+    },
+    {
       path: '/uslugi',
       name: 'uslugi',
       component: UslugiPage,
@@ -27,6 +40,14 @@ const router = createRouter({
           'Услуги металлообработки для изготовления металлоконструкций: лазерная резка до 20 мм, плазменная до 50 мм, гибка на ЧПУ-листогибе до 3000 мм, сварка MIG/TIG. Расчёт за 1 рабочий день, отгрузка по всей России.',
       },
     },
+    // SEO-страницы отдельных услуг (/uslugi/<slug>) — контент и мета из data/uslugi.js
+    ...uslugi.map((u) => ({
+      path: `/uslugi/${u.slug}`,
+      name: `usluga-${u.slug}`,
+      component: UslugaPage,
+      props: { slug: u.slug },
+      meta: { title: u.metaTitle, description: u.metaDescription },
+    })),
     {
       path: '/kalkulyator',
       name: 'calculator',

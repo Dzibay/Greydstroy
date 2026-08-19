@@ -8,10 +8,8 @@ const menuOpen = ref(false)
 
 const nav = [
   { to: '/uslugi', label: 'Услуги' },
-  { to: '/kalkulyator', label: 'Калькулятор' },
   { to: '/projects', label: 'Объекты' },
   { to: '/dostavka', label: 'Доставка' },
-  { to: '/rekvizity', label: 'Реквизиты' },
   { to: '/kontakty', label: 'Контакты' },
 ]
 
