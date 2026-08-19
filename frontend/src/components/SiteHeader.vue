@@ -8,6 +8,7 @@ const menuOpen = ref(false)
 
 const nav = [
   { to: '/uslugi', label: 'Услуги' },
+  { to: '/kalkulyator', label: 'Калькулятор' },
   { to: '/projects', label: 'Объекты' },
   { to: '/dostavka', label: 'Доставка' },
   { to: '/rekvizity', label: 'Реквизиты' },
@@ -49,7 +50,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
 
       <div class="hdr-right">
         <a href="tel:+79056646665" class="hdr-phone">+7 (905) 664-66-65</a>
-        <RouterLink to="/#cta" class="btn hdr-btn" @click="menuOpen = false">Рассчитать заказ</RouterLink>
+        <RouterLink to="/kalkulyator" class="btn hdr-btn" @click="menuOpen = false">Рассчитать заказ</RouterLink>
         <button
           class="burger"
           :class="{ open: menuOpen }"

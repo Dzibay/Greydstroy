@@ -72,7 +72,7 @@ async function copyAll() {
 
         <div class="req-cta" v-reveal="120">
           <p>Нужен счёт или договор? Пришлите заявку — подготовим документы вместе с расчётом.</p>
-          <RouterLink to="/#cta" class="btn">Рассчитать заказ</RouterLink>
+          <RouterLink to="/kalkulyator" class="btn">Рассчитать заказ</RouterLink>
         </div>
       </div>
     </section>

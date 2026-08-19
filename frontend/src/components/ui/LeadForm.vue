@@ -5,6 +5,9 @@ import { applyPhoneInput, applyPhonePaste, isValidRuPhone } from '../../utils/ph
 const props = defineProps({
   extended: { type: Boolean, default: false },
   buttonText: { type: String, default: 'Рассчитать стоимость' },
+  /* служебный текст (например, конфигурация калькулятора), который
+     прикладывается к комментарию при отправке */
+  commentPrefix: { type: String, default: '' },
 })
 
 const form = reactive({
@@ -109,7 +112,7 @@ async function submit() {
         name: form.name,
         phone: form.phone,
         drawing: form.drawing,
-        comment: form.comment,
+        comment: [props.commentPrefix, form.comment].filter(Boolean).join('\n\n'),
         file_name: form.fileName,
         source: window.location.pathname,
       }),

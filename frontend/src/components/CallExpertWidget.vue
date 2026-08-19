@@ -24,7 +24,7 @@ const open = ref(false)
           <li><span>◆</span> Отвечает инженер, а не колл-центр</li>
         </ul>
 
-        <a href="#cta" class="btn btn--block cew-btn" @click="open = false">Рассчитать заказ</a>
+        <a href="/kalkulyator" class="btn btn--block cew-btn" @click="open = false">Рассчитать заказ</a>
       </div>
     </transition>
 

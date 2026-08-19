@@ -18,6 +18,7 @@ import CompanyLogo from './ui/CompanyLogo.vue'
       <nav class="ftr-nav" aria-label="Разделы сайта">
         <p class="ftr-h">Разделы</p>
         <RouterLink to="/uslugi">Услуги</RouterLink>
+        <RouterLink to="/kalkulyator">Калькулятор стоимости</RouterLink>
         <RouterLink to="/projects">Объекты</RouterLink>
         <RouterLink to="/dostavka">Доставка</RouterLink>
         <RouterLink to="/rekvizity">Реквизиты</RouterLink>
@@ -34,7 +35,7 @@ import CompanyLogo from './ui/CompanyLogo.vue'
       <div class="ftr-cta">
         <p class="ftr-h">Расчёт заказа</p>
         <p class="ftr-cta-text">Пришлите чертёж или опишите задачу — ответим в течение рабочего дня.</p>
-        <RouterLink to="/#cta" class="btn">Рассчитать стоимость</RouterLink>
+        <RouterLink to="/kalkulyator" class="btn">Рассчитать стоимость</RouterLink>
       </div>
     </div>
 

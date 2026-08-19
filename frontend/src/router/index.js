@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '../pages/HomePage.vue'
 import ProjectsListPage from '../pages/ProjectsListPage.vue'
 import UslugiPage from '../pages/UslugiPage.vue'
+import CalculatorPage from '../pages/CalculatorPage.vue'
 import ProjectPage from '../pages/ProjectPage.vue'
 import ContactsPage from '../pages/ContactsPage.vue'
 import DeliveryPage from '../pages/DeliveryPage.vue'
@@ -24,6 +25,16 @@ const router = createRouter({
         title: 'Услуги резки, гибки и сварки металла — Грэйдстрой | Дзержинск',
         description:
           'Услуги металлообработки для изготовления металлоконструкций: лазерная резка до 20 мм, плазменная до 50 мм, гибка на ЧПУ-листогибе до 3000 мм, сварка MIG/TIG. Расчёт за 1 рабочий день, отгрузка по всей России.',
+      },
+    },
+    {
+      path: '/kalkulyator',
+      name: 'calculator',
+      component: CalculatorPage,
+      meta: {
+        title: 'Калькулятор стоимости металлоконструкций онлайн — Грэйдстрой',
+        description:
+          'Рассчитайте примерную стоимость изготовления металлоконструкций онлайн: тип конструкции, масса, покрытие, монтаж и доставка. Ориентир цены и срока без звонка, точная смета — за 1 рабочий день.',
       },
     },
     {

@@ -86,7 +86,7 @@ const cards = [
               Реквизиты для договора — на <RouterLink to="/rekvizity">отдельной странице</RouterLink>.
             </p>
           </div>
-          <RouterLink to="/#cta" class="btn">Рассчитать заказ</RouterLink>
+          <RouterLink to="/kalkulyator" class="btn">Рассчитать заказ</RouterLink>
         </div>
       </div>
     </section>

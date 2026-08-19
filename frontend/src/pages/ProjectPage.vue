@@ -74,7 +74,7 @@ const period = computed(() => {
 
         <div class="project-cta" v-reveal="120">
           <p>Нужен расчёт на аналогичный объект?</p>
-          <RouterLink to="/#cta" class="btn">Рассчитать заказ</RouterLink>
+          <RouterLink to="/kalkulyator" class="btn">Рассчитать заказ</RouterLink>
         </div>
       </div>
     </section>

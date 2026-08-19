@@ -88,7 +88,7 @@ const steps = [
 
         <div class="del-cta" v-reveal="120">
           <p>Скажите, куда везти — посчитаем доставку вместе со стоимостью работ.</p>
-          <RouterLink to="/#cta" class="btn">Рассчитать заказ</RouterLink>
+          <RouterLink to="/kalkulyator" class="btn">Рассчитать заказ</RouterLink>
         </div>
       </div>
     </section>

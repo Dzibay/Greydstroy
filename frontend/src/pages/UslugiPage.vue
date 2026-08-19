@@ -254,7 +254,7 @@ const toggleFaq = (i) => {
               <p class="verdict-spec">{{ verdict.spec }}</p>
             </div>
             <p class="verdict-note">{{ verdict.note }}</p>
-            <RouterLink to="/#cta" class="btn verdict-btn">Рассчитать мою деталь</RouterLink>
+            <RouterLink to="/kalkulyator" class="btn verdict-btn">Рассчитать мою деталь</RouterLink>
           </div>
         </div>
       </div>
@@ -297,7 +297,7 @@ const toggleFaq = (i) => {
                 </ul>
                 <div class="acc-foot">
                   <p class="acc-fit"><span>Подходит для:</span> {{ s.fit }}</p>
-                  <RouterLink to="/#cta" class="btn btn--ghost acc-btn">Рассчитать</RouterLink>
+                  <RouterLink to="/kalkulyator" class="btn btn--ghost acc-btn">Рассчитать</RouterLink>
                 </div>
               </div>
             </div>
@@ -340,7 +340,7 @@ const toggleFaq = (i) => {
               и ответит в течение рабочего дня.
             </p>
           </div>
-          <RouterLink to="/#cta" class="btn">Рассчитать стоимость и сроки</RouterLink>
+          <RouterLink to="/kalkulyator" class="btn">Рассчитать стоимость и сроки</RouterLink>
         </div>
       </div>
     </section>
