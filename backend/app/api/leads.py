@@ -5,9 +5,9 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.db import pool
+from app.paths import UPLOAD_DIR
 
 router = APIRouter()
-UPLOAD_DIR = Path(__file__).resolve().parents[2] / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 

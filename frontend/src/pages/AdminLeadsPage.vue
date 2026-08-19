@@ -20,6 +20,85 @@ const filteredLeads = computed(() =>
 
 const filesCount = computed(() => leads.value.filter((l) => l.file_path).length)
 
+const fileError = ref('')
+const deleteError = ref('')
+const deletingId = ref(null)
+
+function fileApiUrl(lead, download = false) {
+  const q = download ? '?disposition=attachment' : ''
+  return `/api/admin/leads/${lead.id}/file${q}`
+}
+
+async function fetchLeadFile(lead, download = false) {
+  fileError.value = ''
+  const res = await fetch(fileApiUrl(lead, download), {
+    headers: { Authorization: `Bearer ${token.value}` },
+  })
+  if (res.status === 401) {
+    logout()
+    return null
+  }
+  if (!res.ok) {
+    fileError.value = 'Файл не найден на сервере'
+    return null
+  }
+  return res.blob()
+}
+
+async function openFile(lead) {
+  if (!lead.file_path) return
+  const blob = await fetchLeadFile(lead)
+  if (!blob) return
+  const url = URL.createObjectURL(blob)
+  window.open(url, '_blank', 'noopener')
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
+
+async function downloadFile(lead) {
+  if (!lead.file_path) return
+  const blob = await fetchLeadFile(lead, true)
+  if (!blob) return
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = lead.file_name || 'file'
+  a.rel = 'noopener'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+async function deleteLead(lead) {
+  const label = lead.name || lead.phone || `#${lead.id}`
+  if (!confirm(`Удалить заявку «${label}»? Это действие нельзя отменить.`)) return
+
+  deletingId.value = lead.id
+  deleteError.value = ''
+  try {
+    const res = await fetch(`/api/admin/leads/${lead.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token.value}` },
+    })
+    if (res.status === 401) {
+      logout()
+      return
+    }
+    if (res.status === 404) {
+      deleteError.value = 'Заявка уже удалена'
+      await loadLeads()
+      return
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    leads.value = leads.value.filter((l) => l.id !== lead.id)
+    total.value = Math.max(0, total.value - 1)
+  } catch {
+    deleteError.value = 'Не удалось удалить заявку'
+  } finally {
+    deletingId.value = null
+  }
+}
+
 async function login() {
   if (!password.value) return
   loggingIn.value = true
@@ -95,17 +174,6 @@ function formatBytes(v) {
   return `${(n / (1024 * 1024)).toFixed(1)} МБ`
 }
 
-function downloadFile(lead) {
-  if (!lead.file_path) return
-  const a = document.createElement('a')
-  a.href = lead.file_path
-  a.download = lead.file_name || 'file'
-  a.rel = 'noopener'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-}
-
 onMounted(loadLeads)
 </script>
 
@@ -156,6 +224,8 @@ onMounted(loadLeads)
       </header>
 
       <p v-if="loadError" class="adm-error">{{ loadError }}</p>
+      <p v-if="fileError" class="adm-error">{{ fileError }}</p>
+      <p v-if="deleteError" class="adm-error">{{ deleteError }}</p>
 
       <div v-if="!filteredLeads.length && !loading && !loadError" class="adm-empty">
         {{ onlyWithFiles ? 'Заявок с файлами пока нет' : 'Заявок пока нет' }}
@@ -173,6 +243,7 @@ onMounted(loadLeads)
               <th>Файл</th>
               <th>Комментарий</th>
               <th>Страница</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -195,9 +266,9 @@ onMounted(loadLeads)
                     {{ formatBytes(lead.file_size) }}
                   </small>
                   <div class="adm-file-actions">
-                    <a :href="lead.file_path" target="_blank" rel="noopener" class="adm-file-btn">
+                    <button type="button" class="adm-file-btn" @click="openFile(lead)">
                       Открыть
-                    </a>
+                    </button>
                     <button type="button" class="adm-file-btn adm-file-btn--dl" @click="downloadFile(lead)">
                       Скачать
                     </button>
@@ -207,6 +278,16 @@ onMounted(loadLeads)
               </td>
               <td class="adm-comment">{{ lead.comment || '—' }}</td>
               <td class="adm-nowrap">{{ lead.source || '—' }}</td>
+              <td class="adm-row-actions">
+                <button
+                  type="button"
+                  class="adm-del-btn"
+                  :disabled="deletingId === lead.id"
+                  @click="deleteLead(lead)"
+                >
+                  {{ deletingId === lead.id ? '…' : 'Удалить' }}
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -439,11 +520,35 @@ onMounted(loadLeads)
   color: var(--acc-hot);
   background: rgba(255, 90, 31, 0.12);
   border: none;
+  cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
 .adm-file-btn:hover {
   background: var(--acc);
   color: #fff;
 }
-.adm-file-btn--dl { cursor: pointer; }
+
+.adm-row-actions { white-space: nowrap; }
+.adm-del-btn {
+  font-family: var(--font-m);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: #ff8a8a;
+  background: rgba(255, 90, 90, 0.1);
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.adm-del-btn:hover:not(:disabled) {
+  background: rgba(255, 90, 90, 0.22);
+  color: #ffb4b4;
+}
+.adm-del-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 </style>

@@ -1,10 +1,14 @@
 import time
+from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from app.auth import check_password, make_token, require_admin
 from app.db import pool
+from app.paths import UPLOAD_DIR
 
 router = APIRouter()
 
@@ -54,3 +58,59 @@ def list_leads(
         for r in rows
     ]
     return {"total": total, "items": items}
+
+
+@router.get("/admin/leads/{lead_id}/file", dependencies=[Depends(require_admin)])
+def get_lead_file(
+    lead_id: int,
+    disposition: str = Query(default="inline", pattern="^(inline|attachment)$"),
+) -> FileResponse:
+    with pool.connection() as conn:
+        row = conn.execute(
+            "SELECT file_name, file_path, file_mime FROM leads WHERE id = %s",
+            (lead_id,),
+        ).fetchone()
+    if not row or not row[1]:
+        raise HTTPException(status_code=404, detail="Файл не найден")
+
+    file_name, file_path, file_mime = row
+    disk_path = UPLOAD_DIR / Path(file_path).name
+    if not disk_path.is_file():
+        raise HTTPException(status_code=404, detail="Файл не найден на сервере")
+
+    download_name = file_name or disk_path.name
+    encoded_name = quote(download_name)
+    disp = "attachment" if disposition == "attachment" else "inline"
+    return FileResponse(
+        disk_path,
+        media_type=file_mime or "application/octet-stream",
+        headers={
+            "Content-Disposition": f"{disp}; filename*=UTF-8''{encoded_name}",
+        },
+    )
+
+
+@router.delete("/admin/leads/{lead_id}", dependencies=[Depends(require_admin)])
+def delete_lead(lead_id: int) -> dict:
+    with pool.connection() as conn:
+        row = conn.execute(
+            "SELECT file_path FROM leads WHERE id = %s",
+            (lead_id,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Заявка не найдена")
+
+        file_path = row[0]
+        deleted = conn.execute(
+            "DELETE FROM leads WHERE id = %s RETURNING id",
+            (lead_id,),
+        ).fetchone()
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Заявка не найдена")
+
+    if file_path:
+        disk_path = UPLOAD_DIR / Path(file_path).name
+        if disk_path.is_file():
+            disk_path.unlink()
+
+    return {"ok": True, "id": lead_id}

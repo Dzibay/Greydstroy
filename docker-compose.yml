@@ -45,6 +45,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - uploads_data:/app/uploads
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/api/health || exit 1"]
       interval: 30s
@@ -86,5 +88,6 @@ networks:
 
 volumes:
   postgres_data:
+  uploads_data:
   caddy_data:
   caddy_config:
