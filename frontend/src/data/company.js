@@ -17,6 +17,20 @@ export const company = {
     corrAccount: '30101810400000000705',
   },
   schedule: 'Пн–Пт, 08:00–17:00 (МСК)',
+  yandexMaps: (() => {
+    const orgId = '1229824061'
+    const coords = { lat: 56.256304, lon: 43.409604 }
+    const zoom = 16
+    const ll = `${coords.lon}%2C${coords.lat}`
+    return {
+      orgId,
+      coords,
+      zoom,
+      url: `https://yandex.ru/maps/org/greydstroy/${orgId}/`,
+      shareUrl: 'https://yandex.ru/maps/-/CTsmnHo-',
+      widgetUrl: `https://yandex.ru/map-widget/v1/?ll=${ll}&pt=${ll}%2Cpm2rdm&z=${zoom}&oid=${orgId}`,
+    }
+  })(),
 }
 
 export const requisiteGroups = [

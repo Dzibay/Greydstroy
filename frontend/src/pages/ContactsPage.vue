@@ -71,11 +71,16 @@ const cards = [
       <div class="container">
         <div class="con-map card" v-reveal>
           <iframe
-            src="https://yandex.ru/map-widget/v1/?text=Дзержинск%2C%20Заревская%20объездная%2C%209В&z=15"
-            title="Карта: производство ООО «Грэйдстрой» в Дзержинске"
+            :src="company.yandexMaps.widgetUrl"
+            title="ООО «Грэйдстрой» на Яндекс Картах"
             loading="lazy"
             allowfullscreen
           ></iframe>
+          <p class="con-map-link">
+            <a :href="company.yandexMaps.url" target="_blank" rel="noopener noreferrer">
+              Открыть карточку организации в Яндекс Картах
+            </a>
+          </p>
         </div>
 
         <div class="con-cta" v-reveal="80">
@@ -150,6 +155,17 @@ a.con-card:hover .con-value { color: var(--acc-hot); }
   border: none;
   border-radius: calc(var(--r) - 6px);
 }
+.con-map-link {
+  margin-top: 12px;
+  padding: 0 4px;
+  font-size: 13px;
+}
+.con-map-link a {
+  color: var(--acc);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.con-map-link a:hover { color: var(--acc-hot); }
 
 .con-cta {
   margin-top: 28px;
