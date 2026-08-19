@@ -30,7 +30,7 @@ def list_leads(
         total = conn.execute("SELECT COUNT(*) FROM leads").fetchone()[0]
         rows = conn.execute(
             """
-            SELECT id, name, phone, has_drawing, comment, file_name, source, created_at
+            SELECT id, name, phone, has_drawing, comment, file_name, file_path, file_size, file_mime, source, created_at
             FROM leads
             ORDER BY created_at DESC
             LIMIT %s OFFSET %s
@@ -45,8 +45,11 @@ def list_leads(
             "has_drawing": r[3],
             "comment": r[4],
             "file_name": r[5],
-            "source": r[6],
-            "created_at": r[7].isoformat(),
+            "file_path": r[6],
+            "file_size": r[7],
+            "file_mime": r[8],
+            "source": r[9],
+            "created_at": r[10].isoformat(),
         }
         for r in rows
     ]

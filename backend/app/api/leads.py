@@ -1,9 +1,14 @@
-from fastapi import APIRouter, HTTPException
+import secrets
+from pathlib import Path
+
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.db import pool
 
 router = APIRouter()
+UPLOAD_DIR = Path(__file__).resolve().parents[2] / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class LeadIn(BaseModel):
@@ -16,14 +21,49 @@ class LeadIn(BaseModel):
 
 
 @router.post("/leads")
-def create_lead(lead: LeadIn) -> dict:
+async def create_lead(request: Request) -> dict:
+    content_type = request.headers.get("content-type", "")
+
+    file_name = ""
+    file_path = ""
+    file_size = 0
+    file_mime = ""
+
+    if "multipart/form-data" in content_type:
+        form = await request.form()
+        file = form.get("file")
+        if file and getattr(file, "filename", ""):
+            original_name = Path(file.filename).name
+            ext = Path(original_name).suffix.lower()
+            safe_name = f"{secrets.token_hex(12)}{ext}"
+            target = UPLOAD_DIR / safe_name
+            data = await file.read()
+            target.write_bytes(data)
+            file_name = original_name
+            file_path = f"/uploads/{safe_name}"
+            file_size = len(data)
+            file_mime = getattr(file, "content_type", "") or ""
+
+        lead = LeadIn(
+            name=str(form.get("name", "")),
+            phone=str(form.get("phone", "")),
+            drawing=str(form.get("drawing", "yes")),
+            comment=str(form.get("comment", "")),
+            file_name=file_name or str(form.get("file_name", "")),
+            source=str(form.get("source", "")),
+        )
+    else:
+        lead = LeadIn.model_validate(await request.json())
+
     if not lead.phone.strip():
         raise HTTPException(status_code=422, detail="Телефон обязателен")
     with pool.connection() as conn:
         row = conn.execute(
             """
-            INSERT INTO leads (name, phone, has_drawing, comment, file_name, source)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO leads (
+                name, phone, has_drawing, comment, file_name, file_path, file_size, file_mime, source
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (
@@ -32,6 +72,9 @@ def create_lead(lead: LeadIn) -> dict:
                 lead.drawing == "yes",
                 lead.comment.strip(),
                 lead.file_name.strip(),
+                file_path,
+                file_size,
+                file_mime,
                 lead.source.strip(),
             ),
         ).fetchone()

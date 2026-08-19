@@ -105,17 +105,19 @@ async function submit() {
   error.value = ''
   sending.value = true
   try {
+    const file = fileRef.value?.files?.[0] ?? null
+    const payload = new FormData()
+    payload.append('name', form.name)
+    payload.append('phone', form.phone)
+    payload.append('drawing', form.drawing)
+    payload.append('comment', [props.commentPrefix, form.comment].filter(Boolean).join('\n\n'))
+    payload.append('file_name', form.fileName)
+    payload.append('source', window.location.pathname)
+    if (file) payload.append('file', file)
+
     const res = await fetch('/api/leads', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: form.name,
-        phone: form.phone,
-        drawing: form.drawing,
-        comment: [props.commentPrefix, form.comment].filter(Boolean).join('\n\n'),
-        file_name: form.fileName,
-        source: window.location.pathname,
-      }),
+      body: payload,
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     sent.value = true

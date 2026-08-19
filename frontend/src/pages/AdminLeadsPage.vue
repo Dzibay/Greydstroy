@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const TOKEN_KEY = 'gs_admin_token'
 
@@ -12,6 +12,13 @@ const leads = ref([])
 const total = ref(0)
 const loading = ref(false)
 const loadError = ref('')
+const onlyWithFiles = ref(false)
+
+const filteredLeads = computed(() =>
+  onlyWithFiles.value ? leads.value.filter((l) => l.file_path) : leads.value,
+)
+
+const filesCount = computed(() => leads.value.filter((l) => l.file_path).length)
 
 async function login() {
   if (!password.value) return
@@ -80,6 +87,25 @@ function formatDate(iso) {
   })
 }
 
+function formatBytes(v) {
+  const n = Number(v || 0)
+  if (!n) return ''
+  if (n < 1024) return `${n} Б`
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)} КБ`
+  return `${(n / (1024 * 1024)).toFixed(1)} МБ`
+}
+
+function downloadFile(lead) {
+  if (!lead.file_path) return
+  const a = document.createElement('a')
+  a.href = lead.file_path
+  a.download = lead.file_name || 'file'
+  a.rel = 'noopener'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+}
+
 onMounted(loadLeads)
 </script>
 
@@ -110,9 +136,18 @@ onMounted(loadLeads)
       <header class="adm-head">
         <div>
           <p class="adm-tag">Грэйдстрой · Админка</p>
-          <h1>Заявки <span class="adm-count">{{ total }}</span></h1>
+          <h1>
+            Заявки
+            <span class="adm-count">{{ onlyWithFiles ? filteredLeads.length : total }}</span>
+            <span v-if="onlyWithFiles" class="adm-count-sub">из {{ total }}</span>
+          </h1>
         </div>
         <div class="adm-actions">
+          <label class="adm-filter">
+            <input v-model="onlyWithFiles" type="checkbox" />
+            <span>Только с файлами</span>
+            <em v-if="filesCount">{{ filesCount }}</em>
+          </label>
           <button class="adm-btn" :disabled="loading" @click="loadLeads">
             {{ loading ? 'Обновляем…' : 'Обновить' }}
           </button>
@@ -122,11 +157,11 @@ onMounted(loadLeads)
 
       <p v-if="loadError" class="adm-error">{{ loadError }}</p>
 
-      <div v-if="!leads.length && !loading && !loadError" class="adm-empty">
-        Заявок пока нет
+      <div v-if="!filteredLeads.length && !loading && !loadError" class="adm-empty">
+        {{ onlyWithFiles ? 'Заявок с файлами пока нет' : 'Заявок пока нет' }}
       </div>
 
-      <div v-if="leads.length" class="adm-table-wrap">
+      <div v-if="filteredLeads.length" class="adm-table-wrap">
         <table class="adm-table">
           <thead>
             <tr>
@@ -141,7 +176,7 @@ onMounted(loadLeads)
             </tr>
           </thead>
           <tbody>
-            <tr v-for="lead in leads" :key="lead.id">
+            <tr v-for="lead in filteredLeads" :key="lead.id">
               <td class="adm-num">{{ lead.id }}</td>
               <td class="adm-nowrap">{{ formatDate(lead.created_at) }}</td>
               <td>{{ lead.name || '—' }}</td>
@@ -153,7 +188,23 @@ onMounted(loadLeads)
                   {{ lead.has_drawing ? 'Есть' : 'Нет' }}
                 </span>
               </td>
-              <td class="adm-file">{{ lead.file_name || '—' }}</td>
+              <td class="adm-file">
+                <template v-if="lead.file_path">
+                  <p class="adm-file-name">{{ lead.file_name || 'Файл' }}</p>
+                  <small v-if="lead.file_size" class="adm-file-meta">
+                    {{ formatBytes(lead.file_size) }}
+                  </small>
+                  <div class="adm-file-actions">
+                    <a :href="lead.file_path" target="_blank" rel="noopener" class="adm-file-btn">
+                      Открыть
+                    </a>
+                    <button type="button" class="adm-file-btn adm-file-btn--dl" @click="downloadFile(lead)">
+                      Скачать
+                    </button>
+                  </div>
+                </template>
+                <span v-else>—</span>
+              </td>
               <td class="adm-comment">{{ lead.comment || '—' }}</td>
               <td class="adm-nowrap">{{ lead.source || '—' }}</td>
             </tr>
@@ -226,8 +277,44 @@ onMounted(loadLeads)
   color: var(--acc-hot);
   margin-left: 8px;
 }
+.adm-count-sub {
+  font-family: var(--font-m);
+  font-size: 13px;
+  color: var(--w-faint);
+  margin-left: 6px;
+  text-transform: none;
+  font-weight: 400;
+}
 
-.adm-actions { display: flex; gap: 10px; }
+.adm-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.adm-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-m);
+  font-size: 12px;
+  color: var(--w-soft);
+  cursor: pointer;
+  user-select: none;
+  padding: 9px 14px;
+  border-radius: var(--r-sm);
+  box-shadow: inset 0 0 0 1.5px var(--line-d);
+}
+.adm-filter input { accent-color: var(--acc); width: 15px; height: 15px; }
+.adm-filter em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--acc-hot);
+  background: var(--acc-dim);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
 .adm-btn {
   font-family: var(--font-m);
   font-size: 12.5px;
@@ -322,4 +409,41 @@ onMounted(loadLeads)
   max-width: 260px;
   overflow-wrap: break-word;
 }
+
+.adm-file-name {
+  font-size: 13px;
+  color: var(--white);
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+.adm-file-meta {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--w-faint);
+  font-family: var(--font-m);
+  font-size: 11px;
+}
+.adm-file-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.adm-file-btn {
+  font-family: var(--font-m);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: var(--acc-hot);
+  background: rgba(255, 90, 31, 0.12);
+  border: none;
+  transition: background 0.2s, color 0.2s;
+}
+.adm-file-btn:hover {
+  background: var(--acc);
+  color: #fff;
+}
+.adm-file-btn--dl { cursor: pointer; }
 </style>
