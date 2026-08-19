@@ -10,14 +10,14 @@ import CompanyLogo from './ui/CompanyLogo.vue'
           <CompanyLogo variant="light" />
         </RouterLink>
         <p class="ftr-desc">
-          Лазерная и плазменная резка, гибка, сварка.
+          Изготовление металлоконструкций: резка, гибка, сварка.
           Дзержинск, Нижегородская область — отгрузка по всей России.
         </p>
       </div>
 
       <nav class="ftr-nav" aria-label="Разделы сайта">
         <p class="ftr-h">Разделы</p>
-        <RouterLink to="/#services">Услуги</RouterLink>
+        <RouterLink to="/uslugi">Услуги</RouterLink>
         <RouterLink to="/projects">Объекты</RouterLink>
         <RouterLink to="/dostavka">Доставка</RouterLink>
         <RouterLink to="/rekvizity">Реквизиты</RouterLink>

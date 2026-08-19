@@ -40,7 +40,7 @@ const steps = [
         <RouterLink to="/" class="page-back" v-reveal>← На главную</RouterLink>
         <div class="sec-head" v-reveal="60">
           <p class="sec-tag"><span class="idx">Логистика</span> Доставка</p>
-          <h1 class="page-title">Доставка <em>по всей России</em></h1>
+          <h1 class="page-title">Доставка металлоконструкций <em>по всей России</em></h1>
           <p class="page-desc">
             От Нижнего Новгорода до любой точки России — вопрос не «довезёте ли»,
             а «как быстро». Способ и стоимость доставки фиксируем ещё на этапе расчёта заказа.

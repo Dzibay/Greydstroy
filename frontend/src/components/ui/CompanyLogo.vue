@@ -20,7 +20,7 @@ defineProps({
     />
     <span v-if="showText" class="brand-text">
       Грэйдстрой
-      <small>металлообработка</small>
+      <small>металлоконструкции</small>
     </span>
   </span>
 </template>

@@ -7,6 +7,7 @@ const progress = ref(0)
 const menuOpen = ref(false)
 
 const nav = [
+  { to: '/uslugi', label: 'Услуги' },
   { to: '/projects', label: 'Объекты' },
   { to: '/dostavka', label: 'Доставка' },
   { to: '/rekvizity', label: 'Реквизиты' },
