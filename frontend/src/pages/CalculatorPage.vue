@@ -82,43 +82,43 @@ const DISCOUNT_TIERS = [
 ]
 
 /* =====================================================
-   Объект целиком — металлоёмкость каркаса по габаритам
-   q, кг/м²: база при пролёте 18 м, высоте 6 м, снег IV
+   Объект целиком — металлоёмкость по объёму
+   q, кг/м³: база при пролёте 18 м, снег IV (высота входит в м³)
    ===================================================== */
 const BUILDING_KINDS = [
   {
     id: 'canopy',
     label: 'Навес',
     hint: 'Открытая зона, авто, входная группа',
-    q: 22,
+    q: 22 / 6,
     icon: 'canopy',
   },
   {
     id: 'hangar',
     label: 'Холодный ангар',
     hint: 'Склад без утепления, рамный каркас',
-    q: 28,
+    q: 28 / 6,
     icon: 'hangar',
   },
   {
     id: 'warm',
     label: 'Тёплый склад',
     hint: 'Каркас под сэндвич-панели',
-    q: 36,
+    q: 36 / 6,
     icon: 'warm',
   },
   {
     id: 'shop',
     label: 'Цех / производство',
     hint: 'Выше нагрузки, возможны краны',
-    q: 42,
+    q: 42 / 6,
     icon: 'shop',
   },
   {
     id: 'frame',
     label: 'Каркас здания',
     hint: 'Рамный каркас по вашим габаритам',
-    q: 38,
+    q: 38 / 6,
     icon: 'frame',
   },
 ]
@@ -235,20 +235,23 @@ const dimPresetActive = computed(() =>
   ),
 )
 
-/* ---------- объект: металлоёмкость ---------- */
+/* ---------- объект: металлоёмкость по м³ ---------- */
 const buildingQ = computed(() => {
   const spanK = 1 + 0.015 * (bWidth.value - 18)
-  const heightK = 1 + 0.035 * (bHeight.value - 6)
-  let q = bKind.value.q * spanK * heightK * bSnow.value.k * bRoof.value.k * bStep.value.k
-  q += bCrane.value.addQ
-  if (bMezzanine.value) q += 16
-  if (bStairs.value) q *= 1.06
-  return Math.min(110, Math.max(12, q))
+  let q = bKind.value.q * spanK * bSnow.value.k * bRoof.value.k * bStep.value.k
+  return Math.min(16, Math.max(2, q))
 })
 
 const buildingArea = computed(() => bLength.value * bWidth.value)
 const buildingVolume = computed(() => buildingArea.value * bHeight.value)
-const buildingMass = computed(() => roundMass((buildingArea.value * buildingQ.value) / 1000))
+const buildingMass = computed(() => {
+  const area = buildingArea.value
+  let kg = buildingVolume.value * buildingQ.value
+  kg += bCrane.value.addQ * area
+  if (bMezzanine.value) kg += 16 * area
+  if (bStairs.value) kg *= 1.06
+  return roundMass(kg / 1000)
+})
 
 const activeType = computed(() => (mode.value === 'object' ? FRAME_TYPE : type.value))
 const activeMass = computed(() => (mode.value === 'object' ? buildingMass.value : mass.value))
@@ -302,6 +305,7 @@ const calc = computed(() => {
   const total = work + kmd + urgentFee + material + coat + montage - discount + deliveryCost
   const vat = total * RATES.vatShare
   const area = mode.value === 'object' ? buildingArea.value : 0
+  const vol = mode.value === 'object' ? buildingVolume.value : 0
   return {
     work,
     kmd,
@@ -319,6 +323,7 @@ const calc = computed(() => {
     vatHigh: roundK(total * RATES.rangeHigh * RATES.vatShare),
     perTonne: total / m,
     perSqm: area ? total / area : 0,
+    perCub: vol ? total / vol : 0,
   }
 })
 
@@ -373,6 +378,7 @@ const summary = computed(() => {
       `• Габариты: ${fmtM(bLength.value)} × ${fmtM(bWidth.value)} × ${fmtM(bHeight.value)} м (Д×Ш×В)`,
     )
     lines.push(`• Площадь: ${fmt(buildingArea.value)} м²`)
+    lines.push(`• Объём: ${fmt(buildingVolume.value)} м³`)
     lines.push(`• Кровля: ${bRoof.value.label.toLowerCase()}`)
     lines.push(`• Кран: ${bCrane.value.label.toLowerCase()}`)
     lines.push(`• Снеговой район: ${bSnow.value.id}`)
@@ -382,7 +388,7 @@ const summary = computed(() => {
     if (bStairs.value) extra.push('лестницы и площадки')
     if (extra.length) lines.push(`• Дополнительно в каркасе: ${extra.join(', ')}`)
     lines.push(
-      `• Ориентир массы каркаса: ${buildingMass.value} т (${fmtQ(buildingQ.value)} кг/м²)`,
+      `• Ориентир массы каркаса: ${buildingMass.value} т (${fmtQ(buildingQ.value)} кг/м³)`,
     )
     lines.push('• В ориентир заложено: наш металл и грунт ГФ-021')
     lines.push('• КМД, монтаж, покрытие и доставка — уточним в точном расчёте')
@@ -713,7 +719,7 @@ const breakdownOpen = ref(false)
                 </div>
               </div>
               <p class="mass-help dim-help">
-                Тоннаж считается по металлоёмкости каркаса: пролёт, высота, снег и кран меняют расход стали.
+                Цена считается по объёму здания (длина × ширина × высота): чем выше каркас, тем больше колонн, связей и металла.
                 В ориентир заложены металл и грунт. Сэндвич, фундамент, КМД, монтаж и доставка — в точном расчёте.
               </p>
               <transition name="hint-slide" mode="out-in">
@@ -917,7 +923,7 @@ const breakdownOpen = ref(false)
                 <div class="panel-stats">
                   <div><b>{{ fmt(buildingArea) }}</b><span>м²</span></div>
                   <div><b>{{ fmt(buildingVolume) }}</b><span>м³</span></div>
-                  <div><b>{{ buildingMass }} т</b><span>{{ fmtQ(buildingQ) }} кг/м²</span></div>
+                  <div><b>{{ buildingMass }} т</b><span>{{ fmtQ(buildingQ) }} кг/м³</span></div>
                 </div>
               </div>
 
@@ -930,7 +936,7 @@ const breakdownOpen = ref(false)
                 <span class="pp-rub">₽</span>
               </p>
               <p class="panel-per" v-if="mode === 'object'">
-                ≈ {{ fmt(calc.perSqm) }} ₽/м² · каркас с металлом и грунтом
+                ≈ {{ fmt(calc.perCub) }} ₽/м³ · каркас с металлом и грунтом
               </p>
               <p class="panel-per" v-else>
                 ≈ {{ fmt(calc.perTonne) }} ₽/т · с учётом всех выбранных опций
@@ -1003,7 +1009,8 @@ const breakdownOpen = ref(false)
               <li><span>Объект</span>{{ bKind.label }}</li>
               <li><span>Габариты</span>{{ fmtM(bLength) }} × {{ fmtM(bWidth) }} × {{ fmtM(bHeight) }} м</li>
               <li><span>Площадь</span>{{ fmt(buildingArea) }} м²</li>
-              <li><span>Каркас</span>{{ buildingMass }} т · {{ fmtQ(buildingQ) }} кг/м²</li>
+              <li><span>Объём</span>{{ fmt(buildingVolume) }} м³</li>
+              <li><span>Каркас</span>{{ buildingMass }} т · {{ fmtQ(buildingQ) }} кг/м³</li>
               <li><span>Кровля</span>{{ bRoof.label }}</li>
               <li><span>Кран</span>{{ bCrane.label }}</li>
               <li v-if="bMezzanine || bStairs">
