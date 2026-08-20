@@ -1,9 +1,13 @@
 <script setup>
 import LeadForm from './ui/LeadForm.vue'
+
+defineProps({
+  sectionId: { type: String, default: 'cta' },
+})
 </script>
 
 <template>
-  <section id="cta" class="sec cta">
+  <section :id="sectionId" class="sec cta">
     <div class="container">
       <div class="cta-grid">
         <div>

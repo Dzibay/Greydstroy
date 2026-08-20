@@ -1,5 +1,5 @@
 <template>
-  <section class="sec sec--dark sec--deep">
+  <section id="team" class="sec sec--dark sec--deep">
     <div class="container">
       <div class="team-grid">
         <figure class="team-media" v-reveal>

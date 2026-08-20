@@ -22,7 +22,7 @@ const audiences = [
 </script>
 
 <template>
-  <section class="sec sec--dark">
+  <section id="audience" class="sec sec--dark">
     <div class="container">
       <div class="sec-head" v-reveal>
         <p class="sec-tag"><span class="idx">/ 07</span> Для кого мы работаем</p>

@@ -15,7 +15,7 @@ const period = computed(() => {
 
 <template>
   <main v-if="project" class="project-page">
-    <section class="project-hero sec sec--dark">
+    <section id="project-hero" class="project-hero sec sec--dark">
       <div class="container">
         <RouterLink to="/projects" class="project-back" v-reveal>
           ← Все объекты
@@ -53,7 +53,7 @@ const period = computed(() => {
       </div>
     </section>
 
-    <section class="sec sec--light project-body">
+    <section id="project" class="sec sec--light project-body">
       <div class="container project-content">
         <ProjectGallery
           :title="project.title"

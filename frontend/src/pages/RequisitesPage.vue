@@ -31,7 +31,7 @@ async function copyAll() {
 
 <template>
   <main>
-    <section class="sec sec--dark page-hero">
+    <section id="requisites-hero" class="sec sec--dark page-hero">
       <div class="container">
         <RouterLink to="/" class="page-back" v-reveal>← На главную</RouterLink>
         <div class="sec-head" v-reveal="60">
@@ -48,12 +48,13 @@ async function copyAll() {
       </div>
     </section>
 
-    <section class="sec sec--light req-body">
+    <section id="requisites" class="sec sec--light req-body">
       <div class="container">
         <div class="req-grid">
           <section
             v-for="(group, gi) in requisiteGroups"
             :key="group.title"
+            :id="group.id"
             class="card req-card"
             v-reveal="gi * 90"
           >

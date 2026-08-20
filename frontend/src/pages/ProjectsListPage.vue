@@ -5,7 +5,7 @@ import ProjectCard from '../components/ProjectCard.vue'
 
 <template>
   <main class="projects-list-page">
-    <section class="projects-hero sec sec--dark">
+    <section id="projects-hero" class="projects-hero sec sec--dark">
       <div class="container">
         <RouterLink to="/" class="projects-back" v-reveal>← На главную</RouterLink>
         <div class="sec-head" v-reveal="60">
@@ -19,7 +19,7 @@ import ProjectCard from '../components/ProjectCard.vue'
       </div>
     </section>
 
-    <section class="sec sec--light">
+    <section id="projects" class="sec sec--light">
       <div class="container">
         <div class="projects-grid">
           <ProjectCard

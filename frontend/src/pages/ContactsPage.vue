@@ -27,7 +27,7 @@ const cards = [
 
 <template>
   <main>
-    <section class="sec sec--dark page-hero">
+    <section id="contacts" class="sec sec--dark page-hero">
       <div class="container">
         <RouterLink to="/" class="page-back" v-reveal>← На главную</RouterLink>
         <div class="sec-head" v-reveal="60">
@@ -67,7 +67,7 @@ const cards = [
       </div>
     </section>
 
-    <section class="sec sec--light con-map-sec">
+    <section id="map" class="sec sec--light con-map-sec">
       <div class="container">
         <div class="con-map card" v-reveal>
           <iframe

@@ -3,7 +3,7 @@ const placeholders = [1, 2, 3]
 </script>
 
 <template>
-  <section class="sec sec--light">
+  <section id="reviews" class="sec sec--light">
     <div class="container">
       <div class="sec-head" v-reveal>
         <p class="sec-tag"><span class="idx">/ 13</span> Отзывы</p>

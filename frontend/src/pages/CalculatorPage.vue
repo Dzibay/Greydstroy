@@ -223,7 +223,7 @@ const breakdownOpen = ref(false)
 <template>
   <main>
     <!-- ============ HERO ============ -->
-    <section class="sec sec--dark page-hero clc-hero">
+    <section id="calc-hero" class="sec sec--dark page-hero clc-hero">
       <div class="container">
         <RouterLink to="/" class="page-back" v-reveal>← На главную</RouterLink>
         <div class="sec-head" v-reveal="60">

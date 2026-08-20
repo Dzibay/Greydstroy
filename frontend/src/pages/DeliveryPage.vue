@@ -35,7 +35,7 @@ const steps = [
 
 <template>
   <main>
-    <section class="sec sec--dark page-hero">
+    <section id="delivery" class="sec sec--dark page-hero">
       <div class="container">
         <RouterLink to="/" class="page-back" v-reveal>← На главную</RouterLink>
         <div class="sec-head" v-reveal="60">
@@ -71,7 +71,7 @@ const steps = [
       </div>
     </section>
 
-    <section class="sec sec--light">
+    <section id="delivery-how" class="sec sec--light">
       <div class="container">
         <div class="sec-head" v-reveal>
           <p class="sec-tag"><span class="idx">Порядок</span> Как это устроено</p>

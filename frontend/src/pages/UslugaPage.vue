@@ -35,7 +35,7 @@ onUnmounted(() => ldScript?.remove())
 <template>
   <main v-if="usluga" :key="usluga.slug">
     <!-- ============ HERO ============ -->
-    <section class="sec sec--dark page-hero srv-hero">
+    <section id="usluga-hero" class="sec sec--dark page-hero srv-hero">
       <div class="container">
         <RouterLink to="/uslugi" class="page-back" v-reveal>← Все услуги</RouterLink>
         <div class="sec-head" v-reveal="60">
@@ -58,7 +58,7 @@ onUnmounted(() => ldScript?.remove())
     </section>
 
     <!-- ============ ЧТО ВЫ ПОЛУЧАЕТЕ ============ -->
-    <section class="sec sec--deep">
+    <section id="features" class="sec sec--deep">
       <div class="container">
         <div class="sec-head" v-reveal>
           <p class="sec-tag"><span class="idx">Суть</span> Что вы получаете</p>
@@ -76,7 +76,7 @@ onUnmounted(() => ldScript?.remove())
     </section>
 
     <!-- ============ ПРИМЕНЕНИЕ + ДРУГИЕ УСЛУГИ ============ -->
-    <section class="sec sec--light">
+    <section id="apps" class="sec sec--light">
       <div class="container">
         <div class="sec-head" v-reveal>
           <p class="sec-tag"><span class="idx">Применение</span> {{ usluga.appsTitle }}</p>

@@ -34,7 +34,7 @@ const rows = [
 </script>
 
 <template>
-  <section class="sec sec--dark sec--deep">
+  <section id="compare" class="sec sec--dark sec--deep">
     <div class="container">
       <div class="sec-head" v-reveal>
         <p class="sec-tag"><span class="idx">/ 05</span> Почему мы</p>

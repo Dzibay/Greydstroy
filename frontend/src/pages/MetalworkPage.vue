@@ -62,7 +62,7 @@ const products = [
 <template>
   <main>
     <!-- ============ HERO ============ -->
-    <section class="sec sec--dark page-hero mk-hero">
+    <section id="mk-hero" class="sec sec--dark page-hero mk-hero">
       <div class="container">
         <RouterLink to="/" class="page-back" v-reveal>← На главную</RouterLink>
         <div class="sec-head" v-reveal="60">
@@ -90,7 +90,7 @@ const products = [
     </section>
 
     <!-- ============ ЧТО ИЗГОТАВЛИВАЕМ ============ -->
-    <section class="sec sec--deep">
+    <section id="products" class="sec sec--deep">
       <div class="container">
         <div class="sec-head" v-reveal>
           <p class="sec-tag"><span class="idx">Каталог</span> Что изготавливаем</p>

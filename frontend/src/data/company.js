@@ -35,6 +35,7 @@ export const company = {
 
 export const requisiteGroups = [
   {
+    id: 'req-general',
     title: 'Общие сведения',
     rows: [
       { label: 'Полное наименование', value: company.legalName },
@@ -45,6 +46,7 @@ export const requisiteGroups = [
     ],
   },
   {
+    id: 'req-contacts',
     title: 'Адреса и связь',
     rows: [
       { label: 'Юридический адрес', value: company.legalAddress },
@@ -54,6 +56,7 @@ export const requisiteGroups = [
     ],
   },
   {
+    id: 'req-bank',
     title: 'Банковские реквизиты',
     rows: [
       { label: 'Банк', value: company.bank.name },

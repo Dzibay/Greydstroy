@@ -1,5 +1,5 @@
 <template>
-  <section class="qcb-wrap" aria-label="Быстрая связь">
+  <section id="quick-call" class="qcb-wrap" aria-label="Быстрая связь">
     <div class="container">
       <div class="qcb" v-reveal>
         <div class="qcb-left">

@@ -9,7 +9,7 @@ const pains = [
 </script>
 
 <template>
-  <section class="sec sec--light">
+  <section id="pains" class="sec sec--light">
     <div class="container">
       <div class="sec-head" v-reveal>
         <p class="sec-tag"><span class="idx">/ 02</span> Знакомо?</p>

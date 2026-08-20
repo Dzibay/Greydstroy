@@ -169,7 +169,7 @@ const toggleFaq = (i) => {
 <template>
   <main>
     <!-- ============ HERO ============ -->
-    <section class="sec sec--dark page-hero usl-hero">
+    <section id="uslugi-hero" class="sec sec--dark page-hero usl-hero">
       <div class="usl-hero-ghost" aria-hidden="true">УСЛУГИ</div>
       <div class="container">
         <RouterLink to="/" class="page-back" v-reveal>← На главную</RouterLink>
@@ -199,7 +199,7 @@ const toggleFaq = (i) => {
     </section>
 
     <!-- ============ ПОДБОР ТЕХНОЛОГИИ ============ -->
-    <section class="sec sec--deep usl-picker-sec">
+    <section id="tech-picker" class="sec sec--deep usl-picker-sec">
       <div class="container">
         <div class="sec-head" v-reveal>
           <p class="sec-tag">Подбор технологии</p>
@@ -348,7 +348,7 @@ const toggleFaq = (i) => {
     </section>
 
     <!-- ============ FAQ ============ -->
-    <section class="sec sec--dark">
+    <section id="uslugi-faq" class="sec sec--dark">
       <div class="container">
         <div class="sec-head" v-reveal>
           <p class="sec-tag"><span class="idx">Вопросы</span> FAQ</p>

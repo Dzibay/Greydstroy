@@ -1,5 +1,5 @@
 <template>
-  <section class="sec sec--light sec--light2">
+  <section id="draft" class="sec sec--light sec--light2">
     <div class="container">
       <div class="sec-head" v-reveal>
         <p class="sec-tag"><span class="idx">/ 11</span> Нет чертежа?</p>

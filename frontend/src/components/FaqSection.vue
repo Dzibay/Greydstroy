@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 
 const props = defineProps({
   items: { type: Array, default: null },
+  sectionId: { type: String, default: 'faq' },
   idx: { type: String, default: '/ 14' },
   tag: { type: String, default: 'FAQ' },
   title: { type: String, default: 'Вопросы, которые задают' },
@@ -54,7 +55,7 @@ function toggle(i) {
 </script>
 
 <template>
-  <section id="faq" class="sec sec--dark">
+  <section :id="sectionId" class="sec sec--dark">
     <div class="container">
       <div class="sec-head" v-reveal>
         <p class="sec-tag"><span class="idx">{{ idx }}</span> {{ tag }}</p>
