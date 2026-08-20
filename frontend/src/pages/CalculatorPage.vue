@@ -473,7 +473,7 @@ function updateSketchFly() {
   const vw = window.innerWidth
   const header = 76
   const pad = 10
-  const floatW = Math.min(168, Math.max(132, vw * 0.38))
+  const floatW = Math.min(252, Math.max(200, vw * 0.50))
   const floatH = floatW * (210 / 400) + 8
   const floatTop = header + 10
   const floatLeft = vw - floatW - pad
