@@ -3,6 +3,8 @@ import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import LeadForm from '../components/ui/LeadForm.vue'
 import BuildingPreview from '../components/calc/BuildingPreview.vue'
+import SnowRegionPicker from '../components/calc/SnowRegionPicker.vue'
+import { SNOW_REGIONS, DEFAULT_REGION } from '../data/snowRegions'
 
 /* =====================================================
    Тарифы — «примерные параметры», правятся в одном месте
@@ -137,16 +139,25 @@ const CRANES = [
 ]
 
 const SNOW = [
+  { id: 'I', label: 'I', note: '80 кг/м²', k: 0.82 },
   { id: 'II', label: 'II', note: '120 кг/м²', k: 0.88 },
   { id: 'III', label: 'III', note: '180 кг/м²', k: 0.94 },
-  { id: 'IV', label: 'IV', note: 'Нижегородская обл.', k: 1 },
+  { id: 'IV', label: 'IV', note: '240 кг/м²', k: 1 },
   { id: 'V', label: 'V', note: '320 кг/м²', k: 1.12 },
+  { id: 'VI', label: 'VI', note: '400 кг/м²', k: 1.22 },
 ]
 
 const COL_STEPS = [
   { id: 6, label: '6 м', k: 1, note: 'типовой' },
   { id: 9, label: '9 м', k: 1.06, note: 'реже колонны' },
   { id: 12, label: '12 м', k: 1.12, note: 'тяжёлые ригели' },
+]
+
+const FOUNDATIONS = [
+  { id: 'pads', label: 'Стаканный', note: 'столбы под колонны', perSqm: 4800, addQ: 0.5 },
+  { id: 'strip', label: 'Ленточный', note: 'лента по периметру', perSqm: 6400, addQ: 0.35 },
+  { id: 'piles', label: 'Свайный', note: 'сваи с ростверком', perSqm: 8200, addQ: 0.8 },
+  { id: 'slab', label: 'Плитный', note: 'монолитная плита', perSqm: 10800, addQ: 0.25 },
 ]
 
 const DIM_PRESETS = [
@@ -183,10 +194,19 @@ const bWidth = ref(18)
 const bHeight = ref(6)
 const bRoof = ref(ROOFS[1])
 const bCrane = ref(CRANES[0])
-const bSnow = ref(SNOW[2])
+const bSnow = ref(SNOW[3])
 const bStep = ref(COL_STEPS[0])
 const bMezzanine = ref(false)
 const bStairs = ref(false)
+const bFound = ref(FOUNDATIONS[0])
+const bRegion = ref(DEFAULT_REGION)
+
+watch(bRegion, (code) => {
+  const r = SNOW_REGIONS[code]
+  if (!r) return
+  const s = SNOW.find((x) => x.id === r.snow)
+  if (s) bSnow.value = s
+})
 
 function setMode(next) {
   mode.value = next
@@ -248,6 +268,7 @@ const buildingMass = computed(() => {
   const area = buildingArea.value
   let kg = buildingVolume.value * buildingQ.value
   kg += bCrane.value.addQ * area
+  kg += bFound.value.addQ * area
   if (bMezzanine.value) kg += 16 * area
   if (bStairs.value) kg *= 1.06
   return roundMass(kg / 1000)
@@ -301,8 +322,9 @@ const calc = computed(() => {
   const montage = activeNeedMontage.value ? RATES.montagePerTonne * m : 0
   const discount = (work + kmd) * discountShare.value
   const deliveryCost = activeDelivery.value.cost
+  const foundation = mode.value === 'object' ? bFound.value.perSqm * buildingArea.value : 0
 
-  const total = work + kmd + urgentFee + material + coat + montage - discount + deliveryCost
+  const total = work + kmd + urgentFee + material + coat + montage - discount + deliveryCost + foundation
   const vat = total * RATES.vatShare
   const area = mode.value === 'object' ? buildingArea.value : 0
   const vol = mode.value === 'object' ? buildingVolume.value : 0
@@ -315,6 +337,7 @@ const calc = computed(() => {
     montage,
     discount,
     deliveryCost,
+    foundation,
     total,
     vat,
     low: roundK(total * RATES.rangeLow),
@@ -381,8 +404,10 @@ const summary = computed(() => {
     lines.push(`• Объём: ${fmt(buildingVolume.value)} м³`)
     lines.push(`• Кровля: ${bRoof.value.label.toLowerCase()}`)
     lines.push(`• Кран: ${bCrane.value.label.toLowerCase()}`)
-    lines.push(`• Снеговой район: ${bSnow.value.id}`)
+    lines.push(`• Регион: ${SNOW_REGIONS[bRegion.value]?.title || bRegion.value}`)
+    lines.push(`• Снеговой район: ${bSnow.value.id} (${bSnow.value.note})`)
     lines.push(`• Шаг колонн: ${bStep.value.label}`)
+    lines.push(`• Фундамент: ${bFound.value.label.toLowerCase()} (${bFound.value.note})`)
     const extra = []
     if (bMezzanine.value) extra.push('антресоль')
     if (bStairs.value) extra.push('лестницы и площадки')
@@ -390,8 +415,8 @@ const summary = computed(() => {
     lines.push(
       `• Ориентир массы каркаса: ${buildingMass.value} т (${fmtQ(buildingQ.value)} кг/м³)`,
     )
-    lines.push('• В ориентир заложено: наш металл и грунт ГФ-021')
-    lines.push('• КМД, монтаж, покрытие и доставка — уточним в точном расчёте')
+    lines.push('• В ориентир заложено: наш металл, грунт ГФ-021 и фундамент (ориентир ЖБ)')
+    lines.push('• КМД, монтаж, сэндвич и доставка — уточним в точном расчёте')
   } else {
     lines.push(`• Тип: ${type.value.label}`)
     lines.push(`• Масса: ${mass.value} т`)
@@ -720,7 +745,7 @@ const breakdownOpen = ref(false)
               </div>
               <p class="mass-help dim-help">
                 Цена считается по объёму здания (длина × ширина × высота): чем выше каркас, тем больше колонн, связей и металла.
-                В ориентир заложены металл и грунт. Сэндвич, фундамент, КМД, монтаж и доставка — в точном расчёте.
+                В ориентир заложены металл, грунт и фундамент. Сэндвич, КМД, монтаж и доставка — в точном расчёте.
               </p>
               <transition name="hint-slide" mode="out-in">
                 <p v-if="nextTier" class="mass-tip" :key="'onext' + nextTier.pct">
@@ -765,18 +790,8 @@ const breakdownOpen = ref(false)
               </div>
 
               <p class="extra-label">Снеговой район</p>
-              <div class="coat-row">
-                <button
-                  v-for="s in SNOW"
-                  :key="s.id"
-                  class="coat-btn"
-                  :class="{ active: bSnow.id === s.id }"
-                  @click="bSnow = s"
-                >
-                  <span class="coat-label">Район {{ s.label }}</span>
-                  <span class="coat-note">{{ s.note }}</span>
-                </button>
-              </div>
+              <SnowRegionPicker v-model="bRegion" :snow-note="bSnow.note" />
+              <p class="mass-help dim-help">Район берётся по центру выбранного субъекта — СП 20.13330. На конкретной площадке может быть соседний район.</p>
 
               <p class="extra-label">Шаг колонн</p>
               <div class="coat-row coat-row--3">
@@ -791,6 +806,21 @@ const breakdownOpen = ref(false)
                   <span class="coat-note">{{ s.note }}</span>
                 </button>
               </div>
+
+              <p class="extra-label">Фундамент</p>
+              <div class="coat-row">
+                <button
+                  v-for="f in FOUNDATIONS"
+                  :key="f.id"
+                  class="coat-btn"
+                  :class="{ active: bFound.id === f.id }"
+                  @click="bFound = f"
+                >
+                  <span class="coat-label">{{ f.label }}</span>
+                  <span class="coat-note">{{ f.note }}</span>
+                </button>
+              </div>
+              <p class="mass-help dim-help">Ориентир по железобетону на площадь здания. Точный тип и объём бетона считает конструктор по грунтам площадки.</p>
 
               <div class="opt-list extra-opts">
                 <label class="opt" :class="{ active: bMezzanine }">
@@ -918,6 +948,7 @@ const breakdownOpen = ref(false)
                     :col-step="bStep.id"
                     :mezzanine="bMezzanine"
                     :stairs="bStairs"
+                    :foundation="bFound.id"
                   />
                 </div>
                 <div class="panel-stats">
@@ -927,7 +958,7 @@ const breakdownOpen = ref(false)
                 </div>
               </div>
 
-              <p class="panel-tag">{{ mode === 'object' ? 'Ориентир стоимости каркаса' : 'Ориентир стоимости' }}</p>
+              <p class="panel-tag">{{ mode === 'object' ? 'Ориентир каркаса и фундамента' : 'Ориентир стоимости' }}</p>
 
               <p class="panel-price">
                 <span class="pp-num">{{ fmt(shownLow) }}</span>
@@ -936,7 +967,7 @@ const breakdownOpen = ref(false)
                 <span class="pp-rub">₽</span>
               </p>
               <p class="panel-per" v-if="mode === 'object'">
-                ≈ {{ fmt(calc.perCub) }} ₽/м³ · каркас с металлом и грунтом
+                ≈ {{ fmt(calc.perCub) }} ₽/м³ · каркас, грунт и фундамент
               </p>
               <p class="panel-per" v-else>
                 ≈ {{ fmt(calc.perTonne) }} ₽/т · с учётом всех выбранных опций
@@ -967,6 +998,7 @@ const breakdownOpen = ref(false)
                   <p v-if="calc.montage" class="bd-row"><span>Монтаж с окраской</span><b>{{ fmt(calc.montage) }} ₽</b></p>
                   <p v-if="calc.urgentFee" class="bd-row"><span>Срочность</span><b>{{ fmt(calc.urgentFee) }} ₽</b></p>
                   <p v-if="calc.discount" class="bd-row bd-row--ok"><span>Скидка за объём −{{ discountShare * 100 }}%</span><b>−{{ fmt(calc.discount) }} ₽</b></p>
+                  <p v-if="calc.foundation" class="bd-row"><span>Фундамент · {{ bFound.label.toLowerCase() }}</span><b>{{ fmt(calc.foundation) }} ₽</b></p>
                   <p v-if="mode === 'details'" class="bd-row"><span>Доставка</span><b>{{ delivery.external ? 'по тарифу ТК' : calc.deliveryCost ? fmt(calc.deliveryCost) + ' ₽' : 'бесплатно' }}</b></p>
                   <p class="bd-row bd-row--vat"><span>В том числе НДС 20%</span><b>{{ fmt(calc.vat) }} ₽</b></p>
                 </div>
@@ -976,7 +1008,7 @@ const breakdownOpen = ref(false)
               <p class="panel-note">
                 Это ориентир, а не оферта: точная цена зависит от чертежа КМ и текущей цены металла.
                 <template v-if="mode === 'object'">
-                  Заложены наш металл и грунт. Без сэндвича, фундамента, КМД, монтажа и доставки.
+                  Заложены наш металл, грунт и фундамент (ориентир ЖБ). Без сэндвича, КМД, монтажа и доставки.
                 </template>
                 Технолог посчитает бесплатно — за 1 рабочий день.
               </p>
@@ -1013,6 +1045,9 @@ const breakdownOpen = ref(false)
               <li><span>Каркас</span>{{ buildingMass }} т · {{ fmtQ(buildingQ) }} кг/м³</li>
               <li><span>Кровля</span>{{ bRoof.label }}</li>
               <li><span>Кран</span>{{ bCrane.label }}</li>
+              <li><span>Фундамент</span>{{ bFound.label }}</li>
+              <li><span>Регион</span>{{ SNOW_REGIONS[bRegion]?.title }}</li>
+              <li><span>Снег</span>район {{ bSnow.id }} · {{ bSnow.note }}</li>
               <li v-if="bMezzanine || bStairs">
                 <span>В каркасе</span>{{ [bMezzanine && 'антресоль', bStairs && 'лестницы'].filter(Boolean).join(', ') }}
               </li>

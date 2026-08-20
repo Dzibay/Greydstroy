@@ -10,6 +10,7 @@ const props = defineProps({
   colStep: { type: Number, default: 6 },
   mezzanine: { type: Boolean, default: false },
   stairs: { type: Boolean, default: false },
+  foundation: { type: String, default: 'pads' },
   compact: { type: Boolean, default: false },
 })
 
@@ -17,7 +18,8 @@ function raw(x, y, z) {
   return { x: (x - y) * 0.86602540378, y: (x + y) * 0.5 - z }
 }
 
-function fitProject(L, W, H, rise, compact) {
+function fitProject(L, W, H, rise, compact, foundation) {
+  const depth = foundation === 'piles' ? H * 0.48 : H * 0.16
   const samples = [
     raw(0, 0, 0),
     raw(L, 0, 0),
@@ -33,6 +35,8 @@ function fitProject(L, W, H, rise, compact) {
     raw(L, 0, H + rise),
     raw(0, W, H + rise),
     raw(L, W, H + rise),
+    raw(-1, -1, -depth),
+    raw(L + 1, W + 1, -depth),
   ]
   let minX = Infinity
   let maxX = -Infinity
@@ -63,6 +67,37 @@ function pts(list) {
   return list.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
 }
 
+function isoBox(P, x0, y0, x1, y1, z0, z1) {
+  return {
+    top: pts([P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)]),
+    front: pts([P(x0, y0, z0), P(x1, y0, z0), P(x1, y0, z1), P(x0, y0, z1)]),
+    side: pts([P(x1, y0, z0), P(x1, y1, z0), P(x1, y1, z1), P(x1, y0, z1)]),
+  }
+}
+
+function isoHex(P, cx, cy, r, z0, z1) {
+  const v = []
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI / 6 + i * (Math.PI / 3)
+    v.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) })
+  }
+  const faces = []
+  for (let i = 0; i < 6; i++) {
+    const a = v[i]
+    const b = v[(i + 1) % 6]
+    faces.push({
+      poly: pts([P(a.x, a.y, z0), P(b.x, b.y, z0), P(b.x, b.y, z1), P(a.x, a.y, z1)]),
+      _d: a.x + b.x + a.y + b.y,
+    })
+  }
+  faces.sort((a, b) => b._d - a._d)
+  return {
+    faces: faces.slice(-3),
+    top: pts(v.map((p) => P(p.x, p.y, z1))),
+    _d: cx + cy,
+  }
+}
+
 const geo = computed(() => {
   const L = props.length
   const W = props.width
@@ -71,7 +106,7 @@ const geo = computed(() => {
     props.roof === 'arch'
       ? Math.min(W * 0.22, H * 0.45)
       : Math.min(W * 0.16, H * 0.32)
-  const P = fitProject(L, W, H, rise, props.compact)
+  const P = fitProject(L, W, H, rise, props.compact, props.foundation)
 
   const ground = [P(0, 0, 0), P(L, 0, 0), P(L, W, 0), P(0, W, 0)]
 
@@ -189,6 +224,62 @@ const geo = computed(() => {
     }
   }
 
+  const foundBoxes = []
+  const foundPiles = []
+  const fz = Math.min(H * 0.13, Math.max(L, W) * 0.03, 1.35)
+  const kind = props.foundation || 'pads'
+  const addBox = (x0, y0, x1, y1, z0, z1) => {
+    foundBoxes.push({
+      ...isoBox(P, x0, y0, x1, y1, z0, z1),
+      _d: x0 + x1 + y0 + y1,
+    })
+  }
+
+  if (kind === 'pads') {
+    const s = Math.min(2.8, Math.max(1.45, Math.min(L, W) * 0.065))
+    const cup = s * 0.52
+    for (const x of xs) {
+      for (const y of yRows) {
+        addBox(x - s / 2, y - s / 2, x + s / 2, y + s / 2, -fz, -fz * 0.22)
+        addBox(x - cup / 2, y - cup / 2, x + cup / 2, y + cup / 2, -fz * 0.22, 0)
+      }
+    }
+  } else if (kind === 'strip') {
+    const t = Math.min(2.1, Math.max(0.95, Math.min(L, W) * 0.05))
+    addBox(-t, W - t, L + t, W + t, -fz, 0)
+    addBox(L - t, t, L + t, W - t, -fz, 0)
+    addBox(-t, t, t, W - t, -fz, 0)
+    addBox(-t, -t, L + t, t, -fz, 0)
+  } else if (kind === 'piles') {
+    const r = Math.min(0.52, Math.max(0.34, Math.min(L, W) * 0.018))
+    const pz = -Math.min(H * 0.4, Math.max(L, W) * 0.08, 2.6)
+    const pxs = []
+    for (let i = 0; i < xs.length; i++) {
+      pxs.push(xs[i])
+      if (i < xs.length - 1) pxs.push((xs[i] + xs[i + 1]) / 2)
+    }
+    const pys = yRows.length > 2 ? yRows : [0, W / 2, W]
+    for (const x of pxs) {
+      for (const y of pys) {
+        foundPiles.push(isoHex(P, x, y, r, pz, 0))
+      }
+    }
+    foundPiles.sort((a, b) => b._d - a._d)
+    const bw = Math.min(0.7, Math.max(0.38, Math.min(L, W) * 0.02))
+    const rz0 = -fz * 0.12
+    const rz1 = fz * 0.08
+    for (const y of pys) {
+      addBox(-bw, y - bw, L + bw, y + bw, rz0, rz1)
+    }
+    for (const x of pxs) {
+      addBox(x - bw, bw, x + bw, W - bw, rz0, rz1)
+    }
+  } else if (kind === 'slab') {
+    const m = Math.min(1.4, Math.max(0.55, Math.min(L, W) * 0.035))
+    addBox(-m, -m, L + m, W + m, -fz * 0.72, 0)
+  }
+  foundBoxes.sort((a, b) => b._d - a._d)
+
   const midL = P(L / 2, 0, 0)
   const midW = P(L, W / 2, 0)
   const midH = P(0, 0, H / 2)
@@ -203,6 +294,8 @@ const geo = computed(() => {
     crane,
     mezz: mezz ? pts(mezz) : null,
     stairs,
+    foundBoxes,
+    foundPiles,
     labels: {
       L: { ...midL, text: `${fmtM(L)} м` },
       W: { ...midW, text: `${fmtM(W)} м` },
@@ -231,7 +324,33 @@ function fmtM(n) {
       </linearGradient>
     </defs>
 
-    <polygon :points="geo.ground" fill="url(#gnd)" stroke="rgba(255,90,31,0.35)" stroke-width="1.2" />
+    <polygon
+      v-if="foundation !== 'slab'"
+      :points="geo.ground"
+      fill="url(#gnd)"
+      stroke="rgba(255,90,31,0.35)"
+      stroke-width="1.2"
+    />
+
+    <g v-if="geo.foundPiles.length" class="found-piles">
+      <g v-for="(pile, i) in geo.foundPiles" :key="'pl' + i">
+        <polygon
+          v-for="(f, j) in pile.faces"
+          :key="j"
+          :points="f.poly"
+          :class="j % 2 ? 'fn-pile-a' : 'fn-pile-b'"
+        />
+        <polygon :points="pile.top" class="fn-pile-top" />
+      </g>
+    </g>
+
+    <g v-if="geo.foundBoxes.length" class="found">
+      <g v-for="(box, i) in geo.foundBoxes" :key="'fn' + i">
+        <polygon :points="box.side" class="fn-side" />
+        <polygon :points="box.front" class="fn-front" />
+        <polygon :points="box.top" class="fn-top" />
+      </g>
+    </g>
 
     <polygon
       v-if="geo.mezz"
@@ -375,4 +494,10 @@ function fmtM(n) {
 .sketch--compact .lbl { font-size: 12.5px; }
 .lbl-w { fill: var(--w-soft); }
 .lbl-h { fill: var(--w-soft); }
+.fn-side { fill: rgba(138, 124, 104, 0.72); stroke: #8a7d6c; stroke-width: 0.7; }
+.fn-front { fill: rgba(168, 154, 132, 0.78); stroke: #8a7d6c; stroke-width: 0.7; }
+.fn-top { fill: rgba(210, 198, 176, 0.82); stroke: #b0a390; stroke-width: 0.8; }
+.fn-pile-a { fill: rgba(92, 86, 78, 0.88); stroke: #6e675e; stroke-width: 0.45; }
+.fn-pile-b { fill: rgba(122, 112, 98, 0.9); stroke: #6e675e; stroke-width: 0.45; }
+.fn-pile-top { fill: rgba(186, 176, 158, 0.92); stroke: #8a8174; stroke-width: 0.55; }
 </style>
