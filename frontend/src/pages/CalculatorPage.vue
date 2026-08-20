@@ -436,90 +436,142 @@ const summary = computed(() => {
 
 const breakdownOpen = ref(false)
 
-/* мобильная схема: угол → слот в панели */
+/* мобильная схема: едет к слоту через transform, в конце телепорт */
 const SKETCH_MQ = 900
 const sketchSlot = ref(null)
+const sketchFly = ref(null)
 const sketchMobile = ref(
   typeof window !== 'undefined' && window.matchMedia(`(max-width: ${SKETCH_MQ}px)`).matches,
 )
-const flyBox = ref(null)
-const sketchDocked = ref(false)
-const sketchReady = ref(false)
+const sketchPinned = ref(false)
 
-let flyRaf = 0
-function scheduleSketchFly() {
-  if (flyRaf) return
-  flyRaf = requestAnimationFrame(() => {
-    flyRaf = 0
-    updateSketchFly()
-  })
+let pinRaf = 0
+let flyRest = null
+let flyMaxT = 0
+let flyDocked = false
+let flyAwaitDown = false
+let flySlotTop = 0
+
+function resetFlyTrack() {
+  flyRest = null
+  flyMaxT = 0
+  flyDocked = false
+  flyAwaitDown = false
 }
 
-function updateSketchFly() {
+function syncSketchPin() {
   const mobile = window.matchMedia(`(max-width: ${SKETCH_MQ}px)`).matches
-  sketchMobile.value = mobile
+  if (sketchMobile.value !== mobile) sketchMobile.value = mobile
   if (!mobile || mode.value !== 'object') {
-    flyBox.value = null
-    sketchDocked.value = false
-    sketchReady.value = false
+    resetFlyTrack()
+    if (sketchPinned.value) sketchPinned.value = false
     return
   }
+
   const slot = sketchSlot.value
-  const calcSec = document.getElementById('calculator')
-  if (!slot || !calcSec) return
+  const calc = document.getElementById('calculator')
+  if (!slot || !calc) return
 
+  const calcR = calc.getBoundingClientRect()
   const sr = slot.getBoundingClientRect()
-  const calcTop = calcSec.getBoundingClientRect().top
-  const vw = window.innerWidth
-  const header = 76
-  const pad = 10
-  const floatW = Math.min(252, Math.max(200, vw * 0.50))
-  const floatH = floatW * (210 / 400) + 8
-  const floatTop = header + 10
-  const floatLeft = vw - floatW - pad
+  const inCalc = calcR.top < window.innerHeight - 24 && calcR.bottom > 96
 
-  const enter = Math.min(1, Math.max(0, (header + 36 - calcTop) / 64))
-  const range = Math.max(sr.height * 1.8, 260)
-  let t = 1 - Math.min(1, Math.max(0, (sr.top - floatTop) / range))
-  t = t * t * (3 - 2 * t)
-
-  const left = floatLeft + (sr.left - floatLeft) * t
-  const top = floatTop + (sr.top - floatTop) * t
-  const width = floatW + (sr.width - floatW) * t
-  const height = floatH + (sr.height - floatH) * t
-  const lift = 1 - t
-
-  flyBox.value = {
-    left: `${left}px`,
-    top: `${top}px`,
-    width: `${width}px`,
-    height: `${height}px`,
-    opacity: String(enter),
-    boxShadow: `0 ${10 * lift}px ${26 * lift}px rgba(0, 0, 0, ${0.45 * lift})`,
+  if (!inCalc) {
+    resetFlyTrack()
+    if (sketchPinned.value) sketchPinned.value = false
+    return
   }
-  sketchDocked.value = t > 0.97
-  sketchReady.value = enter > 0.02
+
+  if (flyDocked) {
+    if (sr.top > window.innerHeight - 12) {
+      flyDocked = false
+      flyRest = null
+      flyMaxT = 0
+      flyAwaitDown = true
+      flySlotTop = sr.top
+      sketchPinned.value = true
+    }
+    return
+  }
+
+  if (!sketchPinned.value) {
+    sketchPinned.value = true
+    return
+  }
+
+  const el = sketchFly.value
+  if (!el) return
+
+  if (flyAwaitDown) {
+    if (sr.top < flySlotTop - 4) flyAwaitDown = false
+    else {
+      flySlotTop = sr.top
+      el.style.transform = 'none'
+      return
+    }
+  }
+  flySlotTop = sr.top
+
+  if (!flyRest) {
+    el.style.transform = 'none'
+    const r = el.getBoundingClientRect()
+    flyRest = { left: r.left, top: r.top, width: r.width }
+  }
+
+  const range = Math.max(240, window.innerHeight * 0.42)
+  let t = 1 - Math.min(1, Math.max(0, (sr.top - 118) / range))
+  t = t * t * (3 - 2 * t)
+  if (t < flyMaxT) t = flyMaxT
+  else flyMaxT = t
+
+  if (t >= 0.92 || sr.top <= 118) {
+    flyDocked = true
+    flyAwaitDown = false
+    el.style.transform = 'none'
+    sketchPinned.value = false
+    return
+  }
+
+  if (t <= 0) {
+    el.style.transform = 'none'
+    return
+  }
+
+  const dx = sr.left - flyRest.left
+  const dy = sr.top - flyRest.top
+  const sc = sr.width / Math.max(flyRest.width, 1)
+  el.style.transform = `translate3d(${dx * t}px, ${dy * t}px, 0) scale(${1 + (sc - 1) * t})`
 }
 
-let sketchRo = null
+function scheduleSketchPin() {
+  if (pinRaf) return
+  pinRaf = requestAnimationFrame(() => {
+    pinRaf = 0
+    syncSketchPin()
+  })
+}
+
+function onSketchResize() {
+  flyRest = null
+  scheduleSketchPin()
+}
+
 onMounted(() => {
-  scheduleSketchFly()
-  window.addEventListener('scroll', scheduleSketchFly, { passive: true })
-  window.addEventListener('resize', scheduleSketchFly)
-  sketchRo = new ResizeObserver(scheduleSketchFly)
-  if (sketchSlot.value) sketchRo.observe(sketchSlot.value)
+  scheduleSketchPin()
+  window.addEventListener('scroll', scheduleSketchPin, { passive: true })
+  window.addEventListener('resize', onSketchResize)
 })
 onUnmounted(() => {
-  window.removeEventListener('scroll', scheduleSketchFly)
-  window.removeEventListener('resize', scheduleSketchFly)
-  sketchRo?.disconnect()
-  if (flyRaf) cancelAnimationFrame(flyRaf)
+  window.removeEventListener('scroll', scheduleSketchPin)
+  window.removeEventListener('resize', onSketchResize)
+  if (pinRaf) cancelAnimationFrame(pinRaf)
 })
-watch([mode, breakdownOpen], () => {
-  nextTick(() => {
-    if (sketchRo && sketchSlot.value) sketchRo.observe(sketchSlot.value)
-    scheduleSketchFly()
-  })
+watch(mode, () => {
+  resetFlyTrack()
+  nextTick(scheduleSketchPin)
+})
+watch(sketchPinned, (on) => {
+  if (on) nextTick(scheduleSketchPin)
 })
 
 /* без отдельной навигации шагов — правый блок всегда в поле зрения */
@@ -1026,10 +1078,9 @@ watch([mode, breakdownOpen], () => {
                 <div
                   ref="sketchSlot"
                   class="panel-sketch"
-                  :class="{ 'panel-sketch--ghost': sketchMobile }"
+                  :class="{ 'panel-sketch--away': sketchMobile && sketchPinned }"
                 >
                   <BuildingPreview
-                    v-if="!sketchMobile"
                     compact
                     :length="bLength"
                     :width="bWidth"
@@ -1168,10 +1219,9 @@ watch([mode, breakdownOpen], () => {
 
     <Teleport to="body">
       <div
-        v-if="mode === 'object' && sketchMobile && sketchReady && flyBox"
+        v-if="mode === 'object' && sketchMobile && sketchPinned"
+        ref="sketchFly"
         class="sketch-fly"
-        :class="{ 'sketch-fly--docked': sketchDocked }"
-        :style="flyBox"
         aria-hidden="true"
       >
         <BuildingPreview
@@ -1646,15 +1696,14 @@ watch([mode, breakdownOpen], () => {
   padding: 4px 2px 0;
   margin-bottom: 10px;
 }
-.panel-sketch--ghost {
-  aspect-ratio: 400 / 218;
-  min-height: 118px;
-  pointer-events: none;
-}
+.panel-sketch--away :deep(.sketch) { visibility: hidden; }
 
 .sketch-fly {
   position: fixed;
+  top: 86px;
+  right: 10px;
   z-index: 45;
+  width: min(252px, 58vw);
   margin: 0;
   padding: 4px 2px 0;
   overflow: hidden;
@@ -1662,18 +1711,14 @@ watch([mode, breakdownOpen], () => {
   background: rgba(0, 0, 0, 0.42);
   border: 1px solid rgba(255, 90, 31, 0.4);
   border-radius: var(--r-sm);
-  backdrop-filter: blur(10px);
+  transform-origin: top left;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 .sketch-fly :deep(.sketch) {
   display: block;
   width: 100%;
-  height: 100%;
-}
-.sketch-fly--docked {
-  z-index: 12;
-  background: rgba(0, 0, 0, 0.28);
-  border-color: var(--line-d);
-  backdrop-filter: none;
+  height: auto;
 }
 .panel-stats {
   display: grid;

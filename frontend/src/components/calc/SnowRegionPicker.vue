@@ -221,10 +221,12 @@ onUnmounted(() => {
 .snow-modal {
   position: fixed;
   inset: 0;
-  z-index: 80;
-  display: grid;
-  place-items: center;
-  padding: 18px;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
 }
 .snow-scrim {
   position: absolute;
@@ -236,14 +238,19 @@ onUnmounted(() => {
 .snow-card {
   position: relative;
   z-index: 1;
-  width: min(980px, 100%);
-  max-height: min(92vh, 820px);
+  width: min(920px, 100%);
+  height: min(620px, calc(100vh - 48px));
+  height: min(620px, calc(100svh - 48px));
+  max-height: calc(100vh - 48px);
+  max-height: calc(100svh - 48px);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   background: var(--bg1);
   border: 1px solid rgba(255, 90, 31, 0.35);
   border-radius: var(--r);
-  padding: 22px 22px 16px;
+  padding: 20px 20px 14px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
 }
 .snow-card-h {
@@ -252,6 +259,7 @@ onUnmounted(() => {
   gap: 16px;
   align-items: flex-start;
   margin-bottom: 14px;
+  flex-shrink: 0;
 }
 .snow-card-tag {
   font-family: var(--font-m);
@@ -278,6 +286,7 @@ onUnmounted(() => {
 }
 .snow-x:hover { color: var(--white); border-color: var(--acc); }
 
+.snow-search { flex-shrink: 0; }
 .snow-search input {
   width: 100%;
   background: rgba(255, 255, 255, 0.05);
@@ -295,9 +304,12 @@ onUnmounted(() => {
   grid-template-columns: 1.35fr 0.65fr;
   gap: 16px;
   min-height: 0;
-  flex: 1;
+  flex: 1 1 0;
+  overflow: hidden;
 }
 .snow-map {
+  min-height: 0;
+  height: 100%;
   background: #0d1116;
   border: 1px solid var(--line-d);
   border-radius: var(--r-sm);
@@ -307,7 +319,7 @@ onUnmounted(() => {
 .snow-map :deep(svg) {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 .snow-map :deep(.russia-region) {
   fill: #1b232c;
@@ -360,8 +372,9 @@ onUnmounted(() => {
 }
 .snow-list {
   overflow: auto;
+  overscroll-behavior: contain;
   flex: 1;
-  max-height: 360px;
+  min-height: 0;
   border: 1px solid var(--line-d);
   border-radius: var(--r-sm);
 }
@@ -395,6 +408,7 @@ onUnmounted(() => {
   margin-top: 12px;
   font-size: 12px;
   color: var(--w-faint);
+  flex-shrink: 0;
 }
 .snow-legend span {
   display: inline-flex;
@@ -419,8 +433,30 @@ onUnmounted(() => {
 .snow-legend p { flex: 1 1 220px; margin: 0; }
 
 @media (max-width: 800px) {
-  .snow-body { grid-template-columns: 1fr; }
-  .snow-list { max-height: 180px; }
-  .snow-card { padding: 16px 14px 12px; }
+  .snow-modal {
+    padding: 12px;
+    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+  }
+  .snow-card {
+    width: 100%;
+    height: min(480px, calc(100vh - 24px));
+    height: min(480px, calc(100svh - 24px));
+    max-height: calc(100vh - 24px);
+    max-height: calc(100svh - 24px);
+    padding: 12px 12px 10px;
+  }
+  .snow-card-h { margin-bottom: 8px; }
+  .snow-card-title { font-size: 16px; }
+  .snow-search input { padding: 10px 12px; margin-bottom: 8px; }
+  .snow-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: 132px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .snow-map { height: 132px; }
+  .snow-hint { margin-bottom: 4px; }
+  .snow-hover { margin-bottom: 6px; }
+  .snow-legend { margin-top: 8px; gap: 6px 10px; }
+  .snow-legend p { flex-basis: 100%; font-size: 11px; }
 }
 </style>
