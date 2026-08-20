@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import LeadForm from '../components/ui/LeadForm.vue'
+import BuildingPreview from '../components/calc/BuildingPreview.vue'
 
 /* =====================================================
    Тарифы — «примерные параметры», правятся в одном месте
@@ -79,7 +81,93 @@ const DISCOUNT_TIERS = [
   { min: 50, share: 0.15 },
 ]
 
+/* =====================================================
+   Объект целиком — металлоёмкость каркаса по габаритам
+   q, кг/м²: база при пролёте 18 м, высоте 6 м, снег IV
+   ===================================================== */
+const BUILDING_KINDS = [
+  {
+    id: 'canopy',
+    label: 'Навес',
+    hint: 'Открытая зона, авто, входная группа',
+    q: 22,
+    icon: 'canopy',
+  },
+  {
+    id: 'hangar',
+    label: 'Холодный ангар',
+    hint: 'Склад без утепления, рамный каркас',
+    q: 28,
+    icon: 'hangar',
+  },
+  {
+    id: 'warm',
+    label: 'Тёплый склад',
+    hint: 'Каркас под сэндвич-панели',
+    q: 36,
+    icon: 'warm',
+  },
+  {
+    id: 'shop',
+    label: 'Цех / производство',
+    hint: 'Выше нагрузки, возможны краны',
+    q: 42,
+    icon: 'shop',
+  },
+  {
+    id: 'frame',
+    label: 'Каркас здания',
+    hint: 'Рамный каркас по вашим габаритам',
+    q: 38,
+    icon: 'frame',
+  },
+]
+
+const ROOFS = [
+  { id: 'single', label: 'Односкатная', k: 0.93 },
+  { id: 'gable', label: 'Двускатная', k: 1 },
+  { id: 'arch', label: 'Арочная', k: 0.88 },
+]
+
+const CRANES = [
+  { id: 'none', label: 'Без крана', note: 'только каркас', addQ: 0 },
+  { id: 't5', label: 'Кран-балка 5 т', note: '+ подкрановые пути', addQ: 12 },
+  { id: 't10', label: 'Мостовой 10 т', note: 'усиление колонн', addQ: 22 },
+  { id: 't20', label: 'Мостовой 20 т', note: 'тяжёлый режим', addQ: 35 },
+]
+
+const SNOW = [
+  { id: 'II', label: 'II', note: '120 кг/м²', k: 0.88 },
+  { id: 'III', label: 'III', note: '180 кг/м²', k: 0.94 },
+  { id: 'IV', label: 'IV', note: 'Нижегородская обл.', k: 1 },
+  { id: 'V', label: 'V', note: '320 кг/м²', k: 1.12 },
+]
+
+const COL_STEPS = [
+  { id: 6, label: '6 м', k: 1, note: 'типовой' },
+  { id: 9, label: '9 м', k: 1.06, note: 'реже колонны' },
+  { id: 12, label: '12 м', k: 1.12, note: 'тяжёлые ригели' },
+]
+
+const DIM_PRESETS = [
+  { l: 18, w: 12, h: 4.5, label: '18×12×4,5' },
+  { l: 36, w: 18, h: 6, label: '36×18×6' },
+  { l: 48, w: 24, h: 8, label: '48×24×8' },
+  { l: 60, w: 30, h: 10, label: '60×30×10' },
+]
+
+const DIM = {
+  l: { min: 8, max: 120 },
+  w: { min: 6, max: 48 },
+  h: { min: 3, max: 18 },
+}
+
+const FRAME_TYPE = TYPES.find((t) => t.id === 'frame')
+
 /* ---------- состояние ---------- */
+const route = useRoute()
+
+const mode = ref(route.query.tab === 'object' ? 'object' : 'details')
 const type = ref(TYPES[2])
 const mass = ref(3)
 const ownMetal = ref(false) // false = наш металл, true = давальческий
@@ -88,6 +176,21 @@ const needKmd = ref(false)
 const needMontage = ref(false)
 const urgent = ref(false)
 const delivery = ref(DELIVERY[0])
+
+const bKind = ref(BUILDING_KINDS[1])
+const bLength = ref(36)
+const bWidth = ref(18)
+const bHeight = ref(6)
+const bRoof = ref(ROOFS[1])
+const bCrane = ref(CRANES[0])
+const bSnow = ref(SNOW[2])
+const bStep = ref(COL_STEPS[0])
+const bMezzanine = ref(false)
+const bStairs = ref(false)
+
+function setMode(next) {
+  mode.value = next
+}
 
 /* ---------- масса: лог-слайдер + пресеты ---------- */
 const MASS_MIN = 0.1
@@ -108,17 +211,77 @@ function onMassInput(e) {
   if (!Number.isNaN(v)) mass.value = Math.min(Math.max(v, MASS_MIN), MASS_MAX)
 }
 
+function clamp(n, a, b) {
+  return Math.min(b, Math.max(a, n))
+}
+
+function onDimInput(key, e) {
+  const v = parseFloat(String(e.target.value).replace(',', '.'))
+  if (Number.isNaN(v)) return
+  if (key === 'l') bLength.value = clamp(v, DIM.l.min, DIM.l.max)
+  if (key === 'w') bWidth.value = clamp(v, DIM.w.min, DIM.w.max)
+  if (key === 'h') bHeight.value = clamp(v, DIM.h.min, DIM.h.max)
+}
+
+function applyPreset(p) {
+  bLength.value = p.l
+  bWidth.value = p.w
+  bHeight.value = p.h
+}
+
+const dimPresetActive = computed(() =>
+  DIM_PRESETS.find(
+    (p) => p.l === bLength.value && p.w === bWidth.value && p.h === bHeight.value,
+  ),
+)
+
+/* ---------- объект: металлоёмкость ---------- */
+const buildingQ = computed(() => {
+  const spanK = 1 + 0.015 * (bWidth.value - 18)
+  const heightK = 1 + 0.035 * (bHeight.value - 6)
+  let q = bKind.value.q * spanK * heightK * bSnow.value.k * bRoof.value.k * bStep.value.k
+  q += bCrane.value.addQ
+  if (bMezzanine.value) q += 16
+  if (bStairs.value) q *= 1.06
+  return Math.min(110, Math.max(12, q))
+})
+
+const buildingArea = computed(() => bLength.value * bWidth.value)
+const buildingVolume = computed(() => buildingArea.value * bHeight.value)
+const buildingMass = computed(() => roundMass((buildingArea.value * buildingQ.value) / 1000))
+
+const activeType = computed(() => (mode.value === 'object' ? FRAME_TYPE : type.value))
+const activeMass = computed(() => (mode.value === 'object' ? buildingMass.value : mass.value))
+
+const fmtM = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ','))
+const fmtQ = (n) => (n < 20 ? n.toFixed(1) : Math.round(n).toString()).replace('.', ',')
+
+const stepNo = computed(() =>
+  mode.value === 'object'
+    ? { kind: '01', dim: '02', extra: '03' }
+    : { type: '01', mass: '02', metal: '03', coat: '04', opt: '05', del: '06' },
+)
+
+const objectCoating = COATINGS[1] // грунт — типичный ориентир для каркаса
+
+const activeOwnMetal = computed(() => (mode.value === 'object' ? false : ownMetal.value))
+const activeCoating = computed(() => (mode.value === 'object' ? objectCoating : coating.value))
+const activeNeedKmd = computed(() => (mode.value === 'object' ? false : needKmd.value))
+const activeNeedMontage = computed(() => (mode.value === 'object' ? false : needMontage.value))
+const activeUrgent = computed(() => (mode.value === 'object' ? false : urgent.value))
+const activeDelivery = computed(() => (mode.value === 'object' ? DELIVERY[0] : delivery.value))
+
 /* ---------- скидка за объём ---------- */
 const discountShare = computed(() => {
   let share = 0
-  for (const t of DISCOUNT_TIERS) if (mass.value >= t.min) share = t.share
+  for (const t of DISCOUNT_TIERS) if (activeMass.value >= t.min) share = t.share
   return share
 })
 
 const nextTier = computed(() => {
-  const t = DISCOUNT_TIERS.find((t) => mass.value < t.min)
+  const t = DISCOUNT_TIERS.find((t) => activeMass.value < t.min)
   if (!t) return null
-  return { need: roundMass(t.min - mass.value), pct: t.share * 100 }
+  return { need: roundMass(t.min - activeMass.value), pct: t.share * 100 }
 })
 
 /* ---------- смета ---------- */
@@ -126,18 +289,19 @@ const fmt = (n) => Math.round(n).toLocaleString('ru-RU')
 const roundK = (n) => Math.round(n / 1000) * 1000
 
 const calc = computed(() => {
-  const m = mass.value
-  const work = type.value.rate * m
-  const kmd = needKmd.value ? work * RATES.kmdShare : 0
-  const urgentFee = urgent.value ? (work + kmd) * RATES.urgentShare : 0
-  const material = ownMetal.value ? 0 : RATES.metalPerTonne * m
-  const coat = coating.value.rate * m
-  const montage = needMontage.value ? RATES.montagePerTonne * m : 0
+  const m = activeMass.value
+  const work = activeType.value.rate * m
+  const kmd = activeNeedKmd.value ? work * RATES.kmdShare : 0
+  const urgentFee = activeUrgent.value ? (work + kmd) * RATES.urgentShare : 0
+  const material = activeOwnMetal.value ? 0 : RATES.metalPerTonne * m
+  const coat = activeCoating.value.rate * m
+  const montage = activeNeedMontage.value ? RATES.montagePerTonne * m : 0
   const discount = (work + kmd) * discountShare.value
-  const deliveryCost = delivery.value.cost
+  const deliveryCost = activeDelivery.value.cost
 
   const total = work + kmd + urgentFee + material + coat + montage - discount + deliveryCost
   const vat = total * RATES.vatShare
+  const area = mode.value === 'object' ? buildingArea.value : 0
   return {
     work,
     kmd,
@@ -154,13 +318,14 @@ const calc = computed(() => {
     vatLow: roundK(total * RATES.rangeLow * RATES.vatShare),
     vatHigh: roundK(total * RATES.rangeHigh * RATES.vatShare),
     perTonne: total / m,
+    perSqm: area ? total / area : 0,
   }
 })
 
 /* ---------- срок изготовления ---------- */
 const leadTime = computed(() => {
-  const m = mass.value
-  if (urgent.value) {
+  const m = activeMass.value
+  if (activeUrgent.value) {
     if (m <= 1) return '3–5 рабочих дней'
     if (m <= 5) return '5–9 рабочих дней'
     if (m <= 20) return '10–18 рабочих дней'
@@ -198,18 +363,41 @@ const shownHigh = useTween(highSrc)
 /* ---------- сводка для заявки ---------- */
 const summary = computed(() => {
   const lines = [
-    'Конфигурация из калькулятора:',
-    `• Тип: ${type.value.label}`,
-    `• Масса: ${mass.value} т`,
-    `• Металл: ${ownMetal.value ? 'давальческий (заказчика)' : 'наш, входит в смету'}`,
-    `• Покрытие: ${coating.value.label}`,
+    mode.value === 'object'
+      ? 'Конфигурация из калькулятора (объект целиком):'
+      : 'Конфигурация из калькулятора (детали и конструкции):',
   ]
-  const opts = []
-  if (needKmd.value) opts.push('разработка КМД')
-  if (needMontage.value) opts.push('монтаж')
-  if (urgent.value) opts.push('срочно')
-  if (opts.length) lines.push(`• Опции: ${opts.join(', ')}`)
-  lines.push(`• Доставка: ${delivery.value.label}`)
+  if (mode.value === 'object') {
+    lines.push(`• Тип объекта: ${bKind.value.label}`)
+    lines.push(
+      `• Габариты: ${fmtM(bLength.value)} × ${fmtM(bWidth.value)} × ${fmtM(bHeight.value)} м (Д×Ш×В)`,
+    )
+    lines.push(`• Площадь: ${fmt(buildingArea.value)} м²`)
+    lines.push(`• Кровля: ${bRoof.value.label.toLowerCase()}`)
+    lines.push(`• Кран: ${bCrane.value.label.toLowerCase()}`)
+    lines.push(`• Снеговой район: ${bSnow.value.id}`)
+    lines.push(`• Шаг колонн: ${bStep.value.label}`)
+    const extra = []
+    if (bMezzanine.value) extra.push('антресоль')
+    if (bStairs.value) extra.push('лестницы и площадки')
+    if (extra.length) lines.push(`• Дополнительно в каркасе: ${extra.join(', ')}`)
+    lines.push(
+      `• Ориентир массы каркаса: ${buildingMass.value} т (${fmtQ(buildingQ.value)} кг/м²)`,
+    )
+    lines.push('• В ориентир заложено: наш металл и грунт ГФ-021')
+    lines.push('• КМД, монтаж, покрытие и доставка — уточним в точном расчёте')
+  } else {
+    lines.push(`• Тип: ${type.value.label}`)
+    lines.push(`• Масса: ${mass.value} т`)
+    lines.push(`• Металл: ${ownMetal.value ? 'давальческий (заказчика)' : 'наш, входит в смету'}`)
+    lines.push(`• Покрытие: ${coating.value.label}`)
+    const opts = []
+    if (needKmd.value) opts.push('разработка КМД')
+    if (needMontage.value) opts.push('монтаж')
+    if (urgent.value) opts.push('срочно')
+    if (opts.length) lines.push(`• Опции: ${opts.join(', ')}`)
+    lines.push(`• Доставка: ${delivery.value.label}`)
+  }
   lines.push(`• Ориентир калькулятора: ${fmt(calc.value.low)} – ${fmt(calc.value.high)} ₽`)
   lines.push(`• В т.ч. НДС 20%: ${fmt(calc.value.vatLow)} – ${fmt(calc.value.vatHigh)} ₽`)
   return lines.join('\n')
@@ -230,14 +418,19 @@ const breakdownOpen = ref(false)
           <p class="sec-tag"><span class="idx">Онлайн</span> Калькулятор</p>
           <h1 class="page-title">Калькулятор стоимости <em>металлоконструкций</em></h1>
           <p class="page-desc">
-            Соберите конфигурацию — получите ориентир цены и срока без звонков
-            и «оставьте номер, мы перезвоним». Точный расчёт по чертежу
-            технолог сделает бесплатно за 1 рабочий день.
+            Два режима: отдельные детали по массе или каркас объекта по габаритам.
+            Соберите конфигурацию — получите ориентир цены и срока без звонка.
+            Точный расчёт по чертежу технолог сделает бесплатно за 1 рабочий день.
           </p>
         </div>
 
         <div class="clc-hero-cta" v-reveal="140">
-          <a href="#calculator" class="btn">Рассчитать стоимость</a>
+          <a href="#calculator" class="btn" :class="{ 'btn--ghost': mode === 'object' }" @click="setMode('details')">
+            Детали и конструкции
+          </a>
+          <a href="#calculator" class="btn" :class="{ 'btn--ghost': mode === 'details' }" @click="setMode('object')">
+            Объект целиком
+          </a>
         </div>
       </div>
     </section>
@@ -245,12 +438,53 @@ const breakdownOpen = ref(false)
     <!-- ============ КАЛЬКУЛЯТОР ============ -->
     <section id="calculator" class="sec sec--deep clc-sec">
       <div class="container">
+        <div class="clc-modes" v-reveal role="tablist" aria-label="Режим калькулятора">
+          <button
+            class="clc-mode"
+            :class="{ active: mode === 'details' }"
+            role="tab"
+            :aria-selected="mode === 'details'"
+            @click="setMode('details')"
+          >
+            <span class="clc-mode-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="9" width="22" height="14" rx="1.5" />
+                <circle cx="10" cy="14" r="1.6" /><circle cx="22" cy="14" r="1.6" />
+                <circle cx="10" cy="19" r="1.6" /><circle cx="22" cy="19" r="1.6" />
+              </svg>
+            </span>
+            <span class="clc-mode-body">
+              <span class="clc-mode-title">Детали и конструкции</span>
+              <span class="clc-mode-hint">Знаете массу или тип изделия — пластины, балки, фермы, лестницы</span>
+            </span>
+          </button>
+          <button
+            class="clc-mode"
+            :class="{ active: mode === 'object' }"
+            role="tab"
+            :aria-selected="mode === 'object'"
+            @click="setMode('object')"
+          >
+            <span class="clc-mode-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 26V12l12-7 12 7v14" /><path d="M4 26h24" /><path d="M10 26V15m6 11V12m6 14V15" />
+              </svg>
+            </span>
+            <span class="clc-mode-body">
+              <span class="clc-mode-title">Объект целиком</span>
+              <span class="clc-mode-hint">Ангар, склад, навес или каркас здания — считаем по длине, ширине и высоте</span>
+            </span>
+          </button>
+        </div>
+
         <div class="clc-layout">
           <!-- ЛЕВАЯ КОЛОНКА: ШАГИ -->
           <div class="clc-steps">
+            <!-- ===== ДЕТАЛИ ===== -->
+            <template v-if="mode === 'details'">
             <!-- ШАГ 1: тип -->
             <div id="step-type" class="clc-step" v-reveal>
-              <p class="clc-step-tag"><span>01</span> Что изготовить</p>
+              <p class="clc-step-tag"><span>{{ stepNo.type }}</span> Что изготовить</p>
               <div class="type-grid">
                 <button
                   v-for="t in TYPES"
@@ -287,7 +521,7 @@ const breakdownOpen = ref(false)
 
             <!-- ШАГ 2: масса -->
             <div id="step-mass" class="clc-step" v-reveal="60">
-              <p class="clc-step-tag"><span>02</span> Масса конструкции</p>
+              <p class="clc-step-tag"><span>{{ stepNo.mass }}</span> Масса конструкции</p>
               <div class="mass-box">
                 <div class="mass-head">
                   <div class="mass-input-wrap">
@@ -339,14 +573,259 @@ const breakdownOpen = ref(false)
 
                 <p class="mass-help">
                   Не знаете массу? Она указана в спецификации КМ / КМД («ведомость металла»).
-                  Нет чертежа — <a href="#calc-form">пришлите эскиз</a>, посчитаем сами.
+                  Нет чертежа — переключитесь на «Объект целиком» или <a href="#calc-form">пришлите эскиз</a>.
                 </p>
               </div>
             </div>
+            </template>
 
-            <!-- ШАГ 3: металл -->
+            <!-- ===== ОБЪЕКТ ===== -->
+            <template v-if="mode === 'object'">
+            <div id="step-kind" class="clc-step" v-reveal>
+              <p class="clc-step-tag"><span>{{ stepNo.kind }}</span> Какой объект</p>
+              <div class="type-grid">
+                <button
+                  v-for="k in BUILDING_KINDS"
+                  :key="k.id"
+                  class="type-card"
+                  :class="{ active: bKind.id === k.id }"
+                  @click="bKind = k"
+                >
+                  <span class="type-icon" aria-hidden="true">
+                    <svg v-if="k.icon === 'canopy'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 12c4-5 20-5 24 0" /><path d="M6 12v14m20-14v14" /><path d="M6 20h20" />
+                    </svg>
+                    <svg v-else-if="k.icon === 'hangar'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 24V12l12-8 12 8v12" /><path d="M4 24h24" /><path d="M12 24v-8h8v8" />
+                    </svg>
+                    <svg v-else-if="k.icon === 'warm'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M5 24V13l11-7 11 7v11" /><path d="M5 24h22" /><path d="M9 18h4m6 0h4M9 21h4m6 0h4" />
+                    </svg>
+                    <svg v-else-if="k.icon === 'shop'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 25V12l12-7 12 7v13" /><path d="M4 25h24" /><path d="M8 16h16M16 16v9" />
+                    </svg>
+                    <svg v-else viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 26V12l12-7 12 7v14" /><path d="M4 26h24" /><path d="M10 26V15m6 11V12m6 14V15" />
+                    </svg>
+                  </span>
+                  <span class="type-label">{{ k.label }}</span>
+                  <span class="type-hint">{{ k.hint }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="step-dim" class="clc-step" v-reveal="60">
+              <p class="clc-step-tag"><span>{{ stepNo.dim }}</span> Габариты каркаса</p>
+              <div class="dim-box">
+                <div class="dim-preview dim-preview--mobile">
+                  <BuildingPreview
+                    compact
+                    :length="bLength"
+                    :width="bWidth"
+                    :height="bHeight"
+                    :roof="bRoof.id"
+                    :crane="bCrane.id"
+                    :col-step="bStep.id"
+                    :mezzanine="bMezzanine"
+                  />
+                </div>
+
+                <div class="dim-controls">
+                  <div class="dim-ctl">
+                    <div class="dim-ctl-h">
+                      <span>Длина</span>
+                      <div class="mass-input-wrap">
+                        <input
+                          class="mass-input mass-input--sm"
+                          type="text"
+                          inputmode="decimal"
+                          :value="bLength"
+                          @change="onDimInput('l', $event)"
+                          aria-label="Длина здания в метрах"
+                        />
+                        <span class="mass-unit">м</span>
+                      </div>
+                    </div>
+                    <input
+                      v-model.number="bLength"
+                      type="range"
+                      :min="DIM.l.min"
+                      :max="DIM.l.max"
+                      step="0.5"
+                      class="clc-slider"
+                      aria-label="Длина"
+                    />
+                    <div class="mass-scale"><span>{{ DIM.l.min }} м</span><span>{{ DIM.l.max }} м</span></div>
+                  </div>
+
+                  <div class="dim-ctl">
+                    <div class="dim-ctl-h">
+                      <span>Ширина · пролёт</span>
+                      <div class="mass-input-wrap">
+                        <input
+                          class="mass-input mass-input--sm"
+                          type="text"
+                          inputmode="decimal"
+                          :value="bWidth"
+                          @change="onDimInput('w', $event)"
+                          aria-label="Ширина здания в метрах"
+                        />
+                        <span class="mass-unit">м</span>
+                      </div>
+                    </div>
+                    <input
+                      v-model.number="bWidth"
+                      type="range"
+                      :min="DIM.w.min"
+                      :max="DIM.w.max"
+                      step="0.5"
+                      class="clc-slider"
+                      aria-label="Ширина"
+                    />
+                    <div class="mass-scale"><span>{{ DIM.w.min }} м</span><span>{{ DIM.w.max }} м</span></div>
+                  </div>
+
+                  <div class="dim-ctl">
+                    <div class="dim-ctl-h">
+                      <span>Высота до низа ферм</span>
+                      <div class="mass-input-wrap">
+                        <input
+                          class="mass-input mass-input--sm"
+                          type="text"
+                          inputmode="decimal"
+                          :value="bHeight"
+                          @change="onDimInput('h', $event)"
+                          aria-label="Высота здания в метрах"
+                        />
+                        <span class="mass-unit">м</span>
+                      </div>
+                    </div>
+                    <input
+                      v-model.number="bHeight"
+                      type="range"
+                      :min="DIM.h.min"
+                      :max="DIM.h.max"
+                      step="0.5"
+                      class="clc-slider"
+                      aria-label="Высота"
+                    />
+                    <div class="mass-scale"><span>{{ DIM.h.min }} м</span><span>{{ DIM.h.max }} м</span></div>
+                  </div>
+
+                  <div class="mass-presets dim-presets">
+                    <button
+                      v-for="p in DIM_PRESETS"
+                      :key="p.label"
+                      class="mass-preset"
+                      :class="{ active: dimPresetActive && dimPresetActive.label === p.label }"
+                      @click="applyPreset(p)"
+                    >
+                      {{ p.label }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <p class="mass-help dim-help">
+                Тоннаж считается по металлоёмкости каркаса: пролёт, высота, снег и кран меняют расход стали.
+                В ориентир заложены металл и грунт. Сэндвич, фундамент, КМД, монтаж и доставка — в точном расчёте.
+              </p>
+              <transition name="hint-slide" mode="out-in">
+                <p v-if="nextTier" class="mass-tip" :key="'onext' + nextTier.pct">
+                  <span class="tip-spark">%</span>
+                  До скидки −{{ nextTier.pct }}% на работы не хватает {{ nextTier.need }} т каркаса
+                </p>
+                <p v-else-if="discountShare" class="mass-tip mass-tip--ok" key="omax">
+                  <span class="tip-spark">✓</span>
+                  Применена скидка −{{ discountShare * 100 }}% на работы
+                </p>
+              </transition>
+            </div>
+
+            <div id="step-extra" class="clc-step" v-reveal="60">
+              <p class="clc-step-tag"><span>{{ stepNo.extra }}</span> Что влияет на каркас</p>
+
+              <p class="extra-label extra-label--first">Кровля</p>
+              <div class="coat-row coat-row--3">
+                <button
+                  v-for="r in ROOFS"
+                  :key="r.id"
+                  class="coat-btn"
+                  :class="{ active: bRoof.id === r.id }"
+                  @click="bRoof = r"
+                >
+                  <span class="coat-label">{{ r.label }}</span>
+                </button>
+              </div>
+
+              <p class="extra-label">Крановое оборудование</p>
+              <div class="coat-row">
+                <button
+                  v-for="c in CRANES"
+                  :key="c.id"
+                  class="coat-btn"
+                  :class="{ active: bCrane.id === c.id }"
+                  @click="bCrane = c"
+                >
+                  <span class="coat-label">{{ c.label }}</span>
+                  <span class="coat-note">{{ c.note }}</span>
+                </button>
+              </div>
+
+              <p class="extra-label">Снеговой район</p>
+              <div class="coat-row">
+                <button
+                  v-for="s in SNOW"
+                  :key="s.id"
+                  class="coat-btn"
+                  :class="{ active: bSnow.id === s.id }"
+                  @click="bSnow = s"
+                >
+                  <span class="coat-label">Район {{ s.label }}</span>
+                  <span class="coat-note">{{ s.note }}</span>
+                </button>
+              </div>
+
+              <p class="extra-label">Шаг колонн</p>
+              <div class="coat-row coat-row--3">
+                <button
+                  v-for="s in COL_STEPS"
+                  :key="s.id"
+                  class="coat-btn"
+                  :class="{ active: bStep.id === s.id }"
+                  @click="bStep = s"
+                >
+                  <span class="coat-label">{{ s.label }}</span>
+                  <span class="coat-note">{{ s.note }}</span>
+                </button>
+              </div>
+
+              <div class="opt-list extra-opts">
+                <label class="opt" :class="{ active: bMezzanine }">
+                  <input type="checkbox" v-model="bMezzanine" />
+                  <span class="opt-check" aria-hidden="true"></span>
+                  <span class="opt-body">
+                    <span class="opt-title">Антресоль / перекрытие</span>
+                    <span class="opt-note">добавляет балки и настил в каркас</span>
+                  </span>
+                  <span class="opt-price">+16 кг/м²</span>
+                </label>
+                <label class="opt" :class="{ active: bStairs }">
+                  <input type="checkbox" v-model="bStairs" />
+                  <span class="opt-check" aria-hidden="true"></span>
+                  <span class="opt-body">
+                    <span class="opt-title">Лестницы и площадки</span>
+                    <span class="opt-note">обслуживающие марши в составе каркаса</span>
+                  </span>
+                  <span class="opt-price">+6% к массе</span>
+                </label>
+              </div>
+            </div>
+            </template>
+
+            <template v-if="mode === 'details'">
+            <!-- ШАГ: металл -->
             <div id="step-metal" class="clc-step" v-reveal="60">
-              <p class="clc-step-tag"><span>03</span> Чей металл</p>
+              <p class="clc-step-tag"><span>{{ stepNo.metal }}</span> Чей металл</p>
               <div class="seg">
                 <button class="seg-btn" :class="{ active: !ownMetal }" @click="ownMetal = false">
                   <span class="seg-title">Ваш металл — наша забота</span>
@@ -361,7 +840,7 @@ const breakdownOpen = ref(false)
 
             <!-- ШАГ 4: покрытие -->
             <div id="step-coating" class="clc-step" v-reveal="60">
-              <p class="clc-step-tag"><span>04</span> Покрытие</p>
+              <p class="clc-step-tag"><span>{{ stepNo.coat }}</span> Покрытие</p>
               <div class="coat-row">
                 <button
                   v-for="c in COATINGS"
@@ -378,7 +857,7 @@ const breakdownOpen = ref(false)
 
             <!-- ШАГ 5: опции -->
             <div id="step-options" class="clc-step" v-reveal="60">
-              <p class="clc-step-tag"><span>05</span> Дополнительно</p>
+              <p class="clc-step-tag"><span>{{ stepNo.opt }}</span> Дополнительно</p>
               <div class="opt-list">
                 <label class="opt" :class="{ active: needKmd }">
                   <input type="checkbox" v-model="needKmd" />
@@ -414,7 +893,7 @@ const breakdownOpen = ref(false)
 
             <!-- ШАГ 6: доставка -->
             <div id="step-delivery" class="clc-step" v-reveal="60">
-              <p class="clc-step-tag"><span>06</span> Доставка</p>
+              <p class="clc-step-tag"><span>{{ stepNo.del }}</span> Доставка</p>
               <div class="coat-row">
                 <button
                   v-for="d in DELIVERY"
@@ -428,12 +907,33 @@ const breakdownOpen = ref(false)
                 </button>
               </div>
             </div>
+            </template>
           </div>
 
           <!-- ПРАВАЯ КОЛОНКА: ИТОГ -->
           <aside class="clc-panel-wrap">
-            <div class="clc-panel" v-reveal="120">
-              <p class="panel-tag">Ориентир стоимости</p>
+            <div class="clc-panel" :class="{ 'clc-panel--object': mode === 'object' }" v-reveal="120">
+              <div v-if="mode === 'object'" class="panel-visual">
+                <div class="panel-sketch">
+                  <BuildingPreview
+                    compact
+                    :length="bLength"
+                    :width="bWidth"
+                    :height="bHeight"
+                    :roof="bRoof.id"
+                    :crane="bCrane.id"
+                    :col-step="bStep.id"
+                    :mezzanine="bMezzanine"
+                  />
+                </div>
+                <div class="panel-stats">
+                  <div><b>{{ fmt(buildingArea) }}</b><span>м²</span></div>
+                  <div><b>{{ fmt(buildingVolume) }}</b><span>м³</span></div>
+                  <div><b>{{ buildingMass }} т</b><span>{{ fmtQ(buildingQ) }} кг/м²</span></div>
+                </div>
+              </div>
+
+              <p class="panel-tag">{{ mode === 'object' ? 'Ориентир стоимости каркаса' : 'Ориентир стоимости' }}</p>
 
               <p class="panel-price">
                 <span class="pp-num">{{ fmt(shownLow) }}</span>
@@ -441,7 +941,12 @@ const breakdownOpen = ref(false)
                 <span class="pp-num">{{ fmt(shownHigh) }}</span>
                 <span class="pp-rub">₽</span>
               </p>
-              <p class="panel-per">≈ {{ fmt(calc.perTonne) }} ₽/т · с учётом всех выбранных опций</p>
+              <p class="panel-per" v-if="mode === 'object'">
+                ≈ {{ fmt(calc.perSqm) }} ₽/м² · каркас с металлом и грунтом
+              </p>
+              <p class="panel-per" v-else>
+                ≈ {{ fmt(calc.perTonne) }} ₽/т · с учётом всех выбранных опций
+              </p>
 
               <div class="panel-time">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -457,21 +962,28 @@ const breakdownOpen = ref(false)
 
               <div class="breakdown" :class="{ open: breakdownOpen }">
                 <div class="breakdown-in">
-                  <p class="bd-row"><span>Работы ({{ type.label.toLowerCase() }})</span><b>{{ fmt(calc.work) }} ₽</b></p>
+                  <p v-if="mode === 'object'" class="bd-row">
+                    <span>Каркас {{ fmtM(bLength) }}×{{ fmtM(bWidth) }}×{{ fmtM(bHeight) }} м</span>
+                    <b>{{ buildingMass }} т</b>
+                  </p>
+                  <p class="bd-row"><span>Работы ({{ activeType.label.toLowerCase() }})</span><b>{{ fmt(calc.work) }} ₽</b></p>
                   <p v-if="calc.material" class="bd-row"><span>Металл</span><b>{{ fmt(calc.material) }} ₽</b></p>
-                  <p v-if="calc.coat" class="bd-row"><span>{{ coating.label }}</span><b>{{ fmt(calc.coat) }} ₽</b></p>
+                  <p v-if="calc.coat" class="bd-row"><span>{{ activeCoating.label }}</span><b>{{ fmt(calc.coat) }} ₽</b></p>
                   <p v-if="calc.kmd" class="bd-row"><span>КМД</span><b>{{ fmt(calc.kmd) }} ₽</b></p>
                   <p v-if="calc.montage" class="bd-row"><span>Монтаж с окраской</span><b>{{ fmt(calc.montage) }} ₽</b></p>
                   <p v-if="calc.urgentFee" class="bd-row"><span>Срочность</span><b>{{ fmt(calc.urgentFee) }} ₽</b></p>
                   <p v-if="calc.discount" class="bd-row bd-row--ok"><span>Скидка за объём −{{ discountShare * 100 }}%</span><b>−{{ fmt(calc.discount) }} ₽</b></p>
-                  <p class="bd-row"><span>Доставка</span><b>{{ delivery.external ? 'по тарифу ТК' : calc.deliveryCost ? fmt(calc.deliveryCost) + ' ₽' : 'бесплатно' }}</b></p>
+                  <p v-if="mode === 'details'" class="bd-row"><span>Доставка</span><b>{{ delivery.external ? 'по тарифу ТК' : calc.deliveryCost ? fmt(calc.deliveryCost) + ' ₽' : 'бесплатно' }}</b></p>
                   <p class="bd-row bd-row--vat"><span>В том числе НДС 20%</span><b>{{ fmt(calc.vat) }} ₽</b></p>
                 </div>
               </div>
 
               <a href="#calc-form" class="btn btn--block panel-btn">Получить точный расчёт</a>
               <p class="panel-note">
-                Это ориентир, а не оферта: точная цена зависит от чертежа и текущей цены металла.
+                Это ориентир, а не оферта: точная цена зависит от чертежа КМ и текущей цены металла.
+                <template v-if="mode === 'object'">
+                  Заложены наш металл и грунт. Без сэндвича, фундамента, КМД, монтажа и доставки.
+                </template>
                 Технолог посчитает бесплатно — за 1 рабочий день.
               </p>
             </div>
@@ -499,7 +1011,19 @@ const breakdownOpen = ref(false)
 
           <div class="recap" v-reveal="80">
             <p class="recap-h">Что уйдёт вместе с заявкой:</p>
-            <ul>
+            <ul v-if="mode === 'object'">
+              <li><span>Объект</span>{{ bKind.label }}</li>
+              <li><span>Габариты</span>{{ fmtM(bLength) }} × {{ fmtM(bWidth) }} × {{ fmtM(bHeight) }} м</li>
+              <li><span>Площадь</span>{{ fmt(buildingArea) }} м²</li>
+              <li><span>Каркас</span>{{ buildingMass }} т · {{ fmtQ(buildingQ) }} кг/м²</li>
+              <li><span>Кровля</span>{{ bRoof.label }}</li>
+              <li><span>Кран</span>{{ bCrane.label }}</li>
+              <li v-if="bMezzanine || bStairs">
+                <span>В каркасе</span>{{ [bMezzanine && 'антресоль', bStairs && 'лестницы'].filter(Boolean).join(', ') }}
+              </li>
+              <li class="recap-total"><span>Ориентир</span>{{ fmt(calc.low) }} – {{ fmt(calc.high) }} ₽</li>
+            </ul>
+            <ul v-else>
               <li><span>Тип</span>{{ type.label }}</li>
               <li><span>Масса</span>{{ mass }} т</li>
               <li><span>Металл</span>{{ ownMetal ? 'заказчика' : 'наш' }}</li>
@@ -531,6 +1055,59 @@ const breakdownOpen = ref(false)
   gap: 14px;
   flex-wrap: wrap;
   margin-top: 8px;
+}
+
+/* ============ режимы ============ */
+.clc-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 40px;
+  scroll-margin-top: 140px;
+}
+.clc-mode {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 22px;
+  background: var(--card-d);
+  border: 1px solid var(--line-d);
+  border-radius: var(--r);
+  text-align: left;
+  color: var(--white);
+  transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+}
+.clc-mode:hover { border-color: rgba(255, 90, 31, 0.5); }
+.clc-mode.active {
+  border-color: var(--acc);
+  background: linear-gradient(160deg, rgba(255, 90, 31, 0.14), var(--card-d) 55%);
+  box-shadow: 0 16px 36px rgba(255, 90, 31, 0.1);
+}
+.clc-mode-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--acc-dim);
+  color: var(--acc-hot);
+  transition: background 0.25s, color 0.25s;
+}
+.clc-mode.active .clc-mode-icon { background: var(--acc); color: #fff; }
+.clc-mode-icon svg { width: 24px; height: 24px; }
+.clc-mode-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.clc-mode-title {
+  font-family: var(--font-d);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.clc-mode-hint {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--w-faint);
 }
 
 /* ============ layout ============ */
@@ -650,6 +1227,7 @@ const breakdownOpen = ref(false)
   transition: border-color 0.25s;
 }
 .mass-input:focus { outline: none; border-color: var(--acc); }
+.mass-input--sm { width: 88px; font-size: 20px; padding: 6px 10px; }
 .mass-unit {
   font-family: var(--font-d);
   font-size: 18px;
@@ -744,6 +1322,46 @@ const breakdownOpen = ref(false)
   color: var(--w-faint);
 }
 .mass-help a { color: var(--acc-hot); text-decoration: underline; text-underline-offset: 2px; }
+
+/* габариты объекта */
+.dim-box {
+  background: var(--card-d);
+  border: 1px solid var(--line-d);
+  border-radius: var(--r);
+  padding: 22px 22px 18px;
+}
+.dim-preview { display: none; }
+.dim-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.dim-ctl-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--w-soft);
+}
+.dim-presets { margin-top: 2px; }
+
+.extra-label {
+  margin: 16px 0 8px;
+  font-family: var(--font-m);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--w-faint);
+}
+.extra-label:first-child { margin-top: 0; }
+.extra-label--first { margin-top: 0; }
+.extra-opts { margin-top: 14px; }
+.dim-help { margin-top: 12px; }
+.coat-row--3 { grid-template-columns: repeat(3, 1fr); }
 
 /* сегменты (металл) */
 .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -863,6 +1481,49 @@ const breakdownOpen = ref(false)
   border: 1px solid rgba(255, 90, 31, 0.3);
   border-radius: var(--r);
   padding: 30px 28px;
+}
+.clc-panel--object {
+  padding: 16px 16px 20px;
+}
+.clc-panel--object .panel-tag { margin-bottom: 10px; }
+.clc-panel--object .panel-per { margin-bottom: 12px; }
+.clc-panel--object .panel-time { margin-bottom: 12px; }
+.clc-panel--object .pp-num { font-size: clamp(18px, 1.8vw, 22px); }
+
+.panel-visual { margin-bottom: 16px; }
+.panel-sketch {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--line-d);
+  border-radius: var(--r-sm);
+  padding: 4px 2px 0;
+  margin-bottom: 10px;
+}
+.panel-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.15fr;
+  gap: 6px;
+}
+.panel-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 8px 7px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  min-width: 0;
+}
+.panel-stats b {
+  font-family: var(--font-d);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.panel-stats span {
+  font-size: 10.5px;
+  color: var(--w-faint);
+  line-height: 1.3;
 }
 
 .panel-tag {
@@ -1035,6 +1696,16 @@ const breakdownOpen = ref(false)
   .clc-panel-wrap { position: static; }
   .clc-step { scroll-margin-top: 126px; }
   .clc-form-grid { grid-template-columns: 1fr; gap: 36px; }
+  .clc-modes { grid-template-columns: 1fr; }
+  .dim-preview--mobile {
+    display: block;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid var(--line-d);
+    border-radius: var(--r-sm);
+    padding: 6px 4px 0;
+    margin-bottom: 16px;
+  }
+  .panel-sketch { display: none; }
 
   .clc-mobilebar {
     position: fixed;
@@ -1072,8 +1743,12 @@ const breakdownOpen = ref(false)
   .type-grid { grid-template-columns: 1fr; }
   .seg { grid-template-columns: 1fr; }
   .coat-row { grid-template-columns: 1fr; }
+  .coat-row--3 { grid-template-columns: 1fr; }
   .mass-box { padding: 20px 16px 18px; }
   .opt { flex-wrap: wrap; }
   .opt-price { width: 100%; padding-left: 38px; }
+  .clc-mode { padding: 16px 16px; }
+  .dim-box { padding: 16px 16px 14px; }
+  .panel-stats { grid-template-columns: 1fr 1fr 1fr; }
 }
 </style>
