@@ -3,14 +3,20 @@ const services = [
   {
     title: 'Лазерная резка',
     text: 'Сложный контур сегодня, деталь для сборки — без доработки напильником',
-    spec: 'до 20 мм · чистая кромка',
+    spec: 'до 16 мм · чистая кромка',
     icon: 'laser',
   },
   {
     title: 'Плазменная резка',
     text: 'Толстый металл, большие объёмы, кромка без «доп. зачистки», о которой вы не договаривались',
-    spec: 'до 50 мм · чёрный металл',
+    spec: 'до 25 мм · чёрный металл',
     icon: 'plasma',
+  },
+  {
+    title: 'Газовая резка',
+    text: 'Сверхтолстая чёрная сталь — плиты, закладные и основания до 70 мм',
+    spec: 'до 70 мм · чёрная сталь',
+    icon: 'gas',
   },
   {
     title: 'Гибка на листогибе',
@@ -53,6 +59,11 @@ const services = [
                 <path d="M16 15c-2 3-5 4-5 8m5-8c2 3 5 4 5 8m-5-8v10" stroke-dasharray="3 2.5" />
                 <path d="M6 29h20" />
               </svg>
+              <svg v-else-if="s.icon === 'gas'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 28V14" /><path d="M12 28h8" />
+                <path d="M16 14c-3-4-1-8 0-10 1 2 3 6 0 10z" />
+                <path d="M13 18h6" stroke-dasharray="2 2.5" />
+              </svg>
               <svg v-else-if="s.icon === 'bend'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 24 16 12l12 12" /><path d="M16 12V4" /><path d="M9 4h14" />
                 <circle cx="16" cy="24" r="2.6" />
@@ -76,7 +87,7 @@ const services = [
 <style scoped>
 .srv-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 18px;
 }
 
@@ -154,7 +165,10 @@ const services = [
   flex: 0 !important;
 }
 
-@media (max-width: 1060px) {
+@media (max-width: 1200px) {
+  .srv-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 760px) {
   .srv-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 560px) {

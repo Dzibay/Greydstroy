@@ -3,11 +3,11 @@ import { ref, computed } from 'vue'
 
 /* ---------- интерактивный подбор технологии ---------- */
 const materials = [
-  { id: 'steel', label: 'Сталь', laserMax: 20, plasmaMax: 50 },
-  { id: 'stainless', label: 'Нержавейка', laserMax: 12, plasmaMax: 30 },
-  { id: 'aluminum', label: 'Алюминий', laserMax: 8, plasmaMax: 25 },
+  { id: 'steel', label: 'Сталь', laserMax: 16, plasmaMax: 25, gasMax: 70 },
+  { id: 'stainless', label: 'Нержавейка', laserMax: 12, plasmaMax: 25, gasMax: 0 },
+  { id: 'aluminum', label: 'Алюминий', laserMax: 8, plasmaMax: 25, gasMax: 0 },
 ]
-const SCALE_MAX = 60
+const SCALE_MAX = 70
 
 const material = ref(materials[0])
 const thickness = ref(6)
@@ -34,10 +34,20 @@ const verdict = computed(() => {
       note: 'На этой толщине лазеру работать уже невыгодно, а плазме — самое то. Кромка без «доп. зачистки», о которой вы не договаривались.',
     }
   }
+  if (m.gasMax && t <= m.gasMax) {
+    return {
+      tech: 'Газовая резка',
+      tag: 'gas',
+      spec: `${m.label.toLowerCase()} до ${m.gasMax} мм · сверхтолстый лист`,
+      note: 'Плазма здесь уже не берёт. Кислородная резка — рабочий способ для толстой чёрной стали под сварку.',
+    }
+  }
   return {
     tech: 'Нужен расчёт технолога',
     tag: 'custom',
-    spec: `${m.label.toLowerCase()} свыше ${m.plasmaMax} мм`,
+    spec: m.gasMax
+      ? `${m.label.toLowerCase()} свыше ${m.gasMax} мм`
+      : `${m.label.toLowerCase()} свыше ${m.plasmaMax} мм`,
     note: 'Толщина за пределами типовых режимов. Пришлите чертёж — технолог подберёт способ и посчитает стоимость в течение рабочего дня.',
   }
 })
@@ -52,7 +62,7 @@ const services = [
   {
     title: 'Лазерная резка металла',
     slug: 'lazernaya-rezka',
-    chips: ['до 20 мм', 'ЧПУ', 'DXF / DWG'],
+    chips: ['до 16 мм', 'ЧПУ', 'DXF / DWG'],
     lead: 'Сложный контур сегодня — деталь для сборки без доработки напильником.',
     points: [
       'Чистая кромка без окалины — деталь идёт сразу в сборку или на покраску',
@@ -66,16 +76,30 @@ const services = [
   {
     title: 'Плазменная резка металла',
     slug: 'plazmennaya-rezka',
-    chips: ['до 50 мм', 'чёрный металл', 'большие форматы'],
+    chips: ['до 25 мм', 'чёрный металл', 'большие форматы'],
     lead: 'Толстый лист и большие объёмы — там, где лазеру работать уже невыгодно.',
     points: [
-      'Раскрой листа до 50 мм — фланцы, косынки, закладные, основания',
-      'Экономичнее лазера на толщинах от 20 мм — не переплачиваете за технологию',
+      'Раскрой листа до 25 мм — фланцы, косынки, закладные, основания',
+      'Экономичнее лазера на толщинах от 16 мм — не переплачиваете за технологию',
       'Кромка под сварку без дополнительной механической обработки',
       'Крупногабаритный раскрой для металлоконструкций',
     ],
     fit: 'Толстый лист · фланцы и закладные · крупный раскрой',
     icon: 'plasma',
+  },
+  {
+    title: 'Газовая резка металла',
+    slug: 'gazovaya-rezka',
+    chips: ['до 70 мм', 'чёрная сталь', 'сверхтолстый лист'],
+    lead: 'Сверхтолстая сталь — там, где лазер и плазма уже не берут.',
+    points: [
+      'Раскрой чёрной стали до 70 мм — плиты, закладные, основания',
+      'Рабочий способ на толщинах свыше 25 мм — без переплаты за чужую технологию',
+      'Кромка под сварку металлоконструкций',
+      'Крупногабаритный раскрой тяжёлых элементов',
+    ],
+    fit: 'Плиты и основания · толстые фланцы · закладные',
+    icon: 'gas',
   },
   {
     title: 'Гибка на листогибе с ЧПУ',
@@ -116,11 +140,11 @@ const toggleService = (i) => {
 const faq = [
   {
     q: 'Какую толщину металла вы режете?',
-    a: 'Лазером — сталь до 20 мм, нержавейку до 12 мм, алюминий до 8 мм. Плазмой — чёрный металл до 50 мм. Если толщина больше — пришлите чертёж, технолог предложит способ.',
+    a: 'Лазером — сталь до 16 мм, нержавейку до 12 мм, алюминий до 8 мм. Плазмой — до 25 мм. Газовой резкой — чёрную сталь до 70 мм. Если толщина больше — пришлите чертёж, технолог предложит способ.',
   },
   {
-    q: 'Лазер или плазма — что выбрать?',
-    a: 'До 20 мм по стали выгоднее лазер: чище кромка, точнее контур. Свыше 20 мм — плазма: тот же результат для сварных конструкций, но дешевле. Если сомневаетесь — посчитаем оба варианта, сравните цифры.',
+    q: 'Лазер, плазма или газ — что выбрать?',
+    a: 'До 16 мм по стали выгоднее лазер: чище кромка, точнее контур. От 16 до 25 мм — плазма: тот же результат для сварных конструкций, но дешевле. Свыше 25 мм по чёрной стали — газовая резка до 70 мм. Если сомневаетесь — посчитаем варианты, сравните цифры.',
   },
   {
     q: 'В каком виде прислать чертёж?',
@@ -155,7 +179,7 @@ const toggleFaq = (i) => {
           <p class="page-desc">
             Услуги металлообработки для
             <RouterLink to="/metallokonstruktsii" class="page-desc-link">изготовления металлоконструкций</RouterLink>:
-            лазерная и плазменная резка, гибка на ЧПУ-листогибе, сварка. Один договор, один
+            лазерная, плазменная и газовая резка, гибка на ЧПУ-листогибе, сварка. Один договор, один
             контакт, одна ответственность — от чертежа до отгрузки по всей России.
           </p>
         </div>
@@ -242,11 +266,21 @@ const toggleFaq = (i) => {
                 ></div>
               </div>
             </div>
+            <div class="scale-row" v-if="material.gasMax">
+              <span class="scale-name">Газ</span>
+              <div class="scale-track">
+                <div
+                  class="scale-bar scale-bar--gas"
+                  :class="{ dim: verdict.tag !== 'gas' }"
+                  :style="{ width: pct(material.gasMax) }"
+                ></div>
+              </div>
+            </div>
             <div class="scale-needle" :style="{ left: needlePos }">
               <span class="needle-tip">{{ thickness }}</span>
             </div>
             <div class="scale-ticks">
-              <span v-for="t in [0, 10, 20, 30, 40, 50, 60]" :key="t">{{ t }}</span>
+              <span v-for="t in [0, 10, 20, 30, 40, 50, 60, 70]" :key="t">{{ t }}</span>
             </div>
           </div>
 
@@ -268,7 +302,7 @@ const toggleFaq = (i) => {
     <section id="uslugi-list" class="sec sec--light">
       <div class="container">
         <div class="sec-head" v-reveal>
-          <p class="sec-tag"><span class="idx">Подробно</span> Четыре участка</p>
+          <p class="sec-tag"><span class="idx">Подробно</span> Пять участков</p>
           <h2 class="sec-title">Один подрядчик <em>вместо трёх</em></h2>
           <p class="sec-sub">
             Пока деталь пересылают между цехом резки, гибочным участком и сварочным постом —
@@ -526,6 +560,7 @@ const toggleFaq = (i) => {
 }
 .scale-bar--laser { background: linear-gradient(90deg, #ff7d3f, #ff5a1f); }
 .scale-bar--plasma { background: linear-gradient(90deg, #4f8dff, #2f6bdb); }
+.scale-bar--gas { background: linear-gradient(90deg, #3dd68c, #1fa968); }
 .scale-bar.dim { opacity: 0.28; }
 
 .scale-needle {
@@ -573,6 +608,10 @@ const toggleFaq = (i) => {
   border-left-color: #4f8dff;
   background: rgba(79, 141, 255, 0.05);
 }
+.verdict--gas {
+  border-left-color: #3dd68c;
+  background: rgba(61, 214, 140, 0.05);
+}
 .verdict--custom {
   border-left-color: var(--w-faint);
   background: rgba(255, 255, 255, 0.03);
@@ -595,6 +634,7 @@ const toggleFaq = (i) => {
   animation: pulse 2s infinite;
 }
 .verdict--plasma .verdict-dot { background: #4f8dff; box-shadow: 0 0 14px rgba(79, 141, 255, 0.7); }
+.verdict--gas .verdict-dot { background: #3dd68c; box-shadow: 0 0 14px rgba(61, 214, 140, 0.7); }
 .verdict--custom .verdict-dot { background: var(--w-faint); box-shadow: none; animation: none; }
 
 @keyframes pulse {

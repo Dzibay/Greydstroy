@@ -9,7 +9,8 @@ const RATES = {
   metalPerTonne: 78000, // наш металл, ₽/т (С245/С255)
   kmdShare: 0.08, // разработка КМД, доля от стоимости работ
   urgentShare: 0.25, // срочность, доля от стоимости работ
-  montagePerTonne: 32000, // монтаж по области, ₽/т
+  montagePerTonne: 45000, // монтаж с окраской, ₽/т
+  vatShare: 20 / 120, // НДС 20% «в том числе» (цены с НДС)
   rangeLow: 0.88, // нижняя граница вилки
   rangeHigh: 1.12, // верхняя граница вилки
 }
@@ -19,51 +20,50 @@ const TYPES = [
     id: 'plates',
     label: 'Закладные и детали',
     hint: 'Пластины, анкеры, кронштейны, фланцы',
-    rate: 55000,
+    rate: 45000,
     icon: 'plate',
   },
   {
     id: 'beams',
     label: 'Балки и колонны',
     hint: 'Двутавры, связи, прогоны с обработкой',
-    rate: 65000,
+    rate: 52000,
     icon: 'beam',
   },
   {
     id: 'frame',
     label: 'Каркасы и навесы',
     hint: 'Каркас здания, навес, эстакада',
-    rate: 75000,
+    rate: 57000,
     icon: 'frame',
   },
   {
     id: 'truss',
     label: 'Фермы',
     hint: 'Стропильные и подстропильные фермы',
-    rate: 85000,
+    rate: 65000,
     icon: 'truss',
   },
   {
     id: 'stairs',
     label: 'Лестницы и площадки',
     hint: 'Марши, площадки, ограждения',
-    rate: 95000,
+    rate: 75000,
     icon: 'stairs',
   },
   {
     id: 'custom',
     label: 'Нестандарт',
     hint: 'Ёмкости, бункеры, уникальные узлы',
-    rate: 120000,
+    rate: 95000,
     icon: 'tank',
   },
 ]
 
 const COATINGS = [
   { id: 'none', label: 'Без покрытия', rate: 0, note: 'чистый металл' },
-  { id: 'primer', label: 'Грунт ГФ-021', rate: 8000, note: 'защита на время монтажа' },
+  { id: 'primer', label: 'Грунт ГФ-021', rate: 8000, note: 'огрунтовка, защита на время монтажа' },
   { id: 'paint', label: 'Грунт + эмаль', rate: 15000, note: 'финишное покрытие в цвет RAL' },
-  { id: 'zinc', label: 'Горячее цинкование', rate: 42000, note: 'для улицы, срок службы 25+ лет' },
 ]
 
 const DELIVERY = [
@@ -137,6 +137,7 @@ const calc = computed(() => {
   const deliveryCost = delivery.value.cost
 
   const total = work + kmd + urgentFee + material + coat + montage - discount + deliveryCost
+  const vat = total * RATES.vatShare
   return {
     work,
     kmd,
@@ -147,8 +148,11 @@ const calc = computed(() => {
     discount,
     deliveryCost,
     total,
+    vat,
     low: roundK(total * RATES.rangeLow),
     high: roundK(total * RATES.rangeHigh),
+    vatLow: roundK(total * RATES.rangeLow * RATES.vatShare),
+    vatHigh: roundK(total * RATES.rangeHigh * RATES.vatShare),
     perTonne: total / m,
   }
 })
@@ -207,6 +211,7 @@ const summary = computed(() => {
   if (opts.length) lines.push(`• Опции: ${opts.join(', ')}`)
   lines.push(`• Доставка: ${delivery.value.label}`)
   lines.push(`• Ориентир калькулятора: ${fmt(calc.value.low)} – ${fmt(calc.value.high)} ₽`)
+  lines.push(`• В т.ч. НДС 20%: ${fmt(calc.value.vatLow)} – ${fmt(calc.value.vatHigh)} ₽`)
   return lines.join('\n')
 })
 
@@ -230,11 +235,15 @@ const breakdownOpen = ref(false)
             технолог сделает бесплатно за 1 рабочий день.
           </p>
         </div>
+
+        <div class="clc-hero-cta" v-reveal="140">
+          <a href="#calculator" class="btn">Рассчитать стоимость</a>
+        </div>
       </div>
     </section>
 
     <!-- ============ КАЛЬКУЛЯТОР ============ -->
-    <section class="sec sec--deep clc-sec">
+    <section id="calculator" class="sec sec--deep clc-sec">
       <div class="container">
         <div class="clc-layout">
           <!-- ЛЕВАЯ КОЛОНКА: ШАГИ -->
@@ -385,7 +394,7 @@ const breakdownOpen = ref(false)
                   <input type="checkbox" v-model="needMontage" />
                   <span class="opt-check" aria-hidden="true"></span>
                   <span class="opt-body">
-                    <span class="opt-title">Монтаж на объекте</span>
+                    <span class="opt-title">Монтаж с окраской</span>
                     <span class="opt-note">Нижегородская область, своя бригада</span>
                   </span>
                   <span class="opt-price">+{{ fmt(RATES.montagePerTonne) }} ₽/т</span>
@@ -452,10 +461,11 @@ const breakdownOpen = ref(false)
                   <p v-if="calc.material" class="bd-row"><span>Металл</span><b>{{ fmt(calc.material) }} ₽</b></p>
                   <p v-if="calc.coat" class="bd-row"><span>{{ coating.label }}</span><b>{{ fmt(calc.coat) }} ₽</b></p>
                   <p v-if="calc.kmd" class="bd-row"><span>КМД</span><b>{{ fmt(calc.kmd) }} ₽</b></p>
-                  <p v-if="calc.montage" class="bd-row"><span>Монтаж</span><b>{{ fmt(calc.montage) }} ₽</b></p>
+                  <p v-if="calc.montage" class="bd-row"><span>Монтаж с окраской</span><b>{{ fmt(calc.montage) }} ₽</b></p>
                   <p v-if="calc.urgentFee" class="bd-row"><span>Срочность</span><b>{{ fmt(calc.urgentFee) }} ₽</b></p>
                   <p v-if="calc.discount" class="bd-row bd-row--ok"><span>Скидка за объём −{{ discountShare * 100 }}%</span><b>−{{ fmt(calc.discount) }} ₽</b></p>
                   <p class="bd-row"><span>Доставка</span><b>{{ delivery.external ? 'по тарифу ТК' : calc.deliveryCost ? fmt(calc.deliveryCost) + ' ₽' : 'бесплатно' }}</b></p>
+                  <p class="bd-row bd-row--vat"><span>В том числе НДС 20%</span><b>{{ fmt(calc.vat) }} ₽</b></p>
                 </div>
               </div>
 
@@ -516,6 +526,12 @@ const breakdownOpen = ref(false)
 <style scoped>
 /* ============ hero ============ */
 .clc-hero { padding-bottom: 56px; }
+.clc-hero-cta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
 
 /* ============ layout ============ */
 .clc-sec { padding-top: 72px; overflow: visible; }
@@ -940,6 +956,13 @@ const breakdownOpen = ref(false)
 }
 .bd-row b { font-variant-numeric: tabular-nums; color: var(--white); font-weight: 600; white-space: nowrap; }
 .bd-row--ok, .bd-row--ok b { color: var(--ok); }
+.bd-row--vat {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line-d);
+  color: var(--w-faint);
+}
+.bd-row--vat b { color: var(--w-soft); }
 
 .panel-btn { margin-top: 8px; }
 .panel-note {

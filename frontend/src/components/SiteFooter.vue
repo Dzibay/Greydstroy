@@ -86,9 +86,10 @@ import CompanyLogo from './ui/CompanyLogo.vue'
 .ftr-contacts a:hover { color: var(--white); }
 .ftr-phone {
   font-family: var(--font-m);
-  font-size: 17px !important;
+  font-size: clamp(13px, 1.1vw + 0.55rem, 17px) !important;
   font-weight: 600;
   color: var(--white) !important;
+  white-space: nowrap;
 }
 .ftr-phone:hover { color: var(--acc-hot) !important; }
 .ftr-addr { font-size: 13px; color: var(--w-faint); line-height: 1.7; margin-top: 6px; }
