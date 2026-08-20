@@ -436,111 +436,36 @@ const summary = computed(() => {
 
 const breakdownOpen = ref(false)
 
-/* мобильная схема: едет к слоту через transform, в конце телепорт */
+/* мобильная схема: fade в углу / fade в панели */
 const SKETCH_MQ = 900
 const sketchSlot = ref(null)
-const sketchFly = ref(null)
 const sketchMobile = ref(
   typeof window !== 'undefined' && window.matchMedia(`(max-width: ${SKETCH_MQ}px)`).matches,
 )
 const sketchPinned = ref(false)
 
 let pinRaf = 0
-let flyRest = null
-let flyMaxT = 0
-let flyDocked = false
-let flyAwaitDown = false
-let flySlotTop = 0
-
-function resetFlyTrack() {
-  flyRest = null
-  flyMaxT = 0
-  flyDocked = false
-  flyAwaitDown = false
-}
-
 function syncSketchPin() {
   const mobile = window.matchMedia(`(max-width: ${SKETCH_MQ}px)`).matches
   if (sketchMobile.value !== mobile) sketchMobile.value = mobile
   if (!mobile || mode.value !== 'object') {
-    resetFlyTrack()
     if (sketchPinned.value) sketchPinned.value = false
     return
   }
-
   const slot = sketchSlot.value
   const calc = document.getElementById('calculator')
   if (!slot || !calc) return
-
   const calcR = calc.getBoundingClientRect()
-  const sr = slot.getBoundingClientRect()
-  const inCalc = calcR.top < window.innerHeight - 24 && calcR.bottom > 96
-
-  if (!inCalc) {
-    resetFlyTrack()
+  const r = slot.getBoundingClientRect()
+  const topSafe = 86
+  const inCalc = calcR.top < window.innerHeight - 24 && calcR.bottom > topSafe
+  if (!inCalc || r.bottom < topSafe) {
     if (sketchPinned.value) sketchPinned.value = false
     return
   }
-
-  if (flyDocked) {
-    if (sr.top > window.innerHeight - 12) {
-      flyDocked = false
-      flyRest = null
-      flyMaxT = 0
-      flyAwaitDown = true
-      flySlotTop = sr.top
-      sketchPinned.value = true
-    }
-    return
-  }
-
-  if (!sketchPinned.value) {
-    sketchPinned.value = true
-    return
-  }
-
-  const el = sketchFly.value
-  if (!el) return
-
-  if (flyAwaitDown) {
-    if (sr.top < flySlotTop - 4) flyAwaitDown = false
-    else {
-      flySlotTop = sr.top
-      el.style.transform = 'none'
-      return
-    }
-  }
-  flySlotTop = sr.top
-
-  if (!flyRest) {
-    el.style.transform = 'none'
-    const r = el.getBoundingClientRect()
-    flyRest = { left: r.left, top: r.top, width: r.width }
-  }
-
-  const range = Math.max(240, window.innerHeight * 0.42)
-  let t = 1 - Math.min(1, Math.max(0, (sr.top - 118) / range))
-  t = t * t * (3 - 2 * t)
-  if (t < flyMaxT) t = flyMaxT
-  else flyMaxT = t
-
-  if (t >= 0.92 || sr.top <= 118) {
-    flyDocked = true
-    flyAwaitDown = false
-    el.style.transform = 'none'
-    sketchPinned.value = false
-    return
-  }
-
-  if (t <= 0) {
-    el.style.transform = 'none'
-    return
-  }
-
-  const dx = sr.left - flyRest.left
-  const dy = sr.top - flyRest.top
-  const sc = sr.width / Math.max(flyRest.width, 1)
-  el.style.transform = `translate3d(${dx * t}px, ${dy * t}px, 0) scale(${1 + (sc - 1) * t})`
+  const fullyIn = r.top >= topSafe - 1 && r.bottom <= window.innerHeight + 1
+  const next = !fullyIn
+  if (sketchPinned.value !== next) sketchPinned.value = next
 }
 
 function scheduleSketchPin() {
@@ -551,28 +476,17 @@ function scheduleSketchPin() {
   })
 }
 
-function onSketchResize() {
-  flyRest = null
-  scheduleSketchPin()
-}
-
 onMounted(() => {
   scheduleSketchPin()
   window.addEventListener('scroll', scheduleSketchPin, { passive: true })
-  window.addEventListener('resize', onSketchResize)
+  window.addEventListener('resize', scheduleSketchPin)
 })
 onUnmounted(() => {
   window.removeEventListener('scroll', scheduleSketchPin)
-  window.removeEventListener('resize', onSketchResize)
+  window.removeEventListener('resize', scheduleSketchPin)
   if (pinRaf) cancelAnimationFrame(pinRaf)
 })
-watch(mode, () => {
-  resetFlyTrack()
-  nextTick(scheduleSketchPin)
-})
-watch(sketchPinned, (on) => {
-  if (on) nextTick(scheduleSketchPin)
-})
+watch(mode, () => nextTick(scheduleSketchPin))
 
 /* без отдельной навигации шагов — правый блок всегда в поле зрения */
 </script>
@@ -1218,25 +1132,26 @@ watch(sketchPinned, (on) => {
     </section>
 
     <Teleport to="body">
-      <div
-        v-if="mode === 'object' && sketchMobile && sketchPinned"
-        ref="sketchFly"
-        class="sketch-fly"
-        aria-hidden="true"
-      >
-        <BuildingPreview
-          compact
-          :length="bLength"
-          :width="bWidth"
-          :height="bHeight"
-          :roof="bRoof.id"
-          :crane="bCrane.id"
-          :col-step="bStep.id"
-          :mezzanine="bMezzanine"
-          :stairs="bStairs"
-          :foundation="bFound.id"
-        />
-      </div>
+      <Transition name="sketch-fade">
+        <div
+          v-if="mode === 'object' && sketchMobile && sketchPinned"
+          class="sketch-fly"
+          aria-hidden="true"
+        >
+          <BuildingPreview
+            compact
+            :length="bLength"
+            :width="bWidth"
+            :height="bHeight"
+            :roof="bRoof.id"
+            :crane="bCrane.id"
+            :col-step="bStep.id"
+            :mezzanine="bMezzanine"
+            :stairs="bStairs"
+            :foundation="bFound.id"
+          />
+        </div>
+      </Transition>
     </Teleport>
   </main>
 </template>
@@ -1696,7 +1611,10 @@ watch(sketchPinned, (on) => {
   padding: 4px 2px 0;
   margin-bottom: 10px;
 }
-.panel-sketch--away :deep(.sketch) { visibility: hidden; }
+.panel-sketch :deep(.sketch) {
+  transition: opacity 0.32s ease;
+}
+.panel-sketch--away :deep(.sketch) { opacity: 0; }
 
 .sketch-fly {
   position: fixed;
@@ -1711,14 +1629,19 @@ watch(sketchPinned, (on) => {
   background: rgba(0, 0, 0, 0.42);
   border: 1px solid rgba(255, 90, 31, 0.4);
   border-radius: var(--r-sm);
-  transform-origin: top left;
-  will-change: transform;
-  backface-visibility: hidden;
 }
 .sketch-fly :deep(.sketch) {
   display: block;
   width: 100%;
   height: auto;
+}
+.sketch-fade-enter-active,
+.sketch-fade-leave-active {
+  transition: opacity 0.32s ease;
+}
+.sketch-fade-enter-from,
+.sketch-fade-leave-to {
+  opacity: 0;
 }
 .panel-stats {
   display: grid;
