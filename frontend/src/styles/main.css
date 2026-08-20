@@ -255,11 +255,14 @@ ul, ol { list-style: none; }
 
 .page-title {
   font-family: var(--font-d);
-  font-size: clamp(28px, 4vw, 42px);
+  font-size: clamp(22px, 6.2vw, 42px);
   font-weight: 900;
-  line-height: 1.15;
+  line-height: 1.18;
   text-transform: uppercase;
   margin-bottom: 16px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 .page-title em {
   font-style: normal;
@@ -308,4 +311,5 @@ ul, ol { list-style: none; }
   .sec { padding: 72px 0; }
   .container { padding: 0 18px; }
   .sec-head { margin-bottom: 36px; }
+  .page-title { font-size: clamp(20px, 7.2vw, 30px); }
 }

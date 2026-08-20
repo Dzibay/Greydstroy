@@ -422,7 +422,7 @@ const breakdownOpen = ref(false)
         <RouterLink to="/" class="page-back" v-reveal>← На главную</RouterLink>
         <div class="sec-head" v-reveal="60">
           <p class="sec-tag"><span class="idx">Онлайн</span> Калькулятор</p>
-          <h1 class="page-title">Калькулятор стоимости <em>металлоконструкций</em></h1>
+          <h1 class="page-title">Калькулятор стоимости <em>металло&shy;конструкций</em></h1>
           <p class="page-desc">
             Два режима: отдельные детали по массе или каркас объекта по габаритам.
             Соберите конфигурацию — получите ориентир цены и срока без звонка.
