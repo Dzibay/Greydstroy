@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import LeadForm from '../components/ui/LeadForm.vue'
 import BuildingPreview from '../components/calc/BuildingPreview.vue'
@@ -435,6 +435,92 @@ const summary = computed(() => {
 })
 
 const breakdownOpen = ref(false)
+
+/* мобильная схема: угол → слот в панели */
+const SKETCH_MQ = 900
+const sketchSlot = ref(null)
+const sketchMobile = ref(
+  typeof window !== 'undefined' && window.matchMedia(`(max-width: ${SKETCH_MQ}px)`).matches,
+)
+const flyBox = ref(null)
+const sketchDocked = ref(false)
+const sketchReady = ref(false)
+
+let flyRaf = 0
+function scheduleSketchFly() {
+  if (flyRaf) return
+  flyRaf = requestAnimationFrame(() => {
+    flyRaf = 0
+    updateSketchFly()
+  })
+}
+
+function updateSketchFly() {
+  const mobile = window.matchMedia(`(max-width: ${SKETCH_MQ}px)`).matches
+  sketchMobile.value = mobile
+  if (!mobile || mode.value !== 'object') {
+    flyBox.value = null
+    sketchDocked.value = false
+    sketchReady.value = false
+    return
+  }
+  const slot = sketchSlot.value
+  const calcSec = document.getElementById('calculator')
+  if (!slot || !calcSec) return
+
+  const sr = slot.getBoundingClientRect()
+  const calcTop = calcSec.getBoundingClientRect().top
+  const vw = window.innerWidth
+  const header = 76
+  const pad = 10
+  const floatW = Math.min(168, Math.max(132, vw * 0.38))
+  const floatH = floatW * (210 / 400) + 8
+  const floatTop = header + 10
+  const floatLeft = vw - floatW - pad
+
+  const enter = Math.min(1, Math.max(0, (header + 36 - calcTop) / 64))
+  const range = Math.max(sr.height * 1.8, 260)
+  let t = 1 - Math.min(1, Math.max(0, (sr.top - floatTop) / range))
+  t = t * t * (3 - 2 * t)
+
+  const left = floatLeft + (sr.left - floatLeft) * t
+  const top = floatTop + (sr.top - floatTop) * t
+  const width = floatW + (sr.width - floatW) * t
+  const height = floatH + (sr.height - floatH) * t
+  const lift = 1 - t
+
+  flyBox.value = {
+    left: `${left}px`,
+    top: `${top}px`,
+    width: `${width}px`,
+    height: `${height}px`,
+    opacity: String(enter),
+    boxShadow: `0 ${10 * lift}px ${26 * lift}px rgba(0, 0, 0, ${0.45 * lift})`,
+  }
+  sketchDocked.value = t > 0.97
+  sketchReady.value = enter > 0.02
+}
+
+let sketchRo = null
+onMounted(() => {
+  scheduleSketchFly()
+  window.addEventListener('scroll', scheduleSketchFly, { passive: true })
+  window.addEventListener('resize', scheduleSketchFly)
+  sketchRo = new ResizeObserver(scheduleSketchFly)
+  if (sketchSlot.value) sketchRo.observe(sketchSlot.value)
+})
+onUnmounted(() => {
+  window.removeEventListener('scroll', scheduleSketchFly)
+  window.removeEventListener('resize', scheduleSketchFly)
+  sketchRo?.disconnect()
+  if (flyRaf) cancelAnimationFrame(flyRaf)
+})
+watch([mode, breakdownOpen], () => {
+  nextTick(() => {
+    if (sketchRo && sketchSlot.value) sketchRo.observe(sketchSlot.value)
+    scheduleSketchFly()
+  })
+})
 
 /* без отдельной навигации шагов — правый блок всегда в поле зрения */
 </script>
@@ -937,8 +1023,13 @@ const breakdownOpen = ref(false)
           <aside class="clc-panel-wrap">
             <div class="clc-panel" :class="{ 'clc-panel--object': mode === 'object' }" v-reveal="120">
               <div v-if="mode === 'object'" class="panel-visual">
-                <div class="panel-sketch">
+                <div
+                  ref="sketchSlot"
+                  class="panel-sketch"
+                  :class="{ 'panel-sketch--ghost': sketchMobile }"
+                >
                   <BuildingPreview
+                    v-if="!sketchMobile"
                     compact
                     :length="bLength"
                     :width="bWidth"
@@ -1074,6 +1165,29 @@ const breakdownOpen = ref(false)
         </div>
       </div>
     </section>
+
+    <Teleport to="body">
+      <div
+        v-if="mode === 'object' && sketchMobile && sketchReady && flyBox"
+        class="sketch-fly"
+        :class="{ 'sketch-fly--docked': sketchDocked }"
+        :style="flyBox"
+        aria-hidden="true"
+      >
+        <BuildingPreview
+          compact
+          :length="bLength"
+          :width="bWidth"
+          :height="bHeight"
+          :roof="bRoof.id"
+          :crane="bCrane.id"
+          :col-step="bStep.id"
+          :mezzanine="bMezzanine"
+          :stairs="bStairs"
+          :foundation="bFound.id"
+        />
+      </div>
+    </Teleport>
   </main>
 </template>
 
@@ -1148,6 +1262,11 @@ const breakdownOpen = ref(false)
   grid-template-columns: 1fr 380px;
   gap: 40px;
   align-items: start;
+  min-width: 0;
+}
+.clc-steps,
+.clc-panel-wrap {
+  min-width: 0;
 }
 
 /* ============ шаги ============ */
@@ -1526,6 +1645,35 @@ const breakdownOpen = ref(false)
   border-radius: var(--r-sm);
   padding: 4px 2px 0;
   margin-bottom: 10px;
+}
+.panel-sketch--ghost {
+  aspect-ratio: 400 / 218;
+  min-height: 118px;
+  pointer-events: none;
+}
+
+.sketch-fly {
+  position: fixed;
+  z-index: 45;
+  margin: 0;
+  padding: 4px 2px 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.42);
+  border: 1px solid rgba(255, 90, 31, 0.4);
+  border-radius: var(--r-sm);
+  backdrop-filter: blur(10px);
+}
+.sketch-fly :deep(.sketch) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.sketch-fly--docked {
+  z-index: 12;
+  background: rgba(0, 0, 0, 0.28);
+  border-color: var(--line-d);
+  backdrop-filter: none;
 }
 .panel-stats {
   display: grid;
