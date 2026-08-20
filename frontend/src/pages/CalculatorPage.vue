@@ -459,7 +459,8 @@ function syncSketchPin() {
   const r = slot.getBoundingClientRect()
   const topSafe = 86
   const inCalc = calcR.top < window.innerHeight - 24 && calcR.bottom > topSafe
-  if (!inCalc || r.bottom < topSafe) {
+  const scrolledPast = r.top < topSafe - 1
+  if (!inCalc || scrolledPast) {
     if (sketchPinned.value) sketchPinned.value = false
     return
   }
