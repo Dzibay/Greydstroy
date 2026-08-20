@@ -617,19 +617,6 @@ const breakdownOpen = ref(false)
             <div id="step-dim" class="clc-step" v-reveal="60">
               <p class="clc-step-tag"><span>{{ stepNo.dim }}</span> Габариты каркаса</p>
               <div class="dim-box">
-                <div class="dim-preview dim-preview--mobile">
-                  <BuildingPreview
-                    compact
-                    :length="bLength"
-                    :width="bWidth"
-                    :height="bHeight"
-                    :roof="bRoof.id"
-                    :crane="bCrane.id"
-                    :col-step="bStep.id"
-                    :mezzanine="bMezzanine"
-                  />
-                </div>
-
                 <div class="dim-controls">
                   <div class="dim-ctl">
                     <div class="dim-ctl-h">
@@ -924,6 +911,7 @@ const breakdownOpen = ref(false)
                     :crane="bCrane.id"
                     :col-step="bStep.id"
                     :mezzanine="bMezzanine"
+                    :stairs="bStairs"
                   />
                 </div>
                 <div class="panel-stats">
@@ -1330,7 +1318,6 @@ const breakdownOpen = ref(false)
   border-radius: var(--r);
   padding: 22px 22px 18px;
 }
-.dim-preview { display: none; }
 .dim-controls {
   display: flex;
   flex-direction: column;
@@ -1697,15 +1684,6 @@ const breakdownOpen = ref(false)
   .clc-step { scroll-margin-top: 126px; }
   .clc-form-grid { grid-template-columns: 1fr; gap: 36px; }
   .clc-modes { grid-template-columns: 1fr; }
-  .dim-preview--mobile {
-    display: block;
-    background: rgba(0, 0, 0, 0.22);
-    border: 1px solid var(--line-d);
-    border-radius: var(--r-sm);
-    padding: 6px 4px 0;
-    margin-bottom: 16px;
-  }
-  .panel-sketch { display: none; }
 
   .clc-mobilebar {
     position: fixed;

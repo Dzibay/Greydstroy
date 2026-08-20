@@ -9,6 +9,7 @@ const props = defineProps({
   crane: { type: String, default: 'none' },
   colStep: { type: Number, default: 6 },
   mezzanine: { type: Boolean, default: false },
+  stairs: { type: Boolean, default: false },
   compact: { type: Boolean, default: false },
 })
 
@@ -138,6 +139,56 @@ const geo = computed(() => {
     mezz = [P(0, 0, z), P(L * 0.55, 0, z), P(L * 0.55, W, z), P(0, W, z)]
   }
 
+  let stairs = null
+  if (props.stairs) {
+    const zTop = props.mezzanine ? H * 0.48 : H * 0.42
+    const x0 = L * 0.04
+    const x1 = L * 0.26
+    const y0 = 0
+    const y1 = Math.min(W * 0.16, W * 0.5)
+    const n = 7
+    const treads = []
+    const stringerA = []
+    const stringerB = []
+    for (let i = 0; i <= n; i++) {
+      const t = i / n
+      const x = x0 + t * (x1 - x0)
+      const z = t * zTop
+      stringerA.push(P(x, y0, z))
+      stringerB.push(P(x, y1, z))
+      treads.push({ a: P(x, y0, z), b: P(x, y1, z) })
+    }
+    const landW = Math.min(L * 0.12, (x1 - x0) * 0.7)
+    const landD = y1 * 1.45
+    const land = [P(x1, y0, zTop), P(x1 + landW, y0, zTop), P(x1 + landW, landD, zTop), P(x1, landD, zTop)]
+    const railH = H * 0.1
+    const rail = [
+      P(x0, y0, railH * 0.3),
+      ...Array.from({ length: n + 1 }, (_, i) => {
+        const t = i / n
+        return P(x0 + t * (x1 - x0), y0, t * zTop + railH)
+      }),
+      P(x1 + landW, y0, zTop + railH),
+      P(x1 + landW, landD, zTop + railH),
+      P(x1, landD, zTop + railH),
+    ]
+    const posts = [
+      { a: P(x0, y0, 0), b: P(x0, y0, railH * 0.3) },
+      { a: P(x1, y0, zTop), b: P(x1, y0, zTop + railH) },
+      { a: P(x1 + landW, y0, zTop), b: P(x1 + landW, y0, zTop + railH) },
+      { a: P(x1 + landW, landD, zTop), b: P(x1 + landW, landD, zTop + railH) },
+      { a: P(x1, landD, zTop), b: P(x1, landD, zTop + railH) },
+    ]
+    stairs = {
+      stringerA: pts(stringerA),
+      stringerB: pts(stringerB),
+      treads,
+      land: pts(land),
+      rail: pts(rail),
+      posts,
+    }
+  }
+
   const midL = P(L / 2, 0, 0)
   const midW = P(L, W / 2, 0)
   const midH = P(0, 0, H / 2)
@@ -151,6 +202,7 @@ const geo = computed(() => {
     ridge,
     crane,
     mezz: mezz ? pts(mezz) : null,
+    stairs,
     labels: {
       L: { ...midL, text: `${fmtM(L)} м` },
       W: { ...midW, text: `${fmtM(W)} м` },
@@ -263,6 +315,36 @@ function fmtM(n) {
         :x2="p.b.x"
         :y2="p.b.y"
       />
+    </g>
+
+    <g v-if="geo.stairs" fill="none" stroke="#86b6ff" stroke-linejoin="round" stroke-linecap="round">
+      <polygon
+        :points="geo.stairs.land"
+        fill="rgba(134,182,255,0.16)"
+        stroke="#86b6ff"
+        stroke-width="1.45"
+      />
+      <polyline :points="geo.stairs.stringerA" stroke-width="1.7" />
+      <polyline :points="geo.stairs.stringerB" stroke-width="1.35" opacity="0.7" />
+      <line
+        v-for="(t, i) in geo.stairs.treads"
+        :key="'st' + i"
+        :x1="t.a.x"
+        :y1="t.a.y"
+        :x2="t.b.x"
+        :y2="t.b.y"
+        stroke-width="1.25"
+      />
+      <line
+        v-for="(p, i) in geo.stairs.posts"
+        :key="'sp' + i"
+        :x1="p.a.x"
+        :y1="p.a.y"
+        :x2="p.b.x"
+        :y2="p.b.y"
+        stroke-width="1.2"
+      />
+      <polyline :points="geo.stairs.rail" stroke-width="1.45" />
     </g>
 
     <text class="lbl lbl-l" :x="geo.labels.L.x" :y="geo.labels.L.y + 16" text-anchor="middle">
