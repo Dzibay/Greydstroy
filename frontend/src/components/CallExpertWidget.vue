@@ -17,18 +17,18 @@ const open = ref(false)
           расчёт по вашему чертежу за 1 рабочий день.
         </p>
 
-        <a href="tel:+79056646665" class="cew-phone">+7 (905) 664-66-65</a>
+        <a href="tel:+79056646665" class="cew-phone" data-track="tel-widget">+7 (905) 664-66-65</a>
 
         <ul class="cew-list">
           <li><span>◆</span> Пн–Пт: 08:00 – 17:00 (МСК)</li>
           <li><span>◆</span> Отвечает инженер, а не колл-центр</li>
         </ul>
 
-        <a href="/kalkulyator" class="btn btn--block cew-btn" @click="open = false">Рассчитать заказ</a>
+        <a href="/kalkulyator" class="btn btn--block cew-btn" data-track="calc-widget" @click="open = false">Рассчитать заказ</a>
       </div>
     </transition>
 
-    <button class="cew-fab" :class="{ open }" @click="open = !open">
+    <button class="cew-fab" data-track="expert-fab" :class="{ open }" @click="open = !open">
       <span class="cew-fab-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path

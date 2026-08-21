@@ -5,6 +5,7 @@ import LeadForm from '../components/ui/LeadForm.vue'
 import BuildingPreview from '../components/calc/BuildingPreview.vue'
 import SnowRegionPicker from '../components/calc/SnowRegionPicker.vue'
 import { SNOW_REGIONS, DEFAULT_REGION } from '../data/snowRegions'
+import { track } from '../analytics/tracker'
 
 /* =====================================================
    Тарифы — «примерные параметры», правятся в одном месте
@@ -206,10 +207,63 @@ watch(bRegion, (code) => {
   if (!r) return
   const s = SNOW.find((x) => x.id === r.snow)
   if (s) bSnow.value = s
+  trackCalc('region', { id: code, label: r.title || code })
 })
 
 function setMode(next) {
+  const changed = mode.value !== next
   mode.value = next
+  if (changed) {
+    trackCalc('mode', {
+      id: next,
+      label: next === 'object' ? 'Объект целиком' : 'Детали и конструкции',
+    })
+  }
+}
+
+function trackCalc(action, item) {
+  const id = item && typeof item === 'object' ? String(item.id ?? '') : String(item ?? '')
+  const label = item && typeof item === 'object' ? String(item.label ?? id) : String(item ?? '')
+  track('calc', {
+    label,
+    props: { action, mode: mode.value, id },
+  })
+}
+
+function pickType(t) {
+  type.value = t
+  trackCalc('type', t)
+}
+function pickKind(k) {
+  bKind.value = k
+  trackCalc('kind', k)
+}
+function pickCoating(c) {
+  coating.value = c
+  trackCalc('coating', c)
+}
+function pickDelivery(d) {
+  delivery.value = d
+  trackCalc('delivery', d)
+}
+function pickRoof(r) {
+  bRoof.value = r
+  trackCalc('roof', r)
+}
+function pickCrane(c) {
+  bCrane.value = c
+  trackCalc('crane', c)
+}
+function pickMetal(own) {
+  ownMetal.value = own
+  trackCalc('metal', {
+    id: own ? 'own' : 'ours',
+    label: own ? 'Металл заказчика' : 'Наш металл',
+  })
+}
+function pickMassPreset(p) {
+  mass.value = p
+  trackCalc('mass', { id: String(p), label: `${p} т` })
 }
 
 /* ---------- масса: лог-слайдер + пресеты ---------- */
@@ -481,6 +535,10 @@ onMounted(() => {
   scheduleSketchPin()
   window.addEventListener('scroll', scheduleSketchPin, { passive: true })
   window.addEventListener('resize', scheduleSketchPin)
+  trackCalc('mode', {
+    id: mode.value,
+    label: mode.value === 'object' ? 'Объект целиком' : 'Детали и конструкции',
+  })
 })
 onUnmounted(() => {
   window.removeEventListener('scroll', scheduleSketchPin)
@@ -509,10 +567,10 @@ watch(mode, () => nextTick(scheduleSketchPin))
         </div>
 
         <div class="clc-hero-cta" v-reveal="140">
-          <a href="#calculator" class="btn" :class="{ 'btn--ghost': mode === 'object' }" @click="setMode('details')">
+          <a href="#calculator" class="btn" data-notrack :class="{ 'btn--ghost': mode === 'object' }" @click="setMode('details')">
             Детали и конструкции
           </a>
-          <a href="#calculator" class="btn" :class="{ 'btn--ghost': mode === 'details' }" @click="setMode('object')">
+          <a href="#calculator" class="btn" data-notrack :class="{ 'btn--ghost': mode === 'details' }" @click="setMode('object')">
             Объект целиком
           </a>
         </div>
@@ -529,6 +587,7 @@ watch(mode, () => nextTick(scheduleSketchPin))
             role="tab"
             :aria-selected="mode === 'details'"
             @click="setMode('details')"
+            data-notrack
           >
             <span class="clc-mode-icon" aria-hidden="true">
               <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -548,6 +607,7 @@ watch(mode, () => nextTick(scheduleSketchPin))
             role="tab"
             :aria-selected="mode === 'object'"
             @click="setMode('object')"
+            data-notrack
           >
             <span class="clc-mode-icon" aria-hidden="true">
               <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -575,7 +635,8 @@ watch(mode, () => nextTick(scheduleSketchPin))
                   :key="t.id"
                   class="type-card"
                   :class="{ active: type.id === t.id }"
-                  @click="type = t"
+                  @click="pickType(t)"
+                  data-notrack
                 >
                   <span class="type-icon" aria-hidden="true">
                     <svg v-if="t.icon === 'plate'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -625,7 +686,8 @@ watch(mode, () => nextTick(scheduleSketchPin))
                       :key="p"
                       class="mass-preset"
                       :class="{ active: mass === p }"
-                      @click="mass = p"
+                      @click="pickMassPreset(p)"
+                      data-notrack
                     >
                       {{ p }}
                     </button>
@@ -673,7 +735,8 @@ watch(mode, () => nextTick(scheduleSketchPin))
                   :key="k.id"
                   class="type-card"
                   :class="{ active: bKind.id === k.id }"
-                  @click="bKind = k"
+                  @click="pickKind(k)"
+                  data-notrack
                 >
                   <span class="type-icon" aria-hidden="true">
                     <svg v-if="k.icon === 'canopy'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -822,7 +885,8 @@ watch(mode, () => nextTick(scheduleSketchPin))
                   :key="r.id"
                   class="coat-btn"
                   :class="{ active: bRoof.id === r.id }"
-                  @click="bRoof = r"
+                  @click="pickRoof(r)"
+                  data-notrack
                 >
                   <span class="coat-label">{{ r.label }}</span>
                 </button>
@@ -835,7 +899,8 @@ watch(mode, () => nextTick(scheduleSketchPin))
                   :key="c.id"
                   class="coat-btn"
                   :class="{ active: bCrane.id === c.id }"
-                  @click="bCrane = c"
+                  @click="pickCrane(c)"
+                  data-notrack
                 >
                   <span class="coat-label">{{ c.label }}</span>
                   <span class="coat-note">{{ c.note }}</span>
@@ -903,11 +968,11 @@ watch(mode, () => nextTick(scheduleSketchPin))
             <div id="step-metal" class="clc-step" v-reveal="60">
               <p class="clc-step-tag"><span>{{ stepNo.metal }}</span> Чей металл</p>
               <div class="seg">
-                <button class="seg-btn" :class="{ active: !ownMetal }" @click="ownMetal = false">
+                <button class="seg-btn" data-notrack :class="{ active: !ownMetal }" @click="pickMetal(false)">
                   <span class="seg-title">Ваш металл — наша забота</span>
                   <span class="seg-note">закупим сами и включим в смету</span>
                 </button>
-                <button class="seg-btn" :class="{ active: ownMetal }" @click="ownMetal = true">
+                <button class="seg-btn" data-notrack :class="{ active: ownMetal }" @click="pickMetal(true)">
                   <span class="seg-title">Металл заказчика</span>
                   <span class="seg-note">давальческое сырьё, примем по накладной</span>
                 </button>
@@ -923,7 +988,8 @@ watch(mode, () => nextTick(scheduleSketchPin))
                   :key="c.id"
                   class="coat-btn"
                   :class="{ active: coating.id === c.id }"
-                  @click="coating = c"
+                  @click="pickCoating(c)"
+                  data-notrack
                 >
                   <span class="coat-label">{{ c.label }}</span>
                   <span class="coat-note">{{ c.note }}</span>
@@ -976,7 +1042,8 @@ watch(mode, () => nextTick(scheduleSketchPin))
                   :key="d.id"
                   class="coat-btn"
                   :class="{ active: delivery.id === d.id }"
-                  @click="delivery = d"
+                  @click="pickDelivery(d)"
+                  data-notrack
                 >
                   <span class="coat-label">{{ d.label }}</span>
                   <span class="coat-note">{{ d.note }}</span>
@@ -1061,7 +1128,7 @@ watch(mode, () => nextTick(scheduleSketchPin))
                 </div>
               </div>
 
-              <a href="#calc-form" class="btn btn--block panel-btn">Получить точный расчёт</a>
+              <a href="#calc-form" class="btn btn--block panel-btn" data-track="calc-get-quote">Получить точный расчёт</a>
               <p class="panel-note">
                 Это ориентир, а не оферта: точная цена зависит от чертежа КМ и текущей цены металла.
                 <template v-if="mode === 'object'">

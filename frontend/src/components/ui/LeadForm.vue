@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, ref, nextTick } from 'vue'
 import { applyPhoneInput, applyPhonePaste, isValidRuPhone } from '../../utils/phone'
+import { getIds, track } from '../../analytics/tracker'
 
 const props = defineProps({
   extended: { type: Boolean, default: false },
@@ -24,6 +25,13 @@ const sending = ref(false)
 const error = ref('')
 const phoneRef = ref(null)
 const fileRef = ref(null)
+const formStarted = ref(false)
+
+function onFormStart() {
+  if (formStarted.value) return
+  formStarted.value = true
+  track('form_start', { label: props.buttonText })
+}
 
 function onFile(e) {
   const f = e.target.files?.[0]
@@ -113,6 +121,9 @@ async function submit() {
     payload.append('comment', [props.commentPrefix, form.comment].filter(Boolean).join('\n\n'))
     payload.append('file_name', form.fileName)
     payload.append('source', window.location.pathname)
+    const ids = getIds()
+    payload.append('visitor_id', ids.visitorId)
+    payload.append('session_id', ids.sessionId)
     if (file) payload.append('file', file)
 
     const res = await fetch('/api/leads', {
@@ -121,8 +132,10 @@ async function submit() {
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     sent.value = true
+    track('form_submit', { label: props.buttonText })
   } catch {
     error.value = 'Не удалось отправить заявку. Позвоните нам: +7 (905) 664-66-65.'
+    track('form_error', { label: props.buttonText })
   } finally {
     sending.value = false
   }
@@ -143,7 +156,7 @@ async function submit() {
         </p>
       </div>
 
-      <form v-else key="form" @submit.prevent="submit" novalidate>
+      <form v-else key="form" @submit.prevent="submit" novalidate @focusin="onFormStart">
         <input
           v-if="extended"
           v-model="form.name"
@@ -214,7 +227,7 @@ async function submit() {
 
         <p v-if="error" class="lf-error">{{ error }}</p>
 
-        <button class="btn btn--block" type="submit" :disabled="sending">
+        <button class="btn btn--block" type="submit" data-track="lead-submit" :disabled="sending">
           {{ sending ? 'Отправляем…' : buttonText }}
         </button>
         <p class="btn-note lf-note"><slot>Отвечаем в течение рабочего дня. Ни к чему не обязывает.</slot></p>

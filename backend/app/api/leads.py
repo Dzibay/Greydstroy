@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from app.analytics import parse_uuid
 from app.db import pool
 from app.paths import UPLOAD_DIR
 
@@ -18,6 +19,8 @@ class LeadIn(BaseModel):
     comment: str = Field(default="", max_length=4000)
     file_name: str = Field(default="", max_length=300)
     source: str = Field(default="", max_length=300)
+    visitor_id: str = Field(default="", max_length=36)
+    session_id: str = Field(default="", max_length=36)
 
 
 @router.post("/leads")
@@ -51,6 +54,8 @@ async def create_lead(request: Request) -> dict:
             comment=str(form.get("comment", "")),
             file_name=file_name or str(form.get("file_name", "")),
             source=str(form.get("source", "")),
+            visitor_id=str(form.get("visitor_id", "")),
+            session_id=str(form.get("session_id", "")),
         )
     else:
         lead = LeadIn.model_validate(await request.json())
@@ -61,9 +66,10 @@ async def create_lead(request: Request) -> dict:
         row = conn.execute(
             """
             INSERT INTO leads (
-                name, phone, has_drawing, comment, file_name, file_path, file_size, file_mime, source
+                name, phone, has_drawing, comment, file_name, file_path, file_size, file_mime,
+                source, visitor_id, session_id
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid, %s::uuid)
             RETURNING id
             """,
             (
@@ -76,6 +82,8 @@ async def create_lead(request: Request) -> dict:
                 file_size,
                 file_mime,
                 lead.source.strip(),
+                parse_uuid(lead.visitor_id),
+                parse_uuid(lead.session_id),
             ),
         ).fetchone()
     return {"ok": True, "id": row[0]}

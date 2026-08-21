@@ -43,12 +43,12 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
         >
           {{ item.label }}
         </RouterLink>
-        <a href="tel:+79056646665" class="hdr-phone-m">+7 (905) 664-66-65</a>
+        <a href="tel:+79056646665" class="hdr-phone-m" data-track="tel-header">+7 (905) 664-66-65</a>
       </nav>
 
       <div class="hdr-right">
-        <a href="tel:+79056646665" class="hdr-phone">+7 (905) 664-66-65</a>
-        <RouterLink to="/kalkulyator" class="btn hdr-btn" @click="menuOpen = false">Рассчитать заказ</RouterLink>
+        <a href="tel:+79056646665" class="hdr-phone" data-track="tel-header">+7 (905) 664-66-65</a>
+        <RouterLink to="/kalkulyator" class="btn hdr-btn" data-track="calc-header" @click="menuOpen = false">Рассчитать заказ</RouterLink>
         <button
           class="burger"
           :class="{ open: menuOpen }"

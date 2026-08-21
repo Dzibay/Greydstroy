@@ -43,7 +43,7 @@ const marquee = [
         </ul>
 
         <div class="hero-cta" v-reveal="320">
-          <RouterLink to="/kalkulyator" class="btn">Рассчитать стоимость в калькуляторе</RouterLink>
+          <RouterLink to="/kalkulyator" class="btn" data-track="calc-hero">Рассчитать стоимость в калькуляторе</RouterLink>
           <p class="btn-note">Ориентир цены и срока — сразу.<br />Точный расчёт по чертежу.</p>
         </div>
       </div>

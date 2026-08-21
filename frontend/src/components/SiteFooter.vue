@@ -26,15 +26,15 @@ import CompanyLogo from './ui/CompanyLogo.vue'
 
       <div class="ftr-contacts">
         <p class="ftr-h">Контакты</p>
-        <a href="tel:+79056646665" class="ftr-phone">+7 (905) 664-66-65</a>
-        <a href="mailto:greydstroy@yandex.ru">greydstroy@yandex.ru</a>
+        <a href="tel:+79056646665" class="ftr-phone" data-track="tel-footer">+7 (905) 664-66-65</a>
+        <a href="mailto:greydstroy@yandex.ru" data-track="mail-footer">greydstroy@yandex.ru</a>
         <p class="ftr-addr">Нижегородская область, г. Дзержинск<br />дорога Заревская объездная, д. 9В</p>
       </div>
 
       <div class="ftr-cta">
         <p class="ftr-h">Расчёт заказа</p>
         <p class="ftr-cta-text">Пришлите чертёж или опишите задачу — ответим в течение рабочего дня.</p>
-        <RouterLink to="/kalkulyator" class="btn">Рассчитать стоимость</RouterLink>
+        <RouterLink to="/kalkulyator" class="btn" data-track="calc-footer">Рассчитать стоимость</RouterLink>
       </div>
     </div>
 

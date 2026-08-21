@@ -111,7 +111,7 @@ const router = createRouter({
       path: ADMIN_PATH,
       name: 'admin',
       component: () => import('../pages/AdminLeadsPage.vue'),
-      meta: { bare: true, noindex: true, title: 'Панель заявок' },
+          meta: { bare: true, noindex: true, title: 'Админка' },
     },
   ],
   scrollBehavior(to) {

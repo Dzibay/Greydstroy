@@ -32,7 +32,7 @@
           </p>
         </div>
         <div class="magnet-cta">
-          <a href="/docs/chek-list.html" target="_blank" rel="noopener" class="btn">
+          <a href="/docs/chek-list.html" target="_blank" rel="noopener" class="btn" data-track="checklist">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 3h7v7" /><path d="M10 14 21 3" /><path d="M21 10v11H3V3h11" />
             </svg>

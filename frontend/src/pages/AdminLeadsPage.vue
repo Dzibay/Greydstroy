@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import AdminStats from '../components/admin/AdminStats.vue'
 
 const TOKEN_KEY = 'gs_admin_token'
 
@@ -13,6 +14,7 @@ const total = ref(0)
 const loading = ref(false)
 const loadError = ref('')
 const onlyWithFiles = ref(false)
+const tab = ref('stats')
 
 const filteredLeads = computed(() =>
   onlyWithFiles.value ? leads.value.filter((l) => l.file_path) : leads.value,
@@ -199,30 +201,44 @@ onMounted(loadLeads)
       </form>
     </div>
 
-    <!-- заявки -->
+    <!-- панель -->
     <div v-else class="adm-panel">
       <header class="adm-head">
         <div>
           <p class="adm-tag">Грэйдстрой · Админка</p>
-          <h1>
+          <h1 v-if="tab === 'leads'">
             Заявки
             <span class="adm-count">{{ onlyWithFiles ? filteredLeads.length : total }}</span>
             <span v-if="onlyWithFiles" class="adm-count-sub">из {{ total }}</span>
           </h1>
+          <h1 v-else>Статистика</h1>
         </div>
         <div class="adm-actions">
-          <label class="adm-filter">
+          <label v-if="tab === 'leads'" class="adm-filter">
             <input v-model="onlyWithFiles" type="checkbox" />
             <span>Только с файлами</span>
             <em v-if="filesCount">{{ filesCount }}</em>
           </label>
-          <button class="adm-btn" :disabled="loading" @click="loadLeads">
+          <button v-if="tab === 'leads'" class="adm-btn" :disabled="loading" @click="loadLeads">
             {{ loading ? 'Обновляем…' : 'Обновить' }}
           </button>
           <button class="adm-btn adm-btn--ghost" @click="logout">Выйти</button>
         </div>
       </header>
 
+      <nav class="adm-tabs">
+        <button type="button" :class="{ on: tab === 'stats' }" @click="tab = 'stats'">
+          Статистика
+        </button>
+        <button type="button" :class="{ on: tab === 'leads' }" @click="tab = 'leads'">
+          Заявки
+          <em v-if="total">{{ total }}</em>
+        </button>
+      </nav>
+
+      <AdminStats v-if="tab === 'stats'" :token="token" @unauthorized="logout" />
+
+      <div v-if="tab === 'leads'">
       <p v-if="loadError" class="adm-error">{{ loadError }}</p>
       <p v-if="fileError" class="adm-error">{{ fileError }}</p>
       <p v-if="deleteError" class="adm-error">{{ deleteError }}</p>
@@ -292,6 +308,7 @@ onMounted(loadLeads)
           </tbody>
         </table>
       </div>
+      </div>
     </div>
   </main>
 </template>
@@ -341,7 +358,7 @@ onMounted(loadLeads)
 
 /* ---- панель ---- */
 .adm-panel {
-  max-width: 1400px;
+  max-width: 1480px;
   margin: 0 auto;
 }
 .adm-head {
@@ -350,7 +367,7 @@ onMounted(loadLeads)
   justify-content: space-between;
   gap: 20px;
   flex-wrap: wrap;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 .adm-count {
   font-family: var(--font-m);
@@ -415,6 +432,41 @@ onMounted(loadLeads)
   box-shadow: inset 0 0 0 1.5px var(--line-d);
 }
 .adm-btn--ghost:hover { background: rgba(255, 255, 255, 0.06); color: var(--white); }
+
+.adm-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding: 4px;
+  width: fit-content;
+  background: var(--bg1);
+  border: 1px solid var(--line-d);
+  border-radius: 12px;
+}
+.adm-tabs button {
+  font-family: var(--font-m);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--w-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.adm-tabs button.on {
+  background: var(--acc);
+  color: #fff;
+}
+.adm-tabs em {
+  font-style: normal;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.16);
+  padding: 1px 7px;
+  border-radius: 999px;
+}
 
 .adm-error {
   font-size: 13.5px;
