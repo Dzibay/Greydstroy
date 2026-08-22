@@ -7,9 +7,9 @@ const props = defineProps({
 const emit = defineEmits(['unauthorized'])
 
 const loading = ref(false)
+const loaded = ref(false)
 const loadError = ref('')
 const actionError = ref('')
-const configured = ref(false)
 const reachable = ref(false)
 const tgError = ref('')
 const checks = ref([])
@@ -43,14 +43,15 @@ async function load() {
     const res = await api('/api/admin/telegram')
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const data = await res.json()
-    configured.value = data.configured
     reachable.value = Boolean(data.reachable)
     tgError.value = data.error || ''
     checks.value = data.checks || []
     recipients.value = data.recipients || []
     pending.value = data.pending || []
+    loaded.value = true
   } catch (err) {
     if (err.message !== 'unauthorized') loadError.value = 'Не удалось загрузить Telegram'
+    loaded.value = true
   } finally {
     loading.value = false
   }
@@ -128,17 +129,7 @@ onMounted(load)
     <p v-if="actionError" class="adm-error">{{ actionError }}</p>
     <p v-if="testOk" class="tg-ok">{{ testOk }}</p>
 
-    <div v-if="!configured" class="tg-card">
-      <h2>Бот ещё не подключён</h2>
-      <ol class="tg-steps">
-        <li>В Telegram откройте @BotFather → /newbot и скопируйте токен.</li>
-        <li>Вставьте его в <code>backend/.env</code> как <code>TELEGRAM_BOT_TOKEN</code>.</li>
-        <li>Перезапустите бэкенд и напишите боту «Старт».</li>
-        <li>Вернитесь сюда — вы сами появитесь в списке ожидающих.</li>
-      </ol>
-    </div>
-
-    <template v-else>
+    <template v-if="loaded">
       <div v-if="!reachable" class="tg-card tg-card--warn">
         <header class="tg-card-h">
           <div>
