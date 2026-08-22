@@ -3,18 +3,15 @@ from pydantic import BaseModel, Field
 
 from app.auth import require_admin
 from app.notify import (
-    bot_info,
     delete_recipient,
-    last_telegram_error,
     list_recipients,
-    pending_chats,
     send_test,
     send_welcome,
     set_recipient_enabled,
     telegram_configured,
+    telegram_diagnostics,
     upsert_recipient,
 )
-from app.config import settings
 
 router = APIRouter(dependencies=[Depends(require_admin)])
 
@@ -31,16 +28,9 @@ class EnabledIn(BaseModel):
 
 @router.get("/admin/telegram")
 def telegram_status() -> dict:
-    info = bot_info()
-    return {
-        "configured": telegram_configured(),
-        "bot": info,
-        "reachable": bool(info.get("ok")),
-        "error": info.get("error") or last_telegram_error(),
-        "join_code": settings.telegram_join_code.strip(),
-        "recipients": list_recipients(),
-        "pending": pending_chats() if telegram_configured() and info.get("ok") else [],
-    }
+    data = telegram_diagnostics()
+    data["recipients"] = list_recipients()
+    return data
 
 
 @router.post("/admin/telegram/recipients")

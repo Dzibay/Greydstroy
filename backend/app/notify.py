@@ -1,7 +1,6 @@
 """Уведомления о заявках через Telegram Bot API.
 
-Бот — курьер, не чат с клиентами. Получатели живут в telegram_recipients
-плюс TELEGRAM_CHAT_ID из .env. Отправка в фоне и не ломает форму.
+Бот — курьер. Доступ к API — через Cloudflare Worker (TELEGRAM_API_BASE).
 """
 
 from __future__ import annotations
@@ -10,8 +9,10 @@ import json
 import logging
 import mimetypes
 import re
+import time
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -33,6 +34,12 @@ PAGE_NAMES = {
     "/rekvizity": "Реквизиты",
 }
 TG_FILE_LIMIT = 45 * 1024 * 1024
+_OFFICIAL_API = "https://api.telegram.org"
+# Cloudflare Bot Fight Mode режет Python-urllib (HTTP 403 / 1010).
+_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+)
 _last_error = ""
 
 
@@ -41,15 +48,34 @@ def last_telegram_error() -> str:
 
 
 def _api_base() -> str:
-    return (settings.telegram_api_base or "https://api.telegram.org").strip().rstrip("/")
+    return (settings.telegram_api_base or _OFFICIAL_API).strip().rstrip("/")
 
 
-def _opener() -> urllib.request.OpenerDirector:
-    proxy = settings.telegram_proxy.strip()
-    handlers = []
-    if proxy:
-        handlers.append(urllib.request.ProxyHandler({"http": proxy, "https": proxy}))
-    return urllib.request.build_opener(*handlers)
+def _uses_relay() -> bool:
+    raw = (settings.telegram_api_base or "").strip()
+    return bool(raw) and "api.telegram.org" not in raw.lower()
+
+
+def explain_telegram_error(raw: str) -> str:
+    text = (raw or "").strip()
+    low = text.lower()
+    if "1010" in text:
+        return (
+            "Cloudflare отбил запрос (код 1010): защита от ботов не пускает сервер. "
+            "В Cloudflare у воркера выключите Bot Fight Mode "
+            "или Security → Bots."
+        )
+    if "11001" in text or "getaddrinfo" in low or "name or service not known" in low:
+        return "Не удалось найти хост релея. Проверьте TELEGRAM_API_BASE."
+    if "timed out" in low or "timeout" in low:
+        return "Таймаут: сервер не достучался до Cloudflare Worker. Проверьте TELEGRAM_API_BASE."
+    if "connection refused" in low or "10061" in text:
+        return "Соединение отклонено. Проверьте TELEGRAM_API_BASE."
+    if "unauthorized" in low:
+        return "Telegram не принял токен. Проверьте TELEGRAM_BOT_TOKEN у @BotFather."
+    if "conflict" in low and "webhook" in low:
+        return "У бота включён webhook — getUpdates пустой. Снимите webhook."
+    return text or "нет ответа от Telegram"
 
 
 def _esc(value: str) -> str:
@@ -104,15 +130,20 @@ def telegram_api(method: str, payload: dict | None = None, file: Path | None = N
     try:
         if file and file.is_file():
             data, headers = _multipart(payload or {}, file)
+            headers["User-Agent"] = _UA
             req = urllib.request.Request(url, data=data, headers=headers, method="POST")
         else:
             req = urllib.request.Request(
                 url,
                 data=json.dumps(payload or {}).encode("utf-8"),
-                headers={"Content-Type": "application/json"},
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "User-Agent": _UA,
+                },
                 method="POST",
             )
-        with _opener().open(req, timeout=20) as resp:
+        with urllib.request.urlopen(req, timeout=20) as resp:
             _last_error = ""
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
@@ -152,18 +183,211 @@ def _multipart(fields: dict[str, Any], file: Path) -> tuple[bytes, dict[str, str
 
 def bot_info() -> dict:
     if not telegram_configured():
-        return {"ok": False, "configured": False}
+        return {"ok": False, "configured": False, "api_base": _api_base(), "via_relay": _uses_relay()}
     data = telegram_api("getMe")
     result = data.get("result") or {}
+    raw_error = "" if data.get("ok") else (data.get("description") or last_telegram_error())
     return {
         "ok": bool(data.get("ok")),
         "configured": True,
         "username": result.get("username") or "",
         "name": result.get("first_name") or "",
         "id": result.get("id"),
-        "error": "" if data.get("ok") else (data.get("description") or last_telegram_error() or "нет ответа от Telegram"),
+        "error": explain_telegram_error(raw_error) if raw_error else "",
         "api_base": _api_base(),
-        "via_proxy": bool(settings.telegram_proxy.strip()),
+        "via_relay": _uses_relay(),
+    }
+
+
+def _fmt_ts(value: int | None) -> str:
+    if not value:
+        return ""
+    return datetime.fromtimestamp(int(value), tz=timezone.utc).astimezone().strftime("%d.%m %H:%M")
+
+
+def _parse_updates(data: dict) -> tuple[list[dict], list[dict], int]:
+    known = {r["chat_id"] for r in list_recipients()}
+    pending: dict[str, dict] = {}
+    recent: list[dict] = []
+    join_code = settings.telegram_join_code.strip()
+    items = data.get("result") or []
+    for upd in items:
+        msg = upd.get("message") or upd.get("channel_post") or {}
+        chat = msg.get("chat") or {}
+        chat_id = str(chat.get("id") or "")
+        if not chat_id:
+            continue
+        text = (msg.get("text") or "").strip()
+        first = chat.get("first_name") or chat.get("title") or ""
+        last = chat.get("last_name") or ""
+        name = f"{first} {last}".strip() or "Без имени"
+        username = chat.get("username") or ""
+        already = chat_id in known
+        recent.append(
+            {
+                "chat_id": chat_id,
+                "name": name,
+                "username": username,
+                "text": text[:80],
+                "at": _fmt_ts(msg.get("date")),
+                "already": already,
+            }
+        )
+        if already:
+            continue
+        if join_code and text.lower().startswith("/join"):
+            parts = text.split(maxsplit=1)
+            if len(parts) == 2 and parts[1].strip() == join_code:
+                upsert_recipient(chat_id, name, username)
+                send_welcome(chat_id)
+                known.add(chat_id)
+                continue
+        pending[chat_id] = {
+            "chat_id": chat_id,
+            "name": name,
+            "username": username,
+            "type": chat.get("type") or "private",
+            "text": text[:80],
+            "at": _fmt_ts(msg.get("date")),
+        }
+    return list(pending.values()), recent[-12:], len(items)
+
+
+def telegram_diagnostics() -> dict:
+    token = settings.telegram_bot_token.strip()
+    checks: list[dict] = []
+    checks.append(
+        {
+            "id": "token",
+            "ok": bool(token),
+            "title": "Токен бота",
+            "detail": f"задан, заканчивается на …{token[-4:]}" if len(token) >= 4 else (
+                "TELEGRAM_BOT_TOKEN пустой"
+            ),
+        }
+    )
+    if _uses_relay():
+        relay_detail = f"Cloudflare {_api_base()}"
+        relay_ok = True
+    else:
+        relay_detail = "TELEGRAM_API_BASE не задан — нужен Cloudflare Worker"
+        relay_ok = False
+    checks.append({"id": "relay", "ok": relay_ok, "title": "Прокладка", "detail": relay_detail})
+
+    info = {
+        "ok": False,
+        "configured": bool(token),
+        "username": "",
+        "name": "",
+        "id": None,
+        "error": "",
+        "api_base": _api_base(),
+        "via_relay": _uses_relay(),
+    }
+    pending: list[dict] = []
+    recent: list[dict] = []
+    updates_count = 0
+    webhook_url = ""
+    getme_ms = None
+
+    if token:
+        started = time.perf_counter()
+        me = telegram_api("getMe")
+        getme_ms = int((time.perf_counter() - started) * 1000)
+        raw = "" if me.get("ok") else (me.get("description") or last_telegram_error())
+        result = me.get("result") or {}
+        info.update(
+            {
+                "ok": bool(me.get("ok")),
+                "username": result.get("username") or "",
+                "name": result.get("first_name") or "",
+                "id": result.get("id"),
+                "error": explain_telegram_error(raw) if raw else "",
+            }
+        )
+        checks.append(
+            {
+                "id": "getme",
+                "ok": bool(me.get("ok")),
+                "title": "getMe",
+                "detail": (
+                    f"@{result.get('username')} · {getme_ms} мс"
+                    if me.get("ok")
+                    else f"{explain_telegram_error(raw)} · {getme_ms} мс"
+                ),
+            }
+        )
+        if me.get("ok"):
+            hook = telegram_api("getWebhookInfo")
+            webhook_url = ((hook.get("result") or {}).get("url") or "").strip()
+            checks.append(
+                {
+                    "id": "webhook",
+                    "ok": not webhook_url,
+                    "title": "Режим обновлений",
+                    "detail": (
+                        f"включён webhook {webhook_url} — список «кто написал» будет пустым"
+                        if webhook_url
+                        else "polling, webhook нет"
+                    ),
+                }
+            )
+            updates = telegram_api("getUpdates", {"timeout": 0, "limit": 50})
+            if updates.get("ok"):
+                pending, recent, updates_count = _parse_updates(updates)
+                checks.append(
+                    {
+                        "id": "updates",
+                        "ok": True,
+                        "title": "Сообщения боту",
+                        "detail": (
+                            f"в очереди {updates_count}, новых людей {len(pending)}"
+                            if updates_count
+                            else "очередь пустая — напишите боту Start и нажмите «Обновить»"
+                        ),
+                    }
+                )
+            else:
+                raw_up = updates.get("description") or last_telegram_error()
+                checks.append(
+                    {
+                        "id": "updates",
+                        "ok": False,
+                        "title": "Сообщения боту",
+                        "detail": explain_telegram_error(raw_up),
+                    }
+                )
+    else:
+        checks.append({"id": "getme", "ok": False, "title": "getMe", "detail": "нет токена"})
+
+    hint = ""
+    failed = next((c for c in checks if not c["ok"] and c["id"] != "relay"), None)
+    if not token:
+        hint = "Вставьте TELEGRAM_BOT_TOKEN в backend/.env и перезапустите бэкенд."
+    elif not info.get("ok"):
+        hint = info.get("error") or "Сервер не достучался до Telegram."
+    elif webhook_url:
+        hint = "Снимите webhook у бота, иначе админка не увидит, кто написал Start."
+    elif not pending and not recent:
+        hint = "Связь есть, но боту ещё никто не писал. Откройте бота, нажмите Start, затем «Обновить»."
+    elif not pending and recent:
+        hint = "Бот видит переписку, но все эти люди уже в рассылке или их нет среди новых."
+    if not _uses_relay() and info.get("ok"):
+        hint = (hint + " ").strip() + " Задайте TELEGRAM_API_BASE на Cloudflare Worker."
+
+    return {
+        "configured": bool(token),
+        "reachable": bool(info.get("ok")),
+        "error": info.get("error") or last_telegram_error(),
+        "bot": info,
+        "checks": checks,
+        "hint": hint.strip(),
+        "pending": pending,
+        "recent": recent,
+        "updates_count": updates_count,
+        "webhook_url": webhook_url,
+        "join_code": settings.telegram_join_code.strip(),
+        "latency_ms": getme_ms,
     }
 
 
@@ -266,38 +490,11 @@ def delete_recipient(recipient_id: int) -> None:
 
 def pending_chats() -> list[dict]:
     """Люди, которые написали боту /start, но ещё не в списке получателей."""
-    known = {r["chat_id"] for r in list_recipients()}
     data = telegram_api("getUpdates", {"timeout": 0, "limit": 50})
     if not data.get("ok"):
         return []
-    pending: dict[str, dict] = {}
-    join_code = settings.telegram_join_code.strip()
-    for upd in data.get("result") or []:
-        msg = upd.get("message") or upd.get("channel_post") or {}
-        chat = msg.get("chat") or {}
-        chat_id = str(chat.get("id") or "")
-        if not chat_id or chat_id in known:
-            continue
-        text = (msg.get("text") or "").strip()
-        first = chat.get("first_name") or chat.get("title") or ""
-        last = chat.get("last_name") or ""
-        name = f"{first} {last}".strip() or "Без имени"
-        username = chat.get("username") or ""
-        if join_code and text.lower().startswith("/join"):
-            parts = text.split(maxsplit=1)
-            if len(parts) == 2 and parts[1].strip() == join_code:
-                rec = upsert_recipient(chat_id, name, username)
-                send_welcome(chat_id)
-                known.add(chat_id)
-                continue
-        pending[chat_id] = {
-            "chat_id": chat_id,
-            "name": name,
-            "username": username,
-            "type": chat.get("type") or "private",
-            "text": text[:80],
-        }
-    return list(pending.values())
+    pending, _, _ = _parse_updates(data)
+    return pending
 
 
 def send_welcome(chat_id: str) -> None:

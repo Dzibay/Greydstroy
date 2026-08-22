@@ -12,15 +12,11 @@ const actionError = ref('')
 const configured = ref(false)
 const reachable = ref(false)
 const tgError = ref('')
-const bot = ref({ username: '', name: '', ok: false, api_base: '', via_proxy: false })
-const joinCode = ref('')
 const recipients = ref([])
 const pending = ref([])
 const addingId = ref('')
 const testing = ref(false)
 const testOk = ref('')
-const manualId = ref('')
-const manualName = ref('')
 
 async function api(path, options = {}) {
   const res = await fetch(path, {
@@ -49,8 +45,6 @@ async function load() {
     configured.value = data.configured
     reachable.value = Boolean(data.reachable)
     tgError.value = data.error || ''
-    bot.value = data.bot || {}
-    joinCode.value = data.join_code || ''
     recipients.value = data.recipients || []
     pending.value = data.pending || []
   } catch (err) {
@@ -70,8 +64,6 @@ async function addPerson(chatId, name = '', username = '') {
       body: JSON.stringify({ chat_id: chatId, name, username }),
     })
     if (!res.ok) throw new Error('add')
-    manualId.value = ''
-    manualName.value = ''
     await load()
   } catch (err) {
     if (err.message !== 'unauthorized') actionError.value = 'Не удалось добавить получателя'
@@ -125,8 +117,6 @@ async function sendTest() {
   }
 }
 
-const botLink = () => (bot.value.username ? `https://t.me/${bot.value.username}` : '')
-
 onMounted(load)
 </script>
 
@@ -147,69 +137,17 @@ onMounted(load)
     </div>
 
     <template v-else>
-      <div v-if="!reachable" class="tg-card tg-card--warn">
-        <h2>Сервер не достучался до Telegram</h2>
-        <p v-if="tgError">{{ tgError }}</p>
-        <p>
-          С российского IP <code>api.telegram.org</code> часто недоступен.
-          Не используйте чужие публичные зеркала — через них утечёт токен бота.
-        </p>
-        <ol class="tg-steps">
-          <li>
-            Свой релей: задеплойте
-            <code>deploy/telegram-relay/worker.js</code>
-            как Cloudflare Worker и в <code>backend/.env</code> укажите
-            <code>TELEGRAM_API_BASE=https://ваш-воркер.workers.dev</code>
-          </li>
-          <li>
-            Или HTTP(S) прокси: <code>TELEGRAM_PROXY=http://хост:порт</code>
-          </li>
-          <li>Перезапустите бэкенд и нажмите «Обновить».</li>
-        </ol>
-        <p v-if="bot.api_base" class="tg-meta">
-          Сейчас запросы идут на <code>{{ bot.api_base }}</code>
-          <span v-if="bot.via_proxy"> через прокси</span>.
-        </p>
-      </div>
-
-      <div class="tg-card">
-        <header class="tg-card-h">
-          <div>
-            <h2>Как добавить человека</h2>
-            <p v-if="bot.username">
-              Пусть откроет
-              <a :href="botLink()" target="_blank" rel="noopener">@{{ bot.username }}</a>
-              и нажмёт <b>Start</b>. Затем обновите список — он появится ниже.
-            </p>
-            <p v-else>Напишите боту Start и нажмите «Обновить».</p>
-            <p v-if="joinCode">
-              Или сразу: человек пишет боту <code>/join {{ joinCode }}</code> — попадёт в рассылку сам.
-            </p>
-          </div>
-          <div class="tg-actions">
-            <button type="button" class="adm-btn" :disabled="loading" @click="load">
-              {{ loading ? 'Обновляем…' : 'Обновить' }}
-            </button>
-            <button
-              type="button"
-              class="adm-btn adm-btn--ghost"
-              :disabled="testing || !recipients.length"
-              @click="sendTest"
-            >
-              {{ testing ? 'Отправляем…' : 'Тестовое сообщение' }}
-            </button>
-          </div>
-        </header>
-      </div>
+      <p v-if="!reachable && tgError" class="adm-error">{{ tgError }}</p>
 
       <div v-if="pending.length" class="tg-card">
-        <h2>Написали боту — добавьте в рассылку</h2>
+        <h2>Ждут добавления</h2>
         <ul class="tg-list">
           <li v-for="p in pending" :key="p.chat_id">
             <div>
               <strong>{{ p.name }}</strong>
               <small>
-                <span v-if="p.username">@{{ p.username }} · </span>{{ p.chat_id }}
+                <span v-if="p.username">@{{ p.username }}</span>
+                <span v-if="p.at">{{ p.username ? ' · ' : '' }}{{ p.at }}</span>
               </small>
             </div>
             <button
@@ -225,14 +163,29 @@ onMounted(load)
       </div>
 
       <div class="tg-card">
-        <h2>Получают заявки <em>{{ recipients.filter((r) => r.enabled).length }}</em></h2>
+        <header class="tg-card-h">
+          <h2>Получают заявки <em>{{ recipients.filter((r) => r.enabled).length }}</em></h2>
+          <div class="tg-actions">
+            <button type="button" class="adm-btn" :disabled="loading" @click="load">
+              {{ loading ? 'Обновляем…' : 'Обновить' }}
+            </button>
+            <button
+              type="button"
+              class="adm-btn adm-btn--ghost"
+              :disabled="testing || !recipients.length"
+              @click="sendTest"
+            >
+              {{ testing ? 'Отправляем…' : 'Тестовое сообщение' }}
+            </button>
+          </div>
+        </header>
         <ul v-if="recipients.length" class="tg-list">
           <li v-for="r in recipients" :key="r.id">
             <div>
               <strong :class="{ off: !r.enabled }">{{ r.name || r.chat_id }}</strong>
               <small>
-                <span v-if="r.username">@{{ r.username }} · </span>{{ r.chat_id }}
-                <span v-if="!r.enabled"> · выключен</span>
+                <span v-if="r.username">@{{ r.username }}</span>
+                <span v-if="!r.enabled">{{ r.username ? ' · ' : '' }}выключен</span>
               </small>
             </div>
             <div class="tg-row-actions">
@@ -243,18 +196,7 @@ onMounted(load)
             </div>
           </li>
         </ul>
-        <p v-else class="tg-empty">Пока никого нет — напишите боту Start и нажмите «Обновить».</p>
-
-        <form class="tg-manual" @submit.prevent="addPerson(manualId, manualName)">
-          <p>Или вставьте chat id вручную</p>
-          <div class="tg-manual-row">
-            <input v-model.trim="manualId" class="field" placeholder="Chat ID" />
-            <input v-model.trim="manualName" class="field" placeholder="Имя (необязательно)" />
-            <button class="adm-btn" type="submit" :disabled="!manualId || addingId === manualId">
-              Добавить
-            </button>
-          </div>
-        </form>
+        <p v-else class="tg-empty">Список пуст</p>
       </div>
     </template>
   </section>
@@ -322,15 +264,6 @@ onMounted(load)
 .tg-row-actions { display: flex; gap: 8px; }
 .tg-empty { color: var(--w-faint); padding: 12px 0; }
 .tg-ok { color: var(--ok); font-size: 13.5px; }
-.tg-card--warn { box-shadow: inset 0 0 0 1px rgba(255, 90, 31, 0.35); }
-.tg-meta { margin-top: 10px; font-size: 13px; color: var(--w-faint); }
-.tg-manual { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--line-d); }
-.tg-manual p { margin-bottom: 10px; font-size: 13px; }
-.tg-manual-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 10px;
-}
 @media (max-width: 700px) {
   .tg { gap: 12px; }
   .tg-card { padding: 14px 12px; }
@@ -343,7 +276,6 @@ onMounted(load)
   }
   .tg-row-actions { width: 100%; }
   .tg-row-actions button { flex: 1; }
-  .tg-manual-row { grid-template-columns: 1fr; }
   .tg-actions { width: 100%; }
   .tg-actions .adm-btn { flex: 1; }
 }
@@ -391,5 +323,4 @@ onMounted(load)
   background: rgba(255, 90, 90, 0.1);
   border: none;
 }
-.field { width: 100%; }
 </style>
