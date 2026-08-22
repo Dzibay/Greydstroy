@@ -9,12 +9,14 @@ import json
 import logging
 import mimetypes
 import re
+import socket
 import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 from uuid import uuid4
 
 from app.config import settings
@@ -60,22 +62,67 @@ def explain_telegram_error(raw: str) -> str:
     text = (raw or "").strip()
     low = text.lower()
     if "1010" in text:
-        return (
-            "Cloudflare отбил запрос (код 1010): защита от ботов не пускает сервер. "
-            "В Cloudflare у воркера выключите Bot Fight Mode "
-            "или Security → Bots."
-        )
+        return "Cloudflare 1010: воркер отбил запрос сервера (Bot Fight Mode)."
     if "11001" in text or "getaddrinfo" in low or "name or service not known" in low:
-        return "Не удалось найти хост релея. Проверьте TELEGRAM_API_BASE."
+        return "Сервер не резолвит хост Cloudflare (DNS)."
     if "timed out" in low or "timeout" in low:
-        return "Таймаут: сервер не достучался до Cloudflare Worker. Проверьте TELEGRAM_API_BASE."
+        return "Таймаут до Cloudflare Worker."
     if "connection refused" in low or "10061" in text:
-        return "Соединение отклонено. Проверьте TELEGRAM_API_BASE."
+        return "Cloudflare: соединение отклонено."
+    if "network is unreachable" in low or "10051" in text:
+        return "Сеть сервера не пускает до Cloudflare."
     if "unauthorized" in low:
-        return "Telegram не принял токен. Проверьте TELEGRAM_BOT_TOKEN у @BotFather."
+        return "Telegram не принял токен."
     if "conflict" in low and "webhook" in low:
-        return "У бота включён webhook — getUpdates пустой. Снимите webhook."
-    return text or "нет ответа от Telegram"
+        return "У бота включён webhook, getUpdates пустой."
+    return text or "нет ответа"
+
+
+def probe_cloudflare() -> dict:
+    """Доходит ли этот сервер до воркера, ещё до вызова Telegram."""
+    base = _api_base()
+    parsed = urlparse(base)
+    host = parsed.hostname or ""
+    port = parsed.port or (443 if (parsed.scheme or "https") == "https" else 80)
+    out = {"ok": False, "host": host, "ip": "", "ms": None, "detail": ""}
+    if not host:
+        out["detail"] = "TELEGRAM_API_BASE пустой"
+        return out
+    started = time.perf_counter()
+    try:
+        infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+        out["ip"] = infos[0][4][0]
+    except OSError as exc:
+        out["ms"] = int((time.perf_counter() - started) * 1000)
+        out["detail"] = f"DNS {host}: {exc}"
+        return out
+    try:
+        sock = socket.create_connection((out["ip"], port), 8)
+        sock.close()
+    except OSError as exc:
+        out["ms"] = int((time.perf_counter() - started) * 1000)
+        out["detail"] = f"TCP {host}:{port} ({out['ip']}): {exc}"
+        return out
+    try:
+        req = urllib.request.Request(
+            f"{base}/",
+            headers={"User-Agent": _UA, "Accept": "*/*"},
+        )
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            out["ok"] = True
+            out["detail"] = f"{host} → {out['ip']} · HTTP {resp.status}"
+    except urllib.error.HTTPError as exc:
+        body = exc.read()[:120]
+        # 404/403 от воркера или Telegram всё равно значит: HTTPS дошёл.
+        out["ok"] = exc.code != 1010 and "1010" not in body.decode("utf-8", errors="replace")
+        out["detail"] = f"{host} → {out['ip']} · HTTP {exc.code}"
+        if "1010" in body.decode("utf-8", errors="replace"):
+            out["ok"] = False
+            out["detail"] += " (1010)"
+    except Exception as exc:
+        out["detail"] = f"HTTPS {host}: {getattr(exc, 'reason', exc)}"
+    out["ms"] = int((time.perf_counter() - started) * 1000)
+    return out
 
 
 def _esc(value: str) -> str:
@@ -267,12 +314,26 @@ def telegram_diagnostics() -> dict:
         }
     )
     if _uses_relay():
-        relay_detail = f"Cloudflare {_api_base()}"
+        relay_detail = _api_base()
         relay_ok = True
     else:
-        relay_detail = "TELEGRAM_API_BASE не задан — нужен Cloudflare Worker"
+        relay_detail = "TELEGRAM_API_BASE не задан"
         relay_ok = False
-    checks.append({"id": "relay", "ok": relay_ok, "title": "Прокладка", "detail": relay_detail})
+    checks.append({"id": "relay", "ok": relay_ok, "title": "Cloudflare Worker", "detail": relay_detail})
+
+    cf = probe_cloudflare()
+    checks.append(
+        {
+            "id": "cloudflare",
+            "ok": cf["ok"],
+            "title": "Доступ до Cloudflare",
+            "detail": (
+                f"{cf['detail']} · {cf['ms']} мс"
+                if cf.get("ms") is not None and cf["detail"]
+                else (cf["detail"] or "нет данных")
+            ),
+        }
+    )
 
     info = {
         "ok": False,
@@ -309,7 +370,7 @@ def telegram_diagnostics() -> dict:
             {
                 "id": "getme",
                 "ok": bool(me.get("ok")),
-                "title": "getMe",
+                "title": "Telegram API",
                 "detail": (
                     f"@{result.get('username')} · {getme_ms} мс"
                     if me.get("ok")
@@ -358,7 +419,10 @@ def telegram_diagnostics() -> dict:
                     }
                 )
     else:
-        checks.append({"id": "getme", "ok": False, "title": "getMe", "detail": "нет токена"})
+        checks.append({"id": "getme", "ok": False, "title": "Telegram API", "detail": "нет токена"})
+
+    if not info.get("ok") and not cf["ok"]:
+        info["error"] = cf["detail"] or info.get("error") or "нет доступа до Cloudflare"
 
     hint = ""
     failed = next((c for c in checks if not c["ok"] and c["id"] != "relay"), None)
@@ -388,6 +452,7 @@ def telegram_diagnostics() -> dict:
         "webhook_url": webhook_url,
         "join_code": settings.telegram_join_code.strip(),
         "latency_ms": getme_ms,
+        "probe": cf,
     }
 
 
@@ -554,7 +619,6 @@ def notify_new_lead(
         return
 
     text = _lead_text(lead_id, name, phone, has_drawing, comment, file_name, source)
-    contact_phone = international_phone(phone)
     disk = UPLOAD_DIR / Path(file_path).name if file_path else None
     send_file = bool(disk and disk.is_file() and disk.stat().st_size <= TG_FILE_LIMIT)
 
@@ -571,17 +635,6 @@ def notify_new_lead(
         mid = ((msg.get("result") or {}) if msg.get("ok") else {}).get("message_id")
         reply = {"reply_to_message_id": mid} if mid else {}
 
-        if contact_phone:
-            telegram_api(
-                "sendContact",
-                {
-                    "chat_id": chat_id,
-                    "phone_number": contact_phone,
-                    "first_name": (name or "Заявка").strip()[:64] or "Заявка",
-                    "last_name": f"заявка {lead_id}",
-                    **reply,
-                },
-            )
         if send_file and disk:
             telegram_api(
                 "sendDocument",

@@ -12,6 +12,7 @@ const actionError = ref('')
 const configured = ref(false)
 const reachable = ref(false)
 const tgError = ref('')
+const checks = ref([])
 const recipients = ref([])
 const pending = ref([])
 const addingId = ref('')
@@ -45,6 +46,7 @@ async function load() {
     configured.value = data.configured
     reachable.value = Boolean(data.reachable)
     tgError.value = data.error || ''
+    checks.value = data.checks || []
     recipients.value = data.recipients || []
     pending.value = data.pending || []
   } catch (err) {
@@ -137,7 +139,26 @@ onMounted(load)
     </div>
 
     <template v-else>
-      <p v-if="!reachable && tgError" class="adm-error">{{ tgError }}</p>
+      <div v-if="!reachable" class="tg-card tg-card--warn">
+        <header class="tg-card-h">
+          <div>
+            <h2>Нет связи</h2>
+            <p v-if="tgError">{{ tgError }}</p>
+          </div>
+          <button type="button" class="adm-btn" :disabled="loading" @click="load">
+            {{ loading ? 'Проверяем…' : 'Проверить' }}
+          </button>
+        </header>
+        <ul v-if="checks.length" class="tg-checks">
+          <li v-for="c in checks" :key="c.id" :class="{ ok: c.ok, bad: !c.ok }">
+            <span class="tg-dot" />
+            <div>
+              <strong>{{ c.title }}</strong>
+              <small>{{ c.detail }}</small>
+            </div>
+          </li>
+        </ul>
+      </div>
 
       <div v-if="pending.length" class="tg-card">
         <h2>Ждут добавления</h2>
@@ -264,6 +285,26 @@ onMounted(load)
 .tg-row-actions { display: flex; gap: 8px; }
 .tg-empty { color: var(--w-faint); padding: 12px 0; }
 .tg-ok { color: var(--ok); font-size: 13.5px; }
+.tg-card--warn { box-shadow: inset 0 0 0 1px rgba(255, 90, 31, 0.35); }
+.tg-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+.tg-checks li { display: flex; gap: 10px; align-items: flex-start; }
+.tg-checks strong { color: var(--white); display: block; font-size: 13.5px; }
+.tg-checks small { color: var(--w-faint); font-size: 12.5px; line-height: 1.4; word-break: break-word; }
+.tg-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+  background: var(--w-faint);
+}
+.tg-checks li.ok .tg-dot { background: #3dcc7a; }
+.tg-checks li.bad .tg-dot { background: var(--acc-hot); }
 @media (max-width: 700px) {
   .tg { gap: 12px; }
   .tg-card { padding: 14px 12px; }
