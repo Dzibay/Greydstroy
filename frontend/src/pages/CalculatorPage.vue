@@ -475,7 +475,7 @@ const summary = computed(() => {
   } else {
     lines.push(`• Тип: ${type.value.label}`)
     lines.push(`• Масса: ${mass.value} т`)
-    lines.push(`• Металл: ${ownMetal.value ? 'давальческий (заказчика)' : 'наш, входит в смету'}`)
+    lines.push(`• Металл: ${ownMetal.value ? 'заказчика (привозят сами)' : 'наш, входит в смету'}`)
     lines.push(`• Покрытие: ${coating.value.label}`)
     const opts = []
     if (needKmd.value) opts.push('разработка КМД')
@@ -970,12 +970,12 @@ watch(mode, () => nextTick(scheduleSketchPin))
               <p class="clc-step-tag"><span>{{ stepNo.metal }}</span> Чей металл</p>
               <div class="seg">
                 <button class="seg-btn" data-notrack :class="{ active: !ownMetal }" @click="pickMetal(false)">
-                  <span class="seg-title">Ваш металл — наша забота</span>
-                  <span class="seg-note">закупим сами и включим в смету</span>
+                  <span class="seg-title">Металл купим сами</span>
+                  <span class="seg-note">рассчитаем, согласуем и закупим сами</span>
                 </button>
                 <button class="seg-btn" data-notrack :class="{ active: ownMetal }" @click="pickMetal(true)">
-                  <span class="seg-title">Металл заказчика</span>
-                  <span class="seg-note">давальческое сырьё, примем по накладной</span>
+                  <span class="seg-title">Металл ваш</span>
+                  <span class="seg-note">привезёте свой — примем по накладной</span>
                 </button>
               </div>
             </div>
@@ -1131,7 +1131,10 @@ watch(mode, () => nextTick(scheduleSketchPin))
                     <b>{{ buildingMass }} т</b>
                   </p>
                   <p class="bd-row"><span>Работы ({{ activeType.label.toLowerCase() }})</span><b>{{ fmt(calc.work) }} ₽</b></p>
-                  <p v-if="calc.material" class="bd-row"><span>Металл</span><b>{{ fmt(calc.material) }} ₽</b></p>
+                  <p v-if="!activeOwnMetal" class="bd-row">
+                    <span>Металл · наш · {{ fmt(RATES.metalPerTonne) }} ₽/т</span>
+                    <b>{{ fmt(calc.material) }} ₽</b>
+                  </p>
                   <p v-if="calc.coat" class="bd-row"><span>{{ activeCoating.label }}</span><b>{{ fmt(calc.coat) }} ₽</b></p>
                   <p v-if="calc.kmd" class="bd-row"><span>КМД</span><b>{{ fmt(calc.kmd) }} ₽</b></p>
                   <p v-if="calc.montage" class="bd-row"><span>Монтаж с окраской</span><b>{{ fmt(calc.montage) }} ₽</b></p>
