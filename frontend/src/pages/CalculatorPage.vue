@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import LeadForm from '../components/ui/LeadForm.vue'
 import BuildingPreview from '../components/calc/BuildingPreview.vue'
+import DetailPreview from '../components/calc/DetailPreview.vue'
 import SnowRegionPicker from '../components/calc/SnowRegionPicker.vue'
 import { SNOW_REGIONS, DEFAULT_REGION } from '../data/snowRegions'
 import { track } from '../analytics/tracker'
@@ -502,7 +503,7 @@ let pinRaf = 0
 function syncSketchPin() {
   const mobile = window.matchMedia(`(max-width: ${SKETCH_MQ}px)`).matches
   if (sketchMobile.value !== mobile) sketchMobile.value = mobile
-  if (!mobile || mode.value !== 'object') {
+  if (!mobile || (mode.value !== 'object' && mode.value !== 'details')) {
     if (sketchPinned.value) sketchPinned.value = false
     return
   }
@@ -1055,14 +1056,15 @@ watch(mode, () => nextTick(scheduleSketchPin))
 
           <!-- ПРАВАЯ КОЛОНКА: ИТОГ -->
           <aside class="clc-panel-wrap">
-            <div class="clc-panel" :class="{ 'clc-panel--object': mode === 'object' }" v-reveal="120">
-              <div v-if="mode === 'object'" class="panel-visual">
+            <div class="clc-panel clc-panel--visual" v-reveal="120">
+              <div class="panel-visual">
                 <div
                   ref="sketchSlot"
                   class="panel-sketch"
                   :class="{ 'panel-sketch--away': sketchMobile && sketchPinned }"
                 >
                   <BuildingPreview
+                    v-if="mode === 'object'"
                     compact
                     :length="bLength"
                     :width="bWidth"
@@ -1074,11 +1076,24 @@ watch(mode, () => nextTick(scheduleSketchPin))
                     :stairs="bStairs"
                     :foundation="bFound.id"
                   />
+                  <DetailPreview
+                    v-else
+                    compact
+                    :type="type.id"
+                    :coating="coating.id"
+                    :kmd="needKmd"
+                    :montage="needMontage"
+                  />
                 </div>
-                <div class="panel-stats">
+                <div v-if="mode === 'object'" class="panel-stats">
                   <div><b>{{ fmt(buildingArea) }}</b><span>м²</span></div>
                   <div><b>{{ fmt(buildingVolume) }}</b><span>м³</span></div>
                   <div><b>{{ buildingMass }} т</b><span>{{ fmtQ(buildingQ) }} кг/м³</span></div>
+                </div>
+                <div v-else class="panel-stats panel-stats--details">
+                  <div><b>{{ mass < 1 ? Math.round(mass * 1000) + ' кг' : mass + ' т' }}</b><span>масса</span></div>
+                  <div><b>{{ coating.id === 'none' ? '—' : coating.id === 'paint' ? 'эмаль' : 'грунт' }}</b><span>покрытие</span></div>
+                  <div><b>{{ needKmd ? 'КМД' : 'без КМД' }}</b><span>{{ needMontage ? 'монтаж' : 'цех' }}</span></div>
                 </div>
               </div>
 
@@ -1202,11 +1217,12 @@ watch(mode, () => nextTick(scheduleSketchPin))
     <Teleport to="body">
       <Transition name="sketch-fade">
         <div
-          v-if="mode === 'object' && sketchMobile && sketchPinned"
+          v-if="sketchMobile && sketchPinned"
           class="sketch-fly"
           aria-hidden="true"
         >
           <BuildingPreview
+            v-if="mode === 'object'"
             compact
             :length="bLength"
             :width="bWidth"
@@ -1217,6 +1233,14 @@ watch(mode, () => nextTick(scheduleSketchPin))
             :mezzanine="bMezzanine"
             :stairs="bStairs"
             :foundation="bFound.id"
+          />
+          <DetailPreview
+            v-else
+            compact
+            :type="type.id"
+            :coating="coating.id"
+            :kmd="needKmd"
+            :montage="needMontage"
           />
         </div>
       </Transition>
@@ -1663,13 +1687,13 @@ watch(mode, () => nextTick(scheduleSketchPin))
   border-radius: var(--r);
   padding: 30px 28px;
 }
-.clc-panel--object {
+.clc-panel--visual {
   padding: 16px 16px 20px;
 }
-.clc-panel--object .panel-tag { margin-bottom: 10px; }
-.clc-panel--object .panel-per { margin-bottom: 12px; }
-.clc-panel--object .panel-time { margin-bottom: 12px; }
-.clc-panel--object .pp-num { font-size: clamp(18px, 1.8vw, 22px); }
+.clc-panel--visual .panel-tag { margin-bottom: 10px; }
+.clc-panel--visual .panel-per { margin-bottom: 12px; }
+.clc-panel--visual .panel-time { margin-bottom: 12px; }
+.clc-panel--visual .pp-num { font-size: clamp(18px, 1.8vw, 22px); }
 
 .panel-visual { margin-bottom: 16px; }
 .panel-sketch {
@@ -1715,6 +1739,9 @@ watch(mode, () => nextTick(scheduleSketchPin))
   display: grid;
   grid-template-columns: 1fr 1fr 1.15fr;
   gap: 6px;
+}
+.panel-stats--details {
+  grid-template-columns: 1.2fr 0.85fr 1fr;
 }
 .panel-stats div {
   display: flex;
