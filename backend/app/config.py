@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     admin_token_secret: str = ""
     admin_token_ttl_hours: int = 12
 
+    # Telegram: уведомления о заявках (необязательно).
+    # Токен от @BotFather, chat_id — личка, группа или канал (через запятую).
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
+    # Если задан — человек пишет боту /join КОД и попадает в рассылку сам.
+    telegram_join_code: str = ""
+
     @property
     def dsn(self) -> str:
         return (

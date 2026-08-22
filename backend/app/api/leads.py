@@ -1,11 +1,12 @@
 import secrets
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.analytics import parse_uuid
 from app.db import pool
+from app.notify import notify_new_lead
 from app.paths import UPLOAD_DIR
 
 router = APIRouter()
@@ -24,7 +25,7 @@ class LeadIn(BaseModel):
 
 
 @router.post("/leads")
-async def create_lead(request: Request) -> dict:
+async def create_lead(request: Request, background: BackgroundTasks) -> dict:
     content_type = request.headers.get("content-type", "")
 
     file_name = ""
@@ -86,4 +87,16 @@ async def create_lead(request: Request) -> dict:
                 parse_uuid(lead.session_id),
             ),
         ).fetchone()
-    return {"ok": True, "id": row[0]}
+    lead_id = row[0]
+    background.add_task(
+        notify_new_lead,
+        lead_id,
+        lead.name.strip(),
+        lead.phone.strip(),
+        lead.drawing == "yes",
+        lead.comment.strip(),
+        lead.file_name.strip() or file_name,
+        lead.source.strip(),
+        file_path,
+    )
+    return {"ok": True, "id": lead_id}

@@ -65,3 +65,15 @@ CREATE INDEX IF NOT EXISTS idx_ae_label ON analytics_events (event, label, occur
     WHERE label <> '';
 CREATE INDEX IF NOT EXISTS idx_ae_calc ON analytics_events (occurred_at DESC)
     WHERE event = 'calc';
+
+CREATE TABLE IF NOT EXISTS telegram_recipients (
+    id          BIGSERIAL PRIMARY KEY,
+    chat_id     TEXT NOT NULL UNIQUE,
+    name        TEXT NOT NULL DEFAULT '',
+    username    TEXT NOT NULL DEFAULT '',
+    enabled     BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_tg_recipients_enabled
+    ON telegram_recipients (enabled) WHERE enabled;

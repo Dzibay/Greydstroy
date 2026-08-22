@@ -654,7 +654,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.st { display: flex; flex-direction: column; gap: 22px; }
+.st { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
 
 .st-toolbar {
   display: flex;
@@ -753,7 +753,8 @@ onUnmounted(() => {
   border: 1px solid var(--line-d);
   border-radius: var(--r);
   padding: 20px 22px 18px;
-  overflow: hidden;
+  overflow-x: auto;
+  min-width: 0;
 }
 .st-card-h {
   display: flex;
@@ -1056,11 +1057,51 @@ onUnmounted(() => {
 
 @media (max-width: 1100px) {
   .st-kpis { grid-template-columns: repeat(3, 1fr); }
-  .st-grid, .st-grid--3, .st-grid--calc, .st-calc-kpis, .st-modes { grid-template-columns: 1fr; }
+  .st-grid, .st-grid--3 { grid-template-columns: 1fr; }
+  .st-grid--calc { grid-template-columns: 1fr 1fr; }
+  .st-calc-kpis { grid-template-columns: 1fr 1fr; }
   .st-feed-row { grid-template-columns: 120px 1fr; }
   .st-feed-dev { display: none; }
 }
-@media (max-width: 640px) {
-  .st-kpis { grid-template-columns: 1fr 1fr; }
+@media (max-width: 760px) {
+  .st { gap: 14px; }
+  .st-kpis { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .st-kpi { padding: 12px 12px 10px; border-radius: 12px; }
+  .st-kpi-label { font-size: 9.5px; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .st-kpi-val { font-size: 18px; }
+  .st-kpi-sub { font-size: 11px; margin-top: 5px; }
+  .st-card { padding: 14px 12px 12px; border-radius: 12px; }
+  .st-card-h {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .st-card-h h2 { font-size: 12px; }
+  .st-card-h p { font-size: 11.5px; }
+  .st-calc-kpis { gap: 8px; }
+  .st-calc-kpis div { padding: 10px; }
+  .st-calc-kpis strong { font-size: 16px; }
+  .st-calc-kpis em { font-size: 9.5px; }
+  .st-calc-kpis span { font-size: 11px; }
+  .st-modes { grid-template-columns: 1fr; }
+  .st-grid--calc { grid-template-columns: 1fr; }
+  .st-mode-h { font-size: 13px; }
+  .st-table { font-size: 12px; }
+  .st-table th { font-size: 10px; padding: 0 4px 8px; }
+  .st-table td { padding: 8px 4px; }
+  .st-table small { font-size: 11px; word-break: break-all; }
+  .st-chip { font-size: 11px; padding: 6px 10px; }
+  .st-refresh { font-size: 12px; padding: 9px 14px; }
+  .st-chart { height: 120px; }
+  .st-legend { flex-wrap: wrap; font-size: 11px; }
+  .st-feed-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 10px 0;
+    font-size: 12px;
+  }
+  .st-feed-label { white-space: normal; }
+  .st-funnel-row { font-size: 12.5px; }
 }
 </style>

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import AdminStats from '../components/admin/AdminStats.vue'
+import AdminTelegram from '../components/admin/AdminTelegram.vue'
 
 const TOKEN_KEY = 'gs_admin_token'
 
@@ -211,6 +212,7 @@ onMounted(loadLeads)
             <span class="adm-count">{{ onlyWithFiles ? filteredLeads.length : total }}</span>
             <span v-if="onlyWithFiles" class="adm-count-sub">из {{ total }}</span>
           </h1>
+          <h1 v-else-if="tab === 'telegram'">Telegram</h1>
           <h1 v-else>Статистика</h1>
         </div>
         <div class="adm-actions">
@@ -234,9 +236,13 @@ onMounted(loadLeads)
           Заявки
           <em v-if="total">{{ total }}</em>
         </button>
+        <button type="button" :class="{ on: tab === 'telegram' }" @click="tab = 'telegram'">
+          Telegram
+        </button>
       </nav>
 
       <AdminStats v-if="tab === 'stats'" :token="token" @unauthorized="logout" />
+      <AdminTelegram v-if="tab === 'telegram'" :token="token" @unauthorized="logout" />
 
       <div v-if="tab === 'leads'">
       <p v-if="loadError" class="adm-error">{{ loadError }}</p>
@@ -245,6 +251,40 @@ onMounted(loadLeads)
 
       <div v-if="!filteredLeads.length && !loading && !loadError" class="adm-empty">
         {{ onlyWithFiles ? 'Заявок с файлами пока нет' : 'Заявок пока нет' }}
+      </div>
+
+      <div v-if="filteredLeads.length" class="adm-cards">
+        <article v-for="lead in filteredLeads" :key="'c-' + lead.id" class="adm-card">
+          <header class="adm-card-h">
+            <span class="adm-num">#{{ lead.id }}</span>
+            <time>{{ formatDate(lead.created_at) }}</time>
+          </header>
+          <a :href="`tel:${lead.phone}`" class="adm-phone">{{ lead.phone }}</a>
+          <p v-if="lead.name" class="adm-card-name">{{ lead.name }}</p>
+          <p class="adm-card-meta">
+            <span class="adm-badge" :class="lead.has_drawing ? 'yes' : 'no'">
+              {{ lead.has_drawing ? 'Чертёж есть' : 'Чертежа нет' }}
+            </span>
+            <span v-if="lead.source">{{ lead.source }}</span>
+          </p>
+          <p v-if="lead.comment" class="adm-comment">{{ lead.comment }}</p>
+          <div v-if="lead.file_path" class="adm-file">
+            <p class="adm-file-name">{{ lead.file_name || 'Файл' }}</p>
+            <small v-if="lead.file_size" class="adm-file-meta">{{ formatBytes(lead.file_size) }}</small>
+            <div class="adm-file-actions">
+              <button type="button" class="adm-file-btn" @click="openFile(lead)">Открыть</button>
+              <button type="button" class="adm-file-btn" @click="downloadFile(lead)">Скачать</button>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="adm-del-btn"
+            :disabled="deletingId === lead.id"
+            @click="deleteLead(lead)"
+          >
+            {{ deletingId === lead.id ? '…' : 'Удалить' }}
+          </button>
+        </article>
       </div>
 
       <div v-if="filteredLeads.length" class="adm-table-wrap">
@@ -602,5 +642,64 @@ onMounted(loadLeads)
 .adm-del-btn:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.adm-cards { display: none; }
+
+@media (max-width: 860px) {
+  .adm { padding: 16px 12px 28px; overflow-x: hidden; }
+  .adm h1 { font-size: 18px; }
+  .adm-count { font-size: 13px; }
+  .adm-head { align-items: stretch; margin-bottom: 14px; }
+  .adm-actions { width: 100%; }
+  .adm-actions .adm-btn { flex: 1; text-align: center; padding: 10px 12px; }
+  .adm-tabs {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+  }
+  .adm-tabs button {
+    justify-content: center;
+    font-size: 11px;
+    padding: 8px 6px;
+  }
+  .adm-table-wrap { display: none; }
+  .adm-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .adm-card {
+    background: var(--bg1);
+    border: 1px solid var(--line-d);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .adm-card-h {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-family: var(--font-m);
+    font-size: 11px;
+    color: var(--w-faint);
+  }
+  .adm-card-name { color: var(--white); font-size: 14px; }
+  .adm-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    color: var(--w-faint);
+    font-size: 12px;
+  }
+  .adm-comment { max-width: none; font-size: 13px; }
+  .adm-file { max-width: none; }
+  .adm-login-card { padding: 24px 18px; }
+  .adm-login-card .field { font-size: 16px; }
 }
 </style>
