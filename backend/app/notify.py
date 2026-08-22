@@ -33,6 +33,23 @@ PAGE_NAMES = {
     "/rekvizity": "Реквизиты",
 }
 TG_FILE_LIMIT = 45 * 1024 * 1024
+_last_error = ""
+
+
+def last_telegram_error() -> str:
+    return _last_error
+
+
+def _api_base() -> str:
+    return (settings.telegram_api_base or "https://api.telegram.org").strip().rstrip("/")
+
+
+def _opener() -> urllib.request.OpenerDirector:
+    proxy = settings.telegram_proxy.strip()
+    handlers = []
+    if proxy:
+        handlers.append(urllib.request.ProxyHandler({"http": proxy, "https": proxy}))
+    return urllib.request.build_opener(*handlers)
 
 
 def _esc(value: str) -> str:
@@ -79,10 +96,11 @@ def telegram_configured() -> bool:
 
 
 def telegram_api(method: str, payload: dict | None = None, file: Path | None = None) -> dict:
+    global _last_error
     token = settings.telegram_bot_token.strip()
     if not token:
         return {}
-    url = f"https://api.telegram.org/bot{token}/{method}"
+    url = f"{_api_base()}/bot{token}/{method}"
     try:
         if file and file.is_file():
             data, headers = _multipart(payload or {}, file)
@@ -94,18 +112,21 @@ def telegram_api(method: str, payload: dict | None = None, file: Path | None = N
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        with _opener().open(req, timeout=20) as resp:
+            _last_error = ""
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")[:400]
+        _last_error = f"HTTP {exc.code}: {detail[:180]}"
         log.warning("Telegram %s HTTP %s: %s", method, exc.code, detail)
         try:
             return json.loads(detail)
         except json.JSONDecodeError:
             return {"ok": False, "description": detail}
-    except Exception:
-        log.exception("Telegram %s не удался", method)
-        return {"ok": False}
+    except Exception as exc:
+        _last_error = str(exc.reason if getattr(exc, "reason", None) else exc)
+        log.warning("Telegram %s не удался: %s", method, _last_error)
+        return {"ok": False, "description": _last_error}
 
 
 def _multipart(fields: dict[str, Any], file: Path) -> tuple[bytes, dict[str, str]]:
@@ -140,6 +161,9 @@ def bot_info() -> dict:
         "username": result.get("username") or "",
         "name": result.get("first_name") or "",
         "id": result.get("id"),
+        "error": "" if data.get("ok") else (data.get("description") or last_telegram_error() or "нет ответа от Telegram"),
+        "api_base": _api_base(),
+        "via_proxy": bool(settings.telegram_proxy.strip()),
     }
 
 

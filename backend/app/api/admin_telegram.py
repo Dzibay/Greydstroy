@@ -5,6 +5,7 @@ from app.auth import require_admin
 from app.notify import (
     bot_info,
     delete_recipient,
+    last_telegram_error,
     list_recipients,
     pending_chats,
     send_test,
@@ -34,9 +35,11 @@ def telegram_status() -> dict:
     return {
         "configured": telegram_configured(),
         "bot": info,
+        "reachable": bool(info.get("ok")),
+        "error": info.get("error") or last_telegram_error(),
         "join_code": settings.telegram_join_code.strip(),
         "recipients": list_recipients(),
-        "pending": pending_chats() if telegram_configured() else [],
+        "pending": pending_chats() if telegram_configured() and info.get("ok") else [],
     }
 
 

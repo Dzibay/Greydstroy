@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     telegram_chat_id: str = ""
     # Если задан — человек пишет боту /join КОД и попадает в рассылку сам.
     telegram_join_code: str = ""
+    # С российского IP api.telegram.org часто недоступен.
+    # TELEGRAM_API_BASE — свой релей (Cloudflare Worker и т.п.), без хвоста /bot...
+    # TELEGRAM_PROXY — HTTP(S) прокси, например http://127.0.0.1:7890
+    telegram_api_base: str = "https://api.telegram.org"
+    telegram_proxy: str = ""
 
     @property
     def dsn(self) -> str:

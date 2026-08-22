@@ -10,7 +10,9 @@ const loading = ref(false)
 const loadError = ref('')
 const actionError = ref('')
 const configured = ref(false)
-const bot = ref({ username: '', name: '', ok: false })
+const reachable = ref(false)
+const tgError = ref('')
+const bot = ref({ username: '', name: '', ok: false, api_base: '', via_proxy: false })
 const joinCode = ref('')
 const recipients = ref([])
 const pending = ref([])
@@ -45,6 +47,8 @@ async function load() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const data = await res.json()
     configured.value = data.configured
+    reachable.value = Boolean(data.reachable)
+    tgError.value = data.error || ''
     bot.value = data.bot || {}
     joinCode.value = data.join_code || ''
     recipients.value = data.recipients || []
@@ -143,6 +147,31 @@ onMounted(load)
     </div>
 
     <template v-else>
+      <div v-if="!reachable" class="tg-card tg-card--warn">
+        <h2>Сервер не достучался до Telegram</h2>
+        <p v-if="tgError">{{ tgError }}</p>
+        <p>
+          С российского IP <code>api.telegram.org</code> часто недоступен.
+          Не используйте чужие публичные зеркала — через них утечёт токен бота.
+        </p>
+        <ol class="tg-steps">
+          <li>
+            Свой релей: задеплойте
+            <code>deploy/telegram-relay/worker.js</code>
+            как Cloudflare Worker и в <code>backend/.env</code> укажите
+            <code>TELEGRAM_API_BASE=https://ваш-воркер.workers.dev</code>
+          </li>
+          <li>
+            Или HTTP(S) прокси: <code>TELEGRAM_PROXY=http://хост:порт</code>
+          </li>
+          <li>Перезапустите бэкенд и нажмите «Обновить».</li>
+        </ol>
+        <p v-if="bot.api_base" class="tg-meta">
+          Сейчас запросы идут на <code>{{ bot.api_base }}</code>
+          <span v-if="bot.via_proxy"> через прокси</span>.
+        </p>
+      </div>
+
       <div class="tg-card">
         <header class="tg-card-h">
           <div>
@@ -293,6 +322,8 @@ onMounted(load)
 .tg-row-actions { display: flex; gap: 8px; }
 .tg-empty { color: var(--w-faint); padding: 12px 0; }
 .tg-ok { color: var(--ok); font-size: 13.5px; }
+.tg-card--warn { box-shadow: inset 0 0 0 1px rgba(255, 90, 31, 0.35); }
+.tg-meta { margin-top: 10px; font-size: 13px; color: var(--w-faint); }
 .tg-manual { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--line-d); }
 .tg-manual p { margin-bottom: 10px; font-size: 13px; }
 .tg-manual-row {
