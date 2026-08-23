@@ -7,6 +7,8 @@ const props = defineProps({
   kmd: { type: Boolean, default: false },
   montage: { type: Boolean, default: false },
   compact: { type: Boolean, default: false },
+  /** Чек-лист площадки: { found, crane, stack, weld, plan } */
+  site: { type: Object, default: null },
 })
 
 const uid = `dp${Math.random().toString(36).slice(2, 8)}`
@@ -15,7 +17,17 @@ const pulse = ref(false)
 let pulseTimer = 0
 
 watch(
-  () => [props.type, props.coating, props.kmd, props.montage],
+  () => [
+    props.type,
+    props.coating,
+    props.kmd,
+    props.montage,
+    props.site?.found,
+    props.site?.crane,
+    props.site?.stack,
+    props.site?.weld,
+    props.site?.plan,
+  ],
   () => {
     animKey.value += 1
     pulse.value = true
@@ -381,20 +393,47 @@ const geo = computed(() => {
   const shape = build(P)
 
   let montage = null
-  if (props.montage && shape.ground) {
+  let siteDraw = null
+  if (shape.ground) {
     const base = shape.ground.split(' ').map((s) => {
       const [x, y] = s.split(',').map(Number)
       return { x, y }
     })
-    if (base.length >= 4) {
-      const cx = (base[0].x + base[2].x) / 2
-      const cy = Math.min(...base.map((p) => p.y)) - 14
-      montage = { x: cx, y: cy }
+    if (base.length >= 3) {
+      const xs = base.map((p) => p.x)
+      const ys = base.map((p) => p.y)
+      const minX = Math.min(...xs)
+      const maxX = Math.max(...xs)
+      const minY = Math.min(...ys)
+      const maxY = Math.max(...ys)
+      const cx = (minX + maxX) / 2
+      const cy = (minY + maxY) / 2
+      if (props.montage && !props.site) {
+        montage = { x: cx, y: minY - 14 }
+      }
+      if (props.site) {
+        const front = shape.cols?.find((c) => !c.back) || shape.cols?.[0]
+        const weld = front
+          ? {
+              x: front.x1 + (front.x2 - front.x1) * 0.58,
+              y: front.y1 + (front.y2 - front.y1) * 0.58,
+            }
+          : { x: cx + 18, y: cy - 8 }
+        siteDraw = {
+          crane: { x: minX + 16, y: maxY - 4 },
+          stack: { x: maxX - 6, y: cy + 16 },
+          weld,
+          plan: { x: maxX - 8, y: minY + 6 },
+        }
+      }
     }
   }
 
-  return { ...shape, montage }
+  return { ...shape, montage, siteDraw }
 })
+
+const showFoundations = computed(() => !props.site || !!props.site.found)
+const siteOn = computed(() => props.site || null)
 
 const typeLabel = computed(() => {
   const map = {
@@ -424,6 +463,7 @@ onUnmounted(() => {
       'dp--compact': compact,
       'dp--kmd': kmd,
       'dp--pulse': pulse && !reduced,
+      'dp--site': !!site,
     }"
   >
     <svg
@@ -473,9 +513,10 @@ onUnmounted(() => {
         stroke="rgba(255,90,31,0.3)"
         stroke-width="1"
         class="ground"
+        :class="{ 'ground--wait': siteOn && !showFoundations, 'ground--ready': siteOn && showFoundations }"
       />
 
-      <g v-if="geo.boxes?.length" class="boxes">
+      <g v-if="geo.boxes?.length && showFoundations" class="boxes site-pop" :key="'found' + animKey">
         <g v-for="(box, i) in geo.boxes" :key="'bx' + i">
           <polygon :points="box.side" :fill="`url(#${uid}-side)`" :stroke="coat.edge" stroke-width="0.7" />
           <polygon :points="box.front" :fill="`url(#${uid}-metal)`" :stroke="coat.edge" stroke-width="0.7" />
@@ -664,6 +705,47 @@ onUnmounted(() => {
         <rect x="-28" y="-10" width="56" height="18" rx="4" fill="rgba(53,201,126,0.18)" stroke="#35c97e" stroke-width="1" />
         <text class="montage-lbl" text-anchor="middle" y="3">монтаж</text>
       </g>
+
+      <g v-if="siteOn && geo.siteDraw" class="site-layers">
+        <g v-if="siteOn.crane" :transform="`translate(${geo.siteDraw.crane.x}, ${geo.siteDraw.crane.y})`">
+          <g class="site-pop" :key="'crane' + animKey">
+            <rect x="-11" y="16" width="22" height="6" rx="1.2" fill="rgba(255,90,31,0.2)" stroke="#ff7d3f" stroke-width="1" />
+            <line x1="0" y1="16" x2="0" y2="-36" stroke="#ff7d3f" stroke-width="1.7" stroke-linecap="round" />
+            <line x1="0" y1="-36" x2="46" y2="-12" stroke="#ffb08a" stroke-width="1.5" stroke-linecap="round" />
+            <line x1="46" y1="-12" x2="46" y2="4" stroke="rgba(255,176,138,0.85)" stroke-width="1" stroke-dasharray="2 2" />
+            <path d="M42 4h8" stroke="#ff7d3f" stroke-width="1.4" stroke-linecap="round" />
+            <text class="site-lbl" text-anchor="middle" y="32">кран</text>
+          </g>
+        </g>
+
+        <g v-if="siteOn.stack" :transform="`translate(${geo.siteDraw.stack.x}, ${geo.siteDraw.stack.y})`">
+          <g class="site-pop" :key="'stack' + animKey">
+            <rect x="-28" y="-16" width="52" height="36" rx="3" fill="none" stroke="rgba(255,90,31,0.45)" stroke-width="1" stroke-dasharray="3 2.5" />
+            <rect x="-18" y="2" width="32" height="6" rx="1" fill="rgba(255,125,63,0.35)" stroke="#ff7d3f" stroke-width="0.8" />
+            <rect x="-16" y="-6" width="28" height="6" rx="1" fill="rgba(255,125,63,0.5)" stroke="#ffb08a" stroke-width="0.8" />
+            <rect x="-14" y="-14" width="24" height="6" rx="1" fill="rgba(255,125,63,0.7)" stroke="#ffb08a" stroke-width="0.8" />
+            <text class="site-lbl" text-anchor="middle" y="28">секции</text>
+          </g>
+        </g>
+
+        <g v-if="siteOn.weld" :transform="`translate(${geo.siteDraw.weld.x}, ${geo.siteDraw.weld.y})`">
+          <g class="site-pop" :key="'weld' + animKey">
+            <circle r="3.2" fill="#ff5a1f" />
+            <line x1="0" y1="0" x2="9" y2="-7" stroke="#ffb08a" stroke-width="1.1" stroke-linecap="round" />
+            <line x1="0" y1="0" x2="11" y2="1" stroke="#ff7d3f" stroke-width="1.1" stroke-linecap="round" />
+            <line x1="0" y1="0" x2="6" y2="9" stroke="#ffb08a" stroke-width="1.1" stroke-linecap="round" />
+            <line x1="0" y1="0" x2="-8" y2="-6" stroke="#ff7d3f" stroke-width="1" stroke-linecap="round" />
+            <text class="site-lbl" x="0" y="18" text-anchor="middle">сварка</text>
+          </g>
+        </g>
+
+        <g v-if="siteOn.plan" :transform="`translate(${geo.siteDraw.plan.x}, ${geo.siteDraw.plan.y})`">
+          <g class="site-pop" :key="'plan' + animKey">
+            <rect x="-30" y="-10" width="60" height="18" rx="4" fill="rgba(53,201,126,0.18)" stroke="#35c97e" stroke-width="1" />
+            <text class="montage-lbl" text-anchor="middle" y="3">график</text>
+          </g>
+        </g>
+      </g>
     </svg>
   </div>
 </template>
@@ -734,8 +816,39 @@ onUnmounted(() => {
 .ground {
   transition: opacity 0.3s ease;
 }
+.ground--wait {
+  opacity: 0.35;
+}
+.ground--ready {
+  opacity: 1;
+}
 .dp--kmd .ground {
   opacity: 0.55;
+}
+
+.site-lbl {
+  font-family: var(--font-m);
+  font-size: 9px;
+  fill: #ffb08a;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.site-pop {
+  animation: site-in 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes site-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-pop,
+  .dp--pulse .sketch {
+    animation: none;
+  }
 }
 
 .lbl {

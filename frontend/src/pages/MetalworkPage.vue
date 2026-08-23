@@ -5,12 +5,13 @@ import CasesSection from '../components/CasesSection.vue'
 import GeoSection from '../components/GeoSection.vue'
 import FaqSection from '../components/FaqSection.vue'
 import FinalCtaSection from '../components/FinalCtaSection.vue'
+import { metalworkLandings, metalworkLandingPath } from '../data/metallokonstruktsii'
 
 /* ---------- что изготавливаем (только уникальные блоки страницы) ---------- */
 const products = [
   {
     title: 'Каркасы зданий',
-    hint: 'Колонны, балки, связи, прогоны по КМ / КМД',
+    hint: 'Колонны, балки, связи, прогоны по чертежу КМ / КМД',
     price: 'от 57 000 ₽/т',
     icon: 'frame',
   },
@@ -37,12 +38,14 @@ const products = [
     hint: 'Для авто, входных групп, производственных зон',
     price: 'от 57 000 ₽/т',
     icon: 'canopy',
+    to: '/metallokonstruktsii/navesy',
   },
   {
     title: 'Ангары и склады',
     hint: 'Быстровозводимые здания, с монтажом по области',
     price: 'от 57 000 ₽/т',
     icon: 'hangar',
+    to: '/metallokonstruktsii/sklady-i-angary',
   },
   {
     title: 'Закладные детали',
@@ -64,14 +67,18 @@ const products = [
     <!-- ============ HERO ============ -->
     <section id="mk-hero" class="sec sec--dark page-hero mk-hero">
       <div class="container">
-        <RouterLink to="/" class="page-back" v-reveal>← На главную</RouterLink>
+        <nav class="crumbs" aria-label="Навигация" v-reveal>
+          <RouterLink to="/">Главная</RouterLink>
+          <span class="crumbs-sep" aria-hidden="true">/</span>
+          <span aria-current="page">Металлоконструкции</span>
+        </nav>
         <div class="sec-head" v-reveal="60">
           <p class="sec-tag"><span class="idx">Производство</span> Металлоконструкции</p>
-          <h1 class="page-title">Изготовление металлоконструкций <em>на заказ</em></h1>
+          <h1 class="page-title">Металлоконструкции <em>на заказ</em></h1>
           <p class="page-desc">
-            Производство металлоконструкций в Дзержинске: от закладной детали до каркаса
-            здания под ключ. Свой цех 3000 м² — резка, гибка, сварка и покрытие на одной
-            площадке. Смета за 1 рабочий день, отгрузка по всей России.
+            Свой цех 3000 м² в Дзержинске: резка, гибка, сварка и покрытие на одной
+            площадке. От закладной детали до каркаса здания. Смета за 1 рабочий день,
+            отгрузка по всей России.
           </p>
         </div>
 
@@ -79,6 +86,17 @@ const products = [
           <RouterLink to="/kalkulyator" class="btn">Рассчитать стоимость в калькуляторе</RouterLink>
           <a href="#cta" class="btn btn--ghost">Прислать чертёж на расчёт</a>
         </div>
+
+        <nav class="mk-cluster" aria-label="Посадочные металлоконструкций" v-reveal="170">
+          <RouterLink
+            v-for="s in metalworkLandings"
+            :key="s.slug"
+            :to="metalworkLandingPath(s.slug)"
+            class="mk-chip"
+          >
+            {{ s.navLabel }}
+          </RouterLink>
+        </nav>
 
         <div class="mk-stats" v-reveal="200">
           <div class="mk-stat"><b>3000 м²</b><span>своё производство</span></div>
@@ -102,7 +120,14 @@ const products = [
         </div>
 
         <div class="prod-grid">
-          <article v-for="(p, i) in products" :key="p.title" class="card prod-card" v-reveal="i * 60">
+          <component
+            :is="p.to ? 'RouterLink' : 'article'"
+            v-for="(p, i) in products"
+            :key="p.title"
+            class="card prod-card"
+            :to="p.to"
+            v-reveal="i * 60"
+          >
             <span class="prod-icon" aria-hidden="true">
               <svg v-if="p.icon === 'frame'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 26V12l12-7 12 7v14" /><path d="M4 26h24" /><path d="M10 26V15m6 11V12m6 14V15" />
@@ -132,7 +157,7 @@ const products = [
             <h3>{{ p.title }}</h3>
             <p>{{ p.hint }}</p>
             <p class="prod-price">{{ p.price }} <small>работы</small></p>
-          </article>
+          </component>
         </div>
       </div>
     </section>
@@ -150,11 +175,48 @@ const products = [
 /* ============ hero ============ */
 .mk-hero { padding-bottom: 64px; }
 
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-bottom: 36px;
+  font-size: 13.5px;
+  color: var(--w-faint);
+}
+.crumbs a {
+  color: var(--w-soft);
+  transition: color 0.2s;
+}
+.crumbs a:hover { color: var(--acc-hot); }
+.crumbs [aria-current="page"] { color: var(--white); }
+.crumbs-sep { color: var(--w-faint); opacity: 0.55; }
+
 .mk-hero-cta {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.mk-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 48px;
+}
+.mk-chip {
+  padding: 10px 16px;
+  border: 1px solid var(--line-d);
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--w-soft);
+  transition: border-color 0.2s, color 0.2s;
+}
+.mk-chip:hover {
+  border-color: var(--acc);
+  color: var(--white);
 }
 
 .mk-stats {
@@ -186,7 +248,7 @@ const products = [
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
-.prod-card { display: flex; flex-direction: column; padding: 26px 24px; }
+.prod-card { display: flex; flex-direction: column; padding: 26px 24px; color: inherit; text-decoration: none; }
 .prod-icon {
   width: 48px;
   height: 48px;

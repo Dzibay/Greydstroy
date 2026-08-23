@@ -5,6 +5,11 @@ import UslugiPage from '../pages/UslugiPage.vue'
 import UslugaPage from '../pages/UslugaPage.vue'
 import MetalworkPage from '../pages/MetalworkPage.vue'
 import { uslugi } from '../data/uslugi'
+import { laserLandings } from '../data/lazernayaRezka'
+import { metalworkLandings, getMetalworkLanding } from '../data/metallokonstruktsii'
+import IzgotovleniePage from '../pages/IzgotovleniePage.vue'
+import ProizvodstvoPage from '../pages/ProizvodstvoPage.vue'
+import MontazhPage from '../pages/MontazhPage.vue'
 import CalculatorPage from '../pages/CalculatorPage.vue'
 import ProjectPage from '../pages/ProjectPage.vue'
 import ContactsPage from '../pages/ContactsPage.vue'
@@ -26,11 +31,45 @@ const router = createRouter({
       name: 'metalwork',
       component: MetalworkPage,
       meta: {
-        title: 'Изготовление металлоконструкций на заказ в Дзержинске — завод Грэйдстрой',
+        title: 'Металлоконструкции на заказ в Дзержинске — завод Грэйдстрой',
         description:
-          'Завод металлоконструкций в Дзержинске: каркасы зданий, фермы, балки, лестницы, навесы, ангары. Работы от 45 000 ₽/т, монтаж с окраской от 45 000 ₽/т, смета за 1 рабочий день, отгрузка по всей России.',
+          'Металлоконструкции на заказ: каркасы зданий, фермы, балки, лестницы, навесы, ангары. Работы от 45 000 ₽/т, монтаж с окраской от 45 000 ₽/т, смета за 1 рабочий день, отгрузка по всей России.',
       },
     },
+    ...(() => {
+      const izg = getMetalworkLanding('izgotovlenie')
+      const prz = getMetalworkLanding('proizvodstvo')
+      const mnt = getMetalworkLanding('montazh')
+      return [
+        {
+          path: '/metallokonstruktsii/izgotovlenie',
+          name: 'metalwork-izgotovlenie',
+          component: IzgotovleniePage,
+          meta: { title: izg.metaTitle, description: izg.metaDescription },
+        },
+        {
+          path: '/metallokonstruktsii/proizvodstvo',
+          name: 'metalwork-proizvodstvo',
+          component: ProizvodstvoPage,
+          meta: { title: prz.metaTitle, description: prz.metaDescription },
+        },
+        {
+          path: '/metallokonstruktsii/montazh',
+          name: 'metalwork-montazh',
+          component: MontazhPage,
+          meta: { title: mnt.metaTitle, description: mnt.metaDescription },
+        },
+        ...metalworkLandings
+          .filter((p) => p.slug !== 'izgotovlenie' && p.slug !== 'proizvodstvo' && p.slug !== 'montazh')
+          .map((p) => ({
+            path: `/metallokonstruktsii/${p.slug}`,
+            name: `metalwork-${p.slug}`,
+            component: UslugaPage,
+            props: { hub: 'metalwork', childSlug: p.slug },
+            meta: { title: p.metaTitle, description: p.metaDescription },
+          })),
+      ]
+    })(),
     {
       path: '/uslugi',
       name: 'uslugi',
@@ -48,6 +87,14 @@ const router = createRouter({
       component: UslugaPage,
       props: { slug: u.slug },
       meta: { title: u.metaTitle, description: u.metaDescription },
+    })),
+    // Дочерние посадочные лазерной резки (/uslugi/lazernaya-rezka/<slug>)
+    ...laserLandings.map((p) => ({
+      path: `/uslugi/lazernaya-rezka/${p.slug}`,
+      name: `usluga-lazernaya-rezka-${p.slug}`,
+      component: UslugaPage,
+      props: { slug: 'lazernaya-rezka', childSlug: p.slug },
+      meta: { title: p.metaTitle, description: p.metaDescription },
     })),
     {
       path: '/kalkulyator',

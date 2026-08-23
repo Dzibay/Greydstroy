@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { laserLandings, laserLandingPath } from '../data/lazernayaRezka'
 
 /* ---------- интерактивный подбор технологии ---------- */
 const materials = [
@@ -72,6 +73,7 @@ const services = [
     ],
     fit: 'Детали под сборку · серийные партии · сложный контур',
     icon: 'laser',
+    children: laserLandings.map((p) => ({ to: laserLandingPath(p.slug), label: p.navLabel })),
   },
   {
     title: 'Плазменная резка металла',
@@ -340,6 +342,9 @@ const toggleFaq = (i) => {
                     <RouterLink to="/kalkulyator" class="btn btn--ghost acc-btn">Рассчитать</RouterLink>
                   </div>
                 </div>
+                <nav v-if="s.children" class="acc-children" aria-label="Посадочные лазерной резки">
+                  <RouterLink v-for="c in s.children" :key="c.to" :to="c.to">{{ c.label }}</RouterLink>
+                </nav>
               </div>
             </div>
           </article>
@@ -809,6 +814,26 @@ const toggleFaq = (i) => {
 }
 .acc-more:hover { color: var(--acc-hot); }
 .acc-btn { padding: 13px 26px; }
+
+.acc-children {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-top: 20px;
+}
+.acc-children a {
+  padding: 8px 14px;
+  border: 1px solid var(--line-l);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  transition: border-color 0.2s, color 0.2s;
+}
+.acc-children a:hover {
+  border-color: var(--acc);
+  color: var(--acc);
+}
 
 /* ============ FAQ ============ */
 .faq {
