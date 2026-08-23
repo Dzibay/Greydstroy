@@ -10,7 +10,8 @@ import ProjectPage from '../pages/ProjectPage.vue'
 import ContactsPage from '../pages/ContactsPage.vue'
 import DeliveryPage from '../pages/DeliveryPage.vue'
 import RequisitesPage from '../pages/RequisitesPage.vue'
-import { getProjectById } from '../data/projects'
+import NotFoundPage from '../pages/NotFoundPage.vue'
+import { getProjectMeta, projects } from '../data/projects'
 import { applyPageMeta } from '../utils/meta'
 
 // Скрытый путь админки: не упоминается в навигации, sitemap и robots.
@@ -68,14 +69,30 @@ const router = createRouter({
           'Реализованные и текущие контракты ООО «Грэйдстрой»: металлоконструкции для промышленных комплексов, складов, муниципальных объектов. Изготовление, резка, гибка, сварка.',
       },
     },
+    // SEO-страницы объектов — meta из data/projects.js
+    ...projects.map((p) => {
+      const meta = getProjectMeta(p)
+      return {
+        path: `/projects/${p.id}`,
+        name: `project-${p.id}`,
+        component: ProjectPage,
+        props: { id: p.id },
+        meta: {
+          title: meta.title,
+          description: meta.description,
+          image: p.images?.[0] ? `https://greydstroy.ru${p.images[0]}` : undefined,
+        },
+      }
+    }),
+    // Неизвестный slug объекта — 404, не soft-redirect на главную
     {
       path: '/projects/:id',
-      name: 'project',
-      component: ProjectPage,
-      props: true,
-      beforeEnter: (to) => {
-        if (!getProjectById(to.params.id)) return { name: 'home' }
-      },
+      name: 'project-missing',
+      beforeEnter: (to) => ({
+        name: 'not-found',
+        params: { pathMatch: to.path.slice(1).split('/') },
+        replace: true,
+      }),
     },
     {
       path: '/kontakty',
@@ -111,7 +128,17 @@ const router = createRouter({
       path: ADMIN_PATH,
       name: 'admin',
       component: () => import('../pages/AdminLeadsPage.vue'),
-          meta: { bare: true, noindex: true, title: 'Админка' },
+      meta: { bare: true, noindex: true, title: 'Админка' },
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFoundPage,
+      meta: {
+        noindex: true,
+        title: 'Страница не найдена — Грэйдстрой',
+        description: 'Страница не найдена.',
+      },
     },
   ],
   scrollBehavior(to) {

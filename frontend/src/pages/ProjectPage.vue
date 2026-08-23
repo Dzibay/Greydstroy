@@ -1,11 +1,13 @@
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
 import { getProjectById } from '../data/projects'
 import ProjectGallery from '../components/ProjectGallery.vue'
 
-const route = useRoute()
-const project = computed(() => getProjectById(route.params.id))
+const props = defineProps({
+  id: { type: String, required: true },
+})
+
+const project = computed(() => getProjectById(props.id))
 
 const period = computed(() => {
   if (!project.value) return ''

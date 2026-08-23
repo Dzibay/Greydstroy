@@ -28,7 +28,7 @@ const marquee = [
         </p>
 
         <h1 class="hero-title" v-reveal="80">
-          Произведём <em>«под ключ»</em> любой заказ из металла
+          Изготовление <em>металлоконструкций</em> на заказ
         </h1>
 
         <p class="hero-sub" v-reveal="160">

@@ -243,3 +243,15 @@ export const projectsByNewest = [...projects].sort(
 export function getProjectById(id) {
   return projects.find((p) => p.id === id)
 }
+
+/** Title / description для SEO страницы объекта */
+export function getProjectMeta(project) {
+  if (!project) return null
+  const title = `${project.title} — ${project.client} | Грэйдстрой`
+  const loc = project.location ? ` ${project.location}.` : ''
+  let description = `${project.subject}${loc} Объект ООО «Грэйдстрой»: металлоконструкции, монтаж.`
+  if (description.length > 160) {
+    description = description.slice(0, 157).replace(/\s+\S*$/, '') + '…'
+  }
+  return { title, description }
+}

@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /gs-panel-x7k2m9
+Disallow: /ru
+Disallow: /ru/
 
 Sitemap: https://greydstroy.ru/sitemap.xml
