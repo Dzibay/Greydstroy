@@ -215,7 +215,7 @@ onMounted(load)
 </template>
 
 <style scoped>
-.tg { display: flex; flex-direction: column; gap: 18px; }
+.tg { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .tg-card {
   background: var(--bg1);
   border: 1px solid var(--line-d);
@@ -242,7 +242,13 @@ onMounted(load)
   align-items: flex-start;
   flex-wrap: wrap;
 }
-.tg-card p { color: var(--w-soft); font-size: 14.5px; line-height: 1.5; }
+.tg-card p {
+  color: var(--w-soft);
+  font-size: 14.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .tg-card a { color: var(--acc-hot); }
 .tg-card code {
   font-family: var(--font-m);
@@ -250,6 +256,8 @@ onMounted(load)
   background: rgba(255, 255, 255, 0.06);
   padding: 1px 6px;
   border-radius: 6px;
+  overflow-wrap: anywhere;
+  word-break: break-all;
 }
 .tg-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .tg-steps {
@@ -299,7 +307,12 @@ onMounted(load)
 @media (max-width: 700px) {
   .tg { gap: 12px; }
   .tg-card { padding: 14px 12px; }
-  .tg-card h2 { font-size: 13px; }
+  .tg-card h2 {
+    font-family: var(--font-b);
+    font-size: 14px;
+    letter-spacing: 0;
+    text-transform: none;
+  }
   .tg-card p, .tg-steps { font-size: 13px; }
   .tg-list li {
     flex-direction: column;

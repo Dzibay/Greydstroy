@@ -34,6 +34,27 @@ PAGE_NAMES = {
     "/kontakty": "Контакты",
     "/dostavka": "Доставка",
     "/rekvizity": "Реквизиты",
+    "/uslugi/lazernaya-rezka": "Лазерная резка",
+    "/uslugi/plazmennaya-rezka": "Плазменная резка",
+    "/uslugi/gazovaya-rezka": "Газовая резка",
+    "/uslugi/gibka-metalla": "Гибка металла",
+    "/uslugi/svarka": "Сварка",
+    "/uslugi/lazernaya-rezka/listovogo-metalla": "Лазер · листового металла",
+    "/uslugi/lazernaya-rezka/trub": "Лазер · труб",
+    "/uslugi/lazernaya-rezka/nerzhaveyushchey-stali": "Лазер · нержавейки",
+    "/uslugi/lazernaya-rezka/alyuminiya": "Лазер · алюминия",
+    "/uslugi/lazernaya-rezka/cena": "Лазер · цена",
+    "/metallokonstruktsii/izgotovlenie": "Изготовление",
+    "/metallokonstruktsii/proizvodstvo": "Производство",
+    "/metallokonstruktsii/montazh": "Монтаж",
+    "/metallokonstruktsii/sborka": "Сборка",
+    "/metallokonstruktsii/cena": "Цена",
+    "/metallokonstruktsii/raschet": "Расчёт",
+    "/metallokonstruktsii/sklady-i-angary": "Склады и ангары",
+    "/metallokonstruktsii/navesy": "Навесы",
+    "/metallokonstruktsii/fermy": "Фермы",
+    "/metallokonstruktsii/lestnitsy": "Лестницы",
+    "/metallokonstruktsii/zakladnye": "Закладные",
 }
 TG_FILE_LIMIT = 45 * 1024 * 1024
 _OFFICIAL_API = "https://api.telegram.org"
@@ -139,10 +160,15 @@ def _page_label(path: str) -> str:
     if clean in PAGE_NAMES:
         return PAGE_NAMES[clean]
     if clean.startswith("/uslugi/"):
-        return f"Услуга · {clean[8:]}"
+        slug = clean[8:].rstrip("/").split("/")[-1].replace("-", " ")
+        return f"Услуга · {slug}" if slug else "Услуги"
+    if clean.startswith("/metallokonstruktsii/"):
+        slug = clean[21:].rstrip("/").split("/")[-1].replace("-", " ")
+        return slug or "Металлоконструкции"
     if clean.startswith("/projects/"):
-        return f"Объект · {clean[10:]}"
-    return path or "—"
+        slug = clean[10:].rstrip("/").replace("-", " ")
+        return f"Объект · {slug}" if slug else "Объекты"
+    return clean or "—"
 
 
 def international_phone(phone: str) -> str:

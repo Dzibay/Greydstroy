@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import AdminStats from '../components/admin/AdminStats.vue'
 import AdminTelegram from '../components/admin/AdminTelegram.vue'
+import { pageLabel } from '../utils/pageLabel'
 
 const TOKEN_KEY = 'gs_admin_token'
 
@@ -265,7 +266,7 @@ onMounted(loadLeads)
             <span class="adm-badge" :class="lead.has_drawing ? 'yes' : 'no'">
               {{ lead.has_drawing ? 'Чертёж есть' : 'Чертежа нет' }}
             </span>
-            <span v-if="lead.source">{{ lead.source }}</span>
+            <span v-if="lead.source" class="adm-source">{{ pageLabel(lead.source) }}</span>
           </p>
           <p v-if="lead.comment" class="adm-comment">{{ lead.comment }}</p>
           <div v-if="lead.file_path" class="adm-file">
@@ -333,7 +334,7 @@ onMounted(loadLeads)
                 <span v-else>—</span>
               </td>
               <td class="adm-comment">{{ lead.comment || '—' }}</td>
-              <td class="adm-nowrap">{{ lead.source || '—' }}</td>
+              <td class="adm-source">{{ lead.source ? pageLabel(lead.source) : '—' }}</td>
               <td class="adm-row-actions">
                 <button
                   type="button"
@@ -400,6 +401,7 @@ onMounted(loadLeads)
 .adm-panel {
   max-width: 1480px;
   margin: 0 auto;
+  min-width: 0;
 }
 .adm-head {
   display: flex;
@@ -559,6 +561,10 @@ onMounted(loadLeads)
 
 .adm-num { font-family: var(--font-m); color: var(--w-faint); }
 .adm-nowrap { white-space: nowrap; }
+.adm-source {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .adm-phone {
   font-family: var(--font-m);
   color: var(--white);
@@ -647,10 +653,16 @@ onMounted(loadLeads)
 .adm-cards { display: none; }
 
 @media (max-width: 860px) {
-  .adm { padding: 16px 12px 28px; overflow-x: hidden; }
-  .adm h1 { font-size: 18px; }
+  .adm { padding: 14px 10px 24px; overflow-x: hidden; }
+  .adm h1 {
+    font-family: var(--font-b);
+    font-size: 18px;
+    letter-spacing: 0;
+    text-transform: none;
+  }
   .adm-count { font-size: 13px; }
-  .adm-head { align-items: stretch; margin-bottom: 14px; }
+  .adm-tag { font-size: 10px; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .adm-head { align-items: stretch; margin-bottom: 12px; }
   .adm-actions { width: 100%; }
   .adm-actions .adm-btn { flex: 1; text-align: center; padding: 10px 12px; }
   .adm-tabs {
@@ -661,8 +673,8 @@ onMounted(loadLeads)
   }
   .adm-tabs button {
     justify-content: center;
-    font-size: 11px;
-    padding: 8px 6px;
+    font-size: 12px;
+    padding: 9px 6px;
   }
   .adm-table-wrap { display: none; }
   .adm-cards {
@@ -674,11 +686,12 @@ onMounted(loadLeads)
     background: var(--bg1);
     border: 1px solid var(--line-d);
     border-radius: 12px;
-    padding: 14px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 8px;
     font-size: 13px;
+    min-width: 0;
   }
   .adm-card-h {
     display: flex;
@@ -693,13 +706,22 @@ onMounted(loadLeads)
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    align-items: center;
+    align-items: flex-start;
     color: var(--w-faint);
     font-size: 12px;
+    min-width: 0;
   }
+  .adm-source { font-size: 12px; line-height: 1.4; }
   .adm-comment { max-width: none; font-size: 13px; }
   .adm-file { max-width: none; }
   .adm-login-card { padding: 24px 18px; }
+  .adm-login-card h1 { font-size: 20px; }
   .adm-login-card .field { font-size: 16px; }
+}
+@media (max-width: 420px) {
+  .adm { padding: 12px 8px 20px; }
+  .adm h1 { font-size: 16px; }
+  .adm-tabs button { font-size: 11px; padding: 8px 4px; }
+  .adm-phone { font-size: 14px; }
 }
 </style>
