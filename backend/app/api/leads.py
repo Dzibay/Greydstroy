@@ -4,13 +4,17 @@ from pathlib import Path
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from app.analytics import parse_uuid
+from app.analytics import RateLimiter, parse_uuid
 from app.db import pool
 from app.notify import notify_new_lead
 from app.paths import UPLOAD_DIR
 
 router = APIRouter()
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+ALLOWED_EXT = {".pdf", ".dwg", ".dxf", ".jpg", ".jpeg", ".png", ".stp", ".step", ".zip"}
+MAX_FILE = 25 * 1024 * 1024
+lead_limiter = RateLimiter(max_hits=8, window_sec=600.0)
 
 
 class LeadIn(BaseModel):
@@ -26,6 +30,10 @@ class LeadIn(BaseModel):
 
 @router.post("/leads")
 async def create_lead(request: Request, background: BackgroundTasks) -> dict:
+    ip = request.client.host if request.client else ""
+    if ip and not lead_limiter.allow(ip):
+        raise HTTPException(status_code=429, detail="Слишком много заявок. Позвоните: +7 (905) 664-66-65")
+
     content_type = request.headers.get("content-type", "")
 
     file_name = ""
@@ -35,13 +43,21 @@ async def create_lead(request: Request, background: BackgroundTasks) -> dict:
 
     if "multipart/form-data" in content_type:
         form = await request.form()
+        honeypot = str(form.get("website", "") or form.get("company_url", "")).strip()
+        if honeypot:
+            return {"ok": True, "id": 0}
+
         file = form.get("file")
         if file and getattr(file, "filename", ""):
             original_name = Path(file.filename).name
             ext = Path(original_name).suffix.lower()
+            if ext not in ALLOWED_EXT:
+                raise HTTPException(status_code=422, detail="Файл: PDF, DWG, DXF, JPG, PNG, STEP или ZIP")
+            data = await file.read()
+            if len(data) > MAX_FILE:
+                raise HTTPException(status_code=422, detail="Файл больше 25 МБ — пришлите ссылкой или сожмите")
             safe_name = f"{secrets.token_hex(12)}{ext}"
             target = UPLOAD_DIR / safe_name
-            data = await file.read()
             target.write_bytes(data)
             file_name = original_name
             file_path = f"/uploads/{safe_name}"
@@ -59,7 +75,12 @@ async def create_lead(request: Request, background: BackgroundTasks) -> dict:
             session_id=str(form.get("session_id", "")),
         )
     else:
-        lead = LeadIn.model_validate(await request.json())
+        raw_body = await request.json()
+        if not isinstance(raw_body, dict):
+            raise HTTPException(status_code=422, detail="Некорректная заявка")
+        if str(raw_body.get("website", "") or raw_body.get("company_url", "")).strip():
+            return {"ok": True, "id": 0}
+        lead = LeadIn.model_validate(raw_body)
 
     if not lead.phone.strip():
         raise HTTPException(status_code=422, detail="Телефон обязателен")

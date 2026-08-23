@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS leads (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS visitor_id UUID;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS session_id UUID;
 
 CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_leads_visitor ON leads (visitor_id) WHERE visitor_id IS NOT NULL;

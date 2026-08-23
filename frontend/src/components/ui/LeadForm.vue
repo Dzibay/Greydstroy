@@ -18,6 +18,7 @@ const form = reactive({
   drawing: 'yes',
   agree: true,
   fileName: '',
+  website: '',
 })
 
 const sent = ref(false)
@@ -113,6 +114,10 @@ async function submit() {
   error.value = ''
   sending.value = true
   try {
+    if (form.website) {
+      sent.value = true
+      return
+    }
     const file = fileRef.value?.files?.[0] ?? null
     const payload = new FormData()
     payload.append('name', form.name)
@@ -156,7 +161,11 @@ async function submit() {
         </p>
       </div>
 
-      <form v-else key="form" @submit.prevent="submit" novalidate @focusin="onFormStart">
+      <form v-else key="form" class="lf-form" @submit.prevent="submit" novalidate @focusin="onFormStart">
+        <label class="lf-hp" aria-hidden="true">
+          Сайт
+          <input v-model="form.website" type="text" name="website" tabindex="-1" autocomplete="off" />
+        </label>
         <input
           v-if="extended"
           v-model="form.name"
@@ -238,6 +247,14 @@ async function submit() {
 
 <style scoped>
 .lead-form { width: 100%; }
+.lf-form { position: relative; }
+.lf-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
 
 .field { margin-bottom: 12px; }
 .lf-textarea { resize: vertical; min-height: 76px; }

@@ -11,6 +11,8 @@ import { uslugi } from '../data/uslugi'
 import DetailPreview from '../components/calc/DetailPreview.vue'
 import FaqSection from '../components/FaqSection.vue'
 import FinalCtaSection from '../components/FinalCtaSection.vue'
+import ShopGallery from '../components/ShopGallery.vue'
+import { montageGallery } from '../data/shopPhotos'
 
 const SITE = 'https://greydstroy.ru'
 const page = getMetalworkLanding('montazh')
@@ -378,6 +380,14 @@ onUnmounted(() => ldScript?.remove())
         </div>
       </div>
     </section>
+
+    <ShopGallery
+      :items="montageGallery"
+      tag="Объект"
+      kicker="Монтаж"
+      title="Как ставим"
+      title-em="на площадке"
+    />
 
     <!-- ============ КАК ИДЁТ + СБОРКА ============ -->
     <section id="how" class="sec sec--light">

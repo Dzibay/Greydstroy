@@ -5,7 +5,9 @@ import CasesSection from '../components/CasesSection.vue'
 import GeoSection from '../components/GeoSection.vue'
 import FaqSection from '../components/FaqSection.vue'
 import FinalCtaSection from '../components/FinalCtaSection.vue'
+import ShopGallery from '../components/ShopGallery.vue'
 import { metalworkLandings, metalworkLandingPath } from '../data/metallokonstruktsii'
+import { homeGallery } from '../data/shopPhotos'
 
 /* ---------- что изготавливаем (только уникальные блоки страницы) ---------- */
 const products = [
@@ -20,6 +22,7 @@ const products = [
     hint: 'Стропильные и подстропильные, пролёты до 36 м',
     price: 'от 65 000 ₽/т',
     icon: 'truss',
+    to: '/metallokonstruktsii/fermy',
   },
   {
     title: 'Балки и колонны',
@@ -32,6 +35,7 @@ const products = [
     hint: 'Марши, обслуживающие площадки, ограждения',
     price: 'от 75 000 ₽/т',
     icon: 'stairs',
+    to: '/metallokonstruktsii/lestnitsy',
   },
   {
     title: 'Навесы и козырьки',
@@ -52,6 +56,7 @@ const products = [
     hint: 'Пластины, анкерные блоки, кронштейны — серийно',
     price: 'от 45 000 ₽/т',
     icon: 'plate',
+    to: '/metallokonstruktsii/zakladnye',
   },
   {
     title: 'Нестандартные конструкции',
@@ -161,6 +166,15 @@ const products = [
         </div>
       </div>
     </section>
+
+    <ShopGallery
+      :items="homeGallery"
+      tag="Площадка"
+      kicker="Цех и объекты"
+      title="Как выглядит"
+      title-em="работа, не рендер"
+      lead="Каркасы, фермы, раскрой и навесы — кадры с наших объектов и из цеха в Дзержинске."
+    />
 
     <ProcessSection />
     <CompareSection />

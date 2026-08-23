@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { laserLandings, laserLandingPath } from '../data/lazernayaRezka'
+import ShopGallery from '../components/ShopGallery.vue'
+import { shopGallery } from '../data/shopPhotos'
 
 /* ---------- интерактивный подбор технологии ---------- */
 const materials = [
@@ -299,6 +301,14 @@ const toggleFaq = (i) => {
         </div>
       </div>
     </section>
+
+    <ShopGallery
+      :items="shopGallery"
+      tag="Цех"
+      kicker="Резка"
+      title="Станки"
+      title-em="на Заревской"
+    />
 
     <!-- ============ УСЛУГИ (АККОРДЕОН) ============ -->
     <section id="uslugi-list" class="sec sec--light">

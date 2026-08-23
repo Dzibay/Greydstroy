@@ -17,6 +17,7 @@ import {
 } from '../data/metallokonstruktsii'
 import FaqSection from '../components/FaqSection.vue'
 import FinalCtaSection from '../components/FinalCtaSection.vue'
+import ShopGallery from '../components/ShopGallery.vue'
 
 const SITE = 'https://greydstroy.ru'
 
@@ -200,6 +201,15 @@ onUnmounted(() => ldScript?.remove())
         </div>
       </div>
     </section>
+
+    <ShopGallery
+      v-if="usluga.photos?.length"
+      :items="usluga.photos"
+      tag="Объект"
+      kicker="С площадки"
+      title="Как это выглядит"
+      title-em="в металле"
+    />
 
     <!-- ============ ОТ ЧЕГО ЗАВИСИТ ЦЕНА ============ -->
     <section v-if="usluga.factors" id="factors" class="sec sec--dark">

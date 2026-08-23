@@ -44,6 +44,9 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
           {{ item.label }}
         </RouterLink>
         <a href="tel:+79056646665" class="hdr-phone-m" data-track="tel-header">+7 (905) 664-66-65</a>
+        <RouterLink to="/kalkulyator" class="btn hdr-calc-m" data-track="calc-header" @click="menuOpen = false">
+          Рассчитать заказ
+        </RouterLink>
       </nav>
 
       <div class="hdr-right">
@@ -115,7 +118,8 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   transition: width 0.25s var(--ease);
 }
 .hdr-nav a:hover::after { width: 100%; }
-.hdr-phone-m { display: none; }
+.hdr-phone-m,
+.hdr-calc-m { display: none; }
 
 .hdr-right { display: flex; align-items: center; gap: 20px; }
 .hdr-phone {
@@ -173,5 +177,20 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   .hdr-nav a { padding: 14px 28px; font-size: 16px; }
   .hdr-nav a::after { display: none; }
   .hdr-phone-m { display: block; color: var(--acc-hot); font-family: var(--font-m); }
+  .hdr-nav a.hdr-calc-m {
+    display: inline-flex;
+    align-self: flex-start;
+    width: auto;
+    margin: 12px 28px 10px;
+    padding: 13px 22px;
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #fff;
+    background: var(--acc);
+  }
+  .hdr-nav a.hdr-calc-m:hover {
+    color: #fff;
+    background: var(--acc-hot);
+  }
 }
 </style>

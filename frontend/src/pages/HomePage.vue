@@ -15,6 +15,8 @@ import DraftSection from '../components/DraftSection.vue'
 import TeamSection from '../components/TeamSection.vue'
 import FaqSection from '../components/FaqSection.vue'
 import FinalCtaSection from '../components/FinalCtaSection.vue'
+import ShopGallery from '../components/ShopGallery.vue'
+import { homeGallery } from '../data/shopPhotos'
 </script>
 
 <template>
@@ -26,6 +28,14 @@ import FinalCtaSection from '../components/FinalCtaSection.vue'
     <ProcessSection />
     <CompareSection />
     <PrecisionSection />
+    <ShopGallery
+      :items="homeGallery"
+      tag="/ 07"
+      kicker="Цех и объекты"
+      title="Железо"
+      title-em="с площадки"
+      lead="Каркас, раскрой, колонны после грунта, навес в монтаже — не сток из фотобанка."
+    />
     <AudienceSection />
     <CasesSection />
     <DocsSection />

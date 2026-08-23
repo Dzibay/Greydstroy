@@ -12,6 +12,8 @@ import { company } from '../data/company'
 import StatCounter from '../components/ui/StatCounter.vue'
 import FaqSection from '../components/FaqSection.vue'
 import FinalCtaSection from '../components/FinalCtaSection.vue'
+import ShopGallery from '../components/ShopGallery.vue'
+import { shopGallery } from '../data/shopPhotos'
 
 const SITE = 'https://greydstroy.ru'
 const page = getMetalworkLanding('proizvodstvo')
@@ -27,6 +29,8 @@ const stations = [
     text: 'Чистый контур, отверстия и пазы за один установ. Деталь с поста идёт в гибку или сразу в сборку.',
     to: '/uslugi/lazernaya-rezka',
     tone: 'laser',
+    photo: '/img/hero-laser.png',
+    photoAlt: 'Лазерная резка металла в цехе Грэйдстрой',
   },
   {
     id: 'plasma',
@@ -36,6 +40,8 @@ const stations = [
     text: 'Толстый лист и фланцы: там, где лазеру уже невыгодно. Кромка под сварку без «доп. зачистки» в смете.',
     to: '/uslugi/plazmennaya-rezka',
     tone: 'plasma',
+    photo: '/img/shop/shop-33.jpg',
+    photoAlt: 'ЧПУ-плазма режет отверстия в стальном листе',
   },
   {
     id: 'gas',
@@ -45,6 +51,8 @@ const stations = [
     text: 'Плиты, закладные, основания. Пост берёт то, что лазер и плазма уже не берут.',
     to: '/uslugi/gazovaya-rezka',
     tone: 'gas',
+    photo: '/img/shop/shop-37.jpg',
+    photoAlt: 'Раскрой толстого листа с отверстиями',
   },
   {
     id: 'bend',
@@ -54,6 +62,8 @@ const stations = [
     text: 'ЧПУ-листогиб рядом с резкой: развёртку считаем сами, угол не «подгоняют на объекте».',
     to: '/uslugi/gibka-metalla',
     tone: 'bend',
+    photo: '/img/press-brake.png',
+    photoAlt: 'ЧПУ-листогиб на производстве Грэйдстрой',
   },
   {
     id: 'weld',
@@ -63,6 +73,8 @@ const stations = [
     text: 'Узлы и каркасы на стапеле. Швы проверяем до накладной, паспорт — на изделие.',
     to: '/uslugi/svarka',
     tone: 'weld',
+    photo: '/img/shop/shop-31.jpg',
+    photoAlt: 'Колонны с опорными пластинами после грунта',
   },
   {
     id: 'ship',
@@ -72,6 +84,8 @@ const stations = [
     text: 'С площадки, без чужого склада «перетарки». По области — свой транспорт, по России — терминал рядом.',
     to: '/dostavka',
     tone: 'ship',
+    photo: '/img/shop/shop-02.jpg',
+    photoAlt: 'Каркас ангара готов к постановке на объекте',
   },
 ]
 
@@ -295,15 +309,20 @@ onUnmounted(() => ldScript?.remove())
             <p class="floor-text">{{ station.text }}</p>
             <RouterLink :to="station.to" class="floor-link">Подробнее об участке →</RouterLink>
           </div>
-          <div class="floor-photo" v-if="station.id === 'bend'">
-            <img src="/img/press-brake.png" alt="ЧПУ-листогиб на производстве Грэйдстрой" />
-          </div>
-          <div class="floor-photo" v-else-if="station.id === 'laser'">
-            <img src="/img/hero-laser.png" alt="Лазерная резка металла в цехе" />
+          <div class="floor-photo" v-if="station.photo">
+            <img :src="station.photo" :alt="station.photoAlt" />
           </div>
         </div>
       </div>
     </section>
+
+    <ShopGallery
+      :items="shopGallery"
+      tag="Цех"
+      kicker="Станки"
+      title="Раскрой"
+      title-em="на своей площадке"
+    />
 
     <!-- ============ КАКОЙ ПОСТ ============ -->
     <section id="post" class="sec sec--dark">

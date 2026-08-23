@@ -11,6 +11,8 @@ import { uslugi } from '../data/uslugi'
 import DetailPreview from '../components/calc/DetailPreview.vue'
 import FaqSection from '../components/FaqSection.vue'
 import FinalCtaSection from '../components/FinalCtaSection.vue'
+import ShopGallery from '../components/ShopGallery.vue'
+import { izgotovlenieGallery } from '../data/shopPhotos'
 
 const SITE = 'https://greydstroy.ru'
 const page = getMetalworkLanding('izgotovlenie')
@@ -33,6 +35,8 @@ const types = [
     rate: 45000,
     hint: 'Пластины, анкеры, кронштейны — серией или по одной.',
     fit: 'От одной детали. Отверстия и фаски по КМД, не «досверлите на площадке».',
+    to: '/metallokonstruktsii/zakladnye',
+    toLabel: 'Закладные →',
   },
   {
     id: 'beams',
@@ -69,6 +73,8 @@ const types = [
     rate: 65000,
     hint: 'Стропильные и подстропильные, пролёты до 36 м.',
     fit: 'Контрольная сборка на стапеле, если стыков много.',
+    to: '/metallokonstruktsii/fermy',
+    toLabel: 'Фермы →',
   },
   {
     id: 'stairs',
@@ -77,6 +83,8 @@ const types = [
     rate: 75000,
     hint: 'Марши, площадки обслуживания, ограждения.',
     fit: 'По КМ или по месту: снимем размеры и согласуем узел.',
+    to: '/metallokonstruktsii/lestnitsy',
+    toLabel: 'Лестницы →',
   },
   {
     id: 'custom',
@@ -408,6 +416,14 @@ onUnmounted(() => ldScript?.remove())
         </div>
       </div>
     </section>
+
+    <ShopGallery
+      :items="izgotovlenieGallery"
+      tag="Цех"
+      kicker="С площадки"
+      title="Что уезжает"
+      title-em="с Заревской"
+    />
 
     <!-- ============ КАК ИДЁТ ЗАКАЗ ============ -->
     <section id="how" class="sec sec--light">
