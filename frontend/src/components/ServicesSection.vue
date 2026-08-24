@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { mainServices } from '../data/services'
 
 const services = mainServices
@@ -7,8 +7,19 @@ const services = mainServices
 const active = ref(0)
 const current = computed(() => services[active.value])
 
+let hoverTimer = 0
+
 const select = (i) => {
+  window.clearTimeout(hoverTimer)
   active.value = i
+}
+
+const selectHover = (i) => {
+  if (i === active.value) return
+  window.clearTimeout(hoverTimer)
+  hoverTimer = window.setTimeout(() => {
+    active.value = i
+  }, 90)
 }
 
 const onKey = (e, i) => {
@@ -23,6 +34,8 @@ const onKey = (e, i) => {
   select(next)
   document.getElementById(`srv-tab-${next}`)?.focus()
 }
+
+onUnmounted(() => window.clearTimeout(hoverTimer))
 </script>
 
 <template>
@@ -54,7 +67,7 @@ const onKey = (e, i) => {
             :aria-controls="'srv-panel'"
             :tabindex="active === i ? 0 : -1"
             @click="select(i)"
-            @mouseenter="select(i)"
+            @mouseenter="selectHover(i)"
             @keydown="onKey($event, i)"
           >
             <span class="srv-tab-num">{{ String(i + 1).padStart(2, '0') }}</span>
@@ -70,13 +83,12 @@ const onKey = (e, i) => {
         <div
           id="srv-panel"
           class="srv-stage"
-          :class="'srv-stage--' + current.tone"
           role="tabpanel"
           :aria-labelledby="'srv-tab-' + active"
         >
           <span class="srv-ghost" aria-hidden="true">{{ String(active + 1).padStart(2, '0') }}</span>
           <Transition name="srv-swap">
-            <div :key="current.id" class="srv-stage-in">
+            <div :key="current.id" class="srv-stage-in" :class="'srv-stage-in--' + current.tone">
               <div class="srv-stage-top">
                 <span class="srv-icon" aria-hidden="true">
                   <svg v-if="current.icon === 'fab'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -270,12 +282,6 @@ const onKey = (e, i) => {
   background: var(--card-d);
   isolation: isolate;
 }
-.srv-stage--fab { --tone: #ff5a1f; }
-.srv-stage--mount { --tone: #4f8dff; }
-.srv-stage--concrete { --tone: #9aa7b8; }
-.srv-stage--turnkey { --tone: #ffb020; }
-.srv-stage--design { --tone: #38bdf8; }
-.srv-stage--demolition { --tone: #ff4d6d; }
 
 .srv-stage::before {
   content: '';
@@ -292,6 +298,7 @@ const onKey = (e, i) => {
 }
 
 .srv-stage-in {
+  --tone: var(--acc);
   position: absolute;
   inset: var(--stage-pad-y) var(--stage-pad-x);
   z-index: 1;
@@ -299,8 +306,13 @@ const onKey = (e, i) => {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
 }
+.srv-stage-in--fab { --tone: #ff5a1f; }
+.srv-stage-in--mount { --tone: #4f8dff; }
+.srv-stage-in--concrete { --tone: #9aa7b8; }
+.srv-stage-in--turnkey { --tone: #ffb020; }
+.srv-stage-in--design { --tone: #38bdf8; }
+.srv-stage-in--demolition { --tone: #ff4d6d; }
 
 .srv-ghost {
   position: absolute;
@@ -335,7 +347,8 @@ const onKey = (e, i) => {
   border-radius: 14px;
   background: color-mix(in srgb, var(--tone) 16%, transparent);
   color: var(--tone);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tone) 35%, transparent);
+  box-shadow: none;
+  border: 1px solid color-mix(in srgb, var(--tone) 35%, transparent);
 }
 .srv-icon svg { width: 32px; height: 32px; }
 
@@ -365,7 +378,7 @@ const onKey = (e, i) => {
   line-height: 1.15;
   margin-bottom: 10px;
   max-width: 18ch;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .srv-stage-title a {
   background-image: linear-gradient(var(--tone), var(--tone));
@@ -435,12 +448,13 @@ const onKey = (e, i) => {
 
 .srv-swap-enter-active,
 .srv-swap-leave-active {
-  transition: opacity 0.28s var(--ease), transform 0.28s var(--ease);
+  transition: opacity 0.22s ease;
+  pointer-events: none;
 }
 .srv-swap-leave-active { z-index: 1; }
 .srv-swap-enter-active { z-index: 2; }
-.srv-swap-enter-from { opacity: 0; transform: translateY(10px); }
-.srv-swap-leave-to { opacity: 0; transform: translateY(-8px); }
+.srv-swap-enter-from,
+.srv-swap-leave-to { opacity: 0; }
 
 .srv-foot {
   display: flex;
@@ -521,6 +535,6 @@ const onKey = (e, i) => {
   .srv-swap-enter-active,
   .srv-swap-leave-active { transition: none; }
   .srv-swap-enter-from,
-  .srv-swap-leave-to { transform: none; }
+  .srv-swap-leave-to { opacity: 1; }
 }
 </style>
