@@ -21,7 +21,7 @@ const siblings = metalworkLandings.filter((p) => p.slug !== 'montazh')
 const cycleOthers = otherCycleLinks(MONTAZH_PATH)
 const seoParagraphs = Array.isArray(page.seoText) ? page.seoText : [page.seoText]
 
-const RATE = 45000
+const RATE = 35000
 const LOW = 0.88
 const HIGH = 1.12
 
@@ -358,7 +358,7 @@ onUnmounted(() => ldScript?.remove())
               <p class="verdict-recap">{{ recap }}</p>
               <p class="verdict-note">
                 База {{ money(RATE) }}/т. Кран, высота и ночные работы в вилку не зашиты —
-                всплывут отдельной строкой, не внутри «от 45 000».
+                всплывут отдельной строкой, не внутри «от 35 000».
               </p>
               <div class="verdict-cta">
                 <RouterLink to="/kalkulyator" class="btn">В калькуляторе с изготовлением</RouterLink>
@@ -372,7 +372,7 @@ onUnmounted(() => ldScript?.remove())
             <h3>Свой монтаж сюда не обещаем по прайсу</h3>
             <p>
               Отгрузим каркас с маркировкой и схемой. Местная бригада ставит по нашей КМД.
-              Если тоннаж большой и выезд всё же нужен — это отдельный расчёт проживания и логистики, не строка «монтаж 45 000 ₽/т».
+              Если тоннаж большой и выезд всё же нужен — это отдельный расчёт проживания и логистики, не строка «монтаж 35 000 ₽/т».
             </p>
             <div class="verdict-cta">
               <RouterLink to="/dostavka" class="btn">Доставка</RouterLink>

@@ -12,10 +12,10 @@ import { track } from '../analytics/tracker'
    Тарифы — «примерные параметры», правятся в одном месте
    ===================================================== */
 const RATES = {
-  metalPerTonne: 78000, // наш металл, ₽/т (С245/С255)
+  metalPerTonne: 75000, // наш металл, ₽/т (С245/С255)
   kmdShare: 0.08, // разработка КМД, доля от стоимости работ
   urgentShare: 0.25, // срочность, доля от стоимости работ
-  montagePerTonne: 45000, // монтаж с окраской, ₽/т
+  montagePerTonne: 35000, // монтаж с окраской, ₽/т
   vatShare: 20 / 120, // НДС 20% «в том числе» (цены с НДС)
   rangeLow: 0.88, // нижняя граница вилки
   rangeHigh: 1.12, // верхняя граница вилки
@@ -26,56 +26,56 @@ const TYPES = [
     id: 'plates',
     label: 'Закладные и детали',
     hint: 'Пластины, анкеры, кронштейны, фланцы',
-    rate: 45000,
+    rate: 39000,
     icon: 'plate',
   },
   {
     id: 'beams',
     label: 'Балки и колонны',
     hint: 'Двутавры, связи, прогоны с обработкой',
-    rate: 52000,
+    rate: 45000,
     icon: 'beam',
   },
   {
     id: 'frame',
     label: 'Каркасы и навесы',
     hint: 'Каркас здания, навес, эстакада',
-    rate: 57000,
+    rate: 49000,
     icon: 'frame',
   },
   {
     id: 'truss',
     label: 'Фермы',
     hint: 'Стропильные и подстропильные фермы',
-    rate: 65000,
+    rate: 55000,
     icon: 'truss',
   },
   {
     id: 'stairs',
     label: 'Лестницы и площадки',
     hint: 'Марши, площадки, ограждения',
-    rate: 75000,
+    rate: 62000,
     icon: 'stairs',
   },
   {
     id: 'custom',
     label: 'Нестандарт',
     hint: 'Ёмкости, бункеры, уникальные узлы',
-    rate: 95000,
+    rate: 79000,
     icon: 'tank',
   },
 ]
 
 const COATINGS = [
   { id: 'none', label: 'Без покрытия', rate: 0, note: 'чистый металл' },
-  { id: 'primer', label: 'Грунт ГФ-021', rate: 8000, note: 'огрунтовка, защита на время монтажа' },
-  { id: 'paint', label: 'Грунт + эмаль', rate: 15000, note: 'финишное покрытие в цвет RAL' },
+  { id: 'primer', label: 'Грунт ГФ-021', rate: 6000, note: 'огрунтовка, защита на время монтажа' },
+  { id: 'paint', label: 'Грунт + эмаль', rate: 12000, note: 'финишное покрытие в цвет RAL' },
 ]
 
 const DELIVERY = [
   { id: 'pickup', label: 'Самовывоз', cost: 0, note: 'Дзержинск, в день готовности' },
-  { id: 'local', label: 'Дзержинск / Н. Новгород', cost: 8000, note: 'наш транспорт' },
-  { id: 'region', label: 'Нижегородская область', cost: 15000, note: 'наш транспорт' },
+  { id: 'local', label: 'Дзержинск / Н. Новгород', cost: 6000, note: 'наш транспорт' },
+  { id: 'region', label: 'Нижегородская область', cost: 12000, note: 'наш транспорт' },
   { id: 'russia', label: 'По России', cost: 0, note: 'по тарифу ТК', external: true },
 ]
 
@@ -156,10 +156,10 @@ const COL_STEPS = [
 ]
 
 const FOUNDATIONS = [
-  { id: 'pads', label: 'Стаканный', note: 'столбы под колонны', perSqm: 4800, addQ: 0.5 },
-  { id: 'strip', label: 'Ленточный', note: 'лента по периметру', perSqm: 6400, addQ: 0.35 },
-  { id: 'piles', label: 'Свайный', note: 'сваи с ростверком', perSqm: 8200, addQ: 0.8 },
-  { id: 'slab', label: 'Плитный', note: 'монолитная плита', perSqm: 10800, addQ: 0.25 },
+  { id: 'pads', label: 'Стаканный', note: 'столбы под колонны', perSqm: 4200, addQ: 0.5 },
+  { id: 'strip', label: 'Ленточный', note: 'лента по периметру', perSqm: 5600, addQ: 0.35 },
+  { id: 'piles', label: 'Свайный', note: 'сваи с ростверком', perSqm: 7200, addQ: 0.8 },
+  { id: 'slab', label: 'Плитный', note: 'монолитная плита', perSqm: 9500, addQ: 0.25 },
 ]
 
 const DIM_PRESETS = [

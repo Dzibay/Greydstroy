@@ -23,8 +23,8 @@ const cycleOthers = otherCycleLinks(IZG_PATH)
 const seoParagraphs = Array.isArray(page.seoText) ? page.seoText : [page.seoText]
 
 /* тарифы как в калькуляторе */
-const METAL = 78000
-const MONTAGE = 45000
+const METAL = 75000
+const MONTAGE = 35000
 const KMD_SHARE = 0.08
 const LOW = 0.88
 const HIGH = 1.12
@@ -34,7 +34,7 @@ const types = [
     id: 'plates',
     preview: 'plates',
     label: 'Закладные',
-    rate: 45000,
+    rate: 39000,
     hint: 'Пластины, анкеры, кронштейны — серией или по одной.',
     fit: 'От одной детали. Отверстия и фаски по КМД, не «досверлите на площадке».',
     to: '/metallokonstruktsii/zakladnye',
@@ -44,7 +44,7 @@ const types = [
     id: 'beams',
     preview: 'beams',
     label: 'Балки и колонны',
-    rate: 52000,
+    rate: 45000,
     hint: 'Сварные двутавры, торцы, отверстия под узлы.',
     fit: 'Сечение и длина по вашему КМ. Торцы обрабатываем в цехе.',
   },
@@ -52,7 +52,7 @@ const types = [
     id: 'frame',
     preview: 'frame',
     label: 'Каркасы',
-    rate: 57000,
+    rate: 49000,
     hint: 'Колонны, связи, прогоны — каркас здания или навес.',
     fit: 'Считаем по чертежу или габаритам. Навесы — отдельной посадочной.',
     to: '/metallokonstruktsii/navesy',
@@ -62,7 +62,7 @@ const types = [
     id: 'hangar',
     preview: 'frame',
     label: 'Ангары',
-    rate: 57000,
+    rate: 49000,
     hint: 'Каркас склада или холодного ангара под ваш пролёт.',
     fit: 'Снег по району, шаг колонн под логистику. Сэндвич — в точном расчёте.',
     to: '/metallokonstruktsii/sklady-i-angary',
@@ -72,7 +72,7 @@ const types = [
     id: 'truss',
     preview: 'truss',
     label: 'Фермы',
-    rate: 65000,
+    rate: 55000,
     hint: 'Стропильные и подстропильные, пролёты до 36 м.',
     fit: 'Контрольная сборка на стапеле, если стыков много.',
     to: '/metallokonstruktsii/fermy',
@@ -82,7 +82,7 @@ const types = [
     id: 'stairs',
     preview: 'stairs',
     label: 'Лестницы',
-    rate: 75000,
+    rate: 62000,
     hint: 'Марши, площадки обслуживания, ограждения.',
     fit: 'По КМ или по месту: снимем размеры и согласуем узел.',
     to: '/metallokonstruktsii/lestnitsy',
@@ -92,7 +92,7 @@ const types = [
     id: 'custom',
     preview: 'custom',
     label: 'Нестандарт',
-    rate: 95000,
+    rate: 79000,
     hint: 'Ёмкости, бункеры, рамы, узлы, которых нет в сортаменте.',
     fit: 'Сначала геометрия, потом тонна. Не копируем чужой прайс «за тонну всего».',
   },
@@ -100,8 +100,8 @@ const types = [
 
 const coatings = [
   { id: 'none', label: 'Без покрытия', rate: 0 },
-  { id: 'primer', label: 'Грунт', rate: 8000 },
-  { id: 'paint', label: 'Грунт + эмаль', rate: 15000 },
+  { id: 'primer', label: 'Грунт', rate: 6000 },
+  { id: 'paint', label: 'Грунт + эмаль', rate: 12000 },
 ]
 
 const starts = [
