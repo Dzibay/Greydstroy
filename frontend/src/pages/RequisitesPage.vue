@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { company, requisiteGroups } from '../data/company'
+import MailLink from '../components/ui/MailLink.vue'
 
 const copied = ref(false)
 
@@ -63,7 +64,8 @@ async function copyAll() {
               <div v-for="row in group.rows" :key="row.label" class="req-row">
                 <dt>{{ row.label }}</dt>
                 <dd :class="{ mono: row.mono }">
-                  <a v-if="row.href" :href="row.href">{{ row.value }}</a>
+                  <MailLink v-if="row.mail" track-label="mail-requisites">{{ row.value }}</MailLink>
+                  <a v-else-if="row.href" :href="row.href" :data-track="row.track">{{ row.value }}</a>
                   <template v-else>{{ row.value }}</template>
                 </dd>
               </div>

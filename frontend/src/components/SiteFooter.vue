@@ -1,6 +1,8 @@
 <script setup>
 import CompanyLogo from './ui/CompanyLogo.vue'
+import MailLink from './ui/MailLink.vue'
 import { mainServices } from '../data/services'
+import { company } from '../data/company'
 </script>
 
 <template>
@@ -34,8 +36,8 @@ import { mainServices } from '../data/services'
 
       <div class="ftr-contacts">
         <p class="ftr-h">Контакты</p>
-        <a href="tel:+79056646665" class="ftr-phone" data-track="tel-footer">+7 (905) 664-66-65</a>
-        <a href="mailto:greydstroy@yandex.ru" data-track="mail-footer">greydstroy@yandex.ru</a>
+        <a :href="company.phoneHref" class="ftr-phone" data-track="tel-footer">{{ company.phone }}</a>
+        <MailLink class="ftr-mail" track-label="mail-footer">{{ company.email }}</MailLink>
         <p class="ftr-addr">Нижегородская область, г. Дзержинск<br />дорога Заревская объездная, д. 9В</p>
       </div>
 

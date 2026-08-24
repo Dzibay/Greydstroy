@@ -13,6 +13,8 @@ const PATH_NAMES = {
   '/kontakty': 'Контакты',
   '/dostavka': 'Доставка',
   '/rekvizity': 'Реквизиты',
+  '/docs/privacy-policy.html': 'Политика ПДн',
+  '/docs/chek-list.html': 'Чек-лист ТЗ',
 }
 
 for (const u of uslugi) {

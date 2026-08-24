@@ -2,6 +2,7 @@
 import { reactive, ref, nextTick } from 'vue'
 import { applyPhoneInput, applyPhonePaste, isValidRuPhone } from '../../utils/phone'
 import { getIds, track } from '../../analytics/tracker'
+import { company } from '../../data/company'
 
 const props = defineProps({
   extended: { type: Boolean, default: false },
@@ -139,7 +140,7 @@ async function submit() {
     sent.value = true
     track('form_submit', { label: props.buttonText })
   } catch {
-    error.value = 'Не удалось отправить заявку. Позвоните нам: +7 (905) 664-66-65.'
+    error.value = 'submit-failed'
     track('form_error', { label: props.buttonText })
   } finally {
     sending.value = false
@@ -234,7 +235,13 @@ async function submit() {
           </label>
         </template>
 
-        <p v-if="error" class="lf-error">{{ error }}</p>
+        <p v-if="error" class="lf-error">
+          <template v-if="error === 'submit-failed'">
+            Не удалось отправить заявку.
+            <a :href="company.phoneHref" data-track="tel-form-error">Позвоните {{ company.phone }}</a>
+          </template>
+          <template v-else>{{ error }}</template>
+        </p>
 
         <button class="btn btn--block" type="submit" data-track="lead-submit" :disabled="sending">
           {{ sending ? 'Отправляем…' : buttonText }}
@@ -339,6 +346,11 @@ async function submit() {
   font-size: 13px;
   color: var(--acc-hot);
   margin-bottom: 12px;
+}
+.lf-error a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .lf-note { text-align: center; }

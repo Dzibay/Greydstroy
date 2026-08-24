@@ -23,11 +23,22 @@ const CLICK_NAMES = {
   'calc-mode-details': 'Калькулятор · режим «детали»',
   'calc-mode-object': 'Калькулятор · режим «объект»',
   'calc-get-quote': 'Калькулятор · точный расчёт',
-  'tel-header': 'Звонок · шапка',
-  'tel-banner': 'Звонок · баннер',
-  'tel-widget': 'Звонок · виджет',
-  'tel-footer': 'Звонок · подвал',
-  'mail-footer': 'Почта · подвал',
+  'tel-header': 'Шапка',
+  'tel-banner': 'Баннер на главной',
+  'tel-widget': 'Виджет связи',
+  'tel-footer': 'Подвал',
+  'tel-contacts': 'Страница контактов',
+  'tel-proizvodstvo': 'Страница производства',
+  'tel-requisites': 'Страница реквизитов',
+  'tel-form-error': 'Ошибка отправки заявки',
+  'tel-privacy': 'Политика ПДн',
+  'tel-checklist': 'Чек-лист ТЗ',
+  'mail-footer': 'Подвал',
+  'mail-contacts': 'Страница контактов',
+  'mail-requisites': 'Страница реквизитов',
+  'mail-widget': 'Виджет связи',
+  'mail-privacy': 'Политика ПДн',
+  'mail-checklist': 'Чек-лист ТЗ',
   'expert-fab': 'Виджет «связь с инженером»',
     'lead-submit': 'Отправка заявки',
     checklist: 'Чек-лист подготовки ТЗ',
@@ -37,6 +48,8 @@ const EVENT_NAMES = {
   pageview: 'Просмотр',
   click: 'Клик',
   outbound: 'Внешняя ссылка',
+  tel: 'Звонок',
+  mail: 'Почта',
   form_start: 'Форма: начало',
   form_submit: 'Форма: заявка',
   form_error: 'Форма: ошибка',
@@ -48,6 +61,7 @@ const FEED_FILTERS = [
   { id: 'calc', label: 'Калькулятор' },
   { id: 'form', label: 'Формы' },
   { id: 'click', label: 'Клики' },
+  { id: 'contact', label: 'Звонки и почта' },
 ]
 
 const DEVICE_NAMES = {
@@ -55,6 +69,45 @@ const DEVICE_NAMES = {
   tablet: 'Планшет',
   desktop: 'Компьютер',
   'неизвестно': 'Неизвестно',
+}
+
+const MAIL_PROVIDERS = {
+  gmail: 'Gmail',
+  yandex: 'Яндекс.Почта',
+  copy: 'Скопировали адрес',
+  mailto: 'Программа на компьютере',
+  unknown: 'Не указано',
+}
+
+const TEL_SPOTS = [
+  'tel-header',
+  'tel-banner',
+  'tel-widget',
+  'tel-footer',
+  'tel-contacts',
+  'tel-proizvodstvo',
+  'tel-requisites',
+  'tel-form-error',
+  'tel-privacy',
+  'tel-checklist',
+]
+
+const MAIL_SPOTS = [
+  'mail-footer',
+  'mail-contacts',
+  'mail-requisites',
+  'mail-widget',
+  'mail-privacy',
+  'mail-checklist',
+]
+
+function mergeSpots(known, rows) {
+  const map = new Map(rows.map((r) => [r.label, r.count]))
+  const extra = rows.filter((r) => !known.includes(r.label))
+  return [
+    ...known.map((label) => ({ label, count: map.get(label) || 0 })),
+    ...extra.map((r) => ({ label: r.label, count: r.count })),
+  ]
 }
 
 const days = ref(7)
@@ -73,6 +126,11 @@ const funnelMax = computed(() => Math.max(1, funnel.value[0]?.count || 1))
 const calc = computed(() => data.value?.calculator || {})
 const calcModes = computed(() => calc.value.modes || [])
 const calcModeTotal = computed(() => Math.max(1, calcModes.value.reduce((s, m) => s + m.sessions, 0)))
+const contactPlaces = computed(() => data.value?.contact?.places || [])
+const telPlaces = computed(() => mergeSpots(TEL_SPOTS, contactPlaces.value.filter((p) => p.kind === 'tel')))
+const mailPlaces = computed(() => mergeSpots(MAIL_SPOTS, contactPlaces.value.filter((p) => p.kind === 'mail')))
+const mailProviders = computed(() => data.value?.contact?.mail_providers || [])
+const contactRows = computed(() => data.value?.contact?.rows || [])
 
 const filteredRecent = computed(() => {
   const rows = data.value?.recent || []
@@ -81,7 +139,14 @@ const filteredRecent = computed(() => {
     return rows.filter((e) => e.event.startsWith('form_'))
   }
   if (feedFilter.value === 'click') {
-    return rows.filter((e) => e.event === 'click' || e.event === 'outbound')
+    return rows.filter((e) => ['click', 'outbound', 'tel', 'mail'].includes(e.event))
+  }
+  if (feedFilter.value === 'contact') {
+    return rows.filter((e) => {
+      if (e.event === 'tel' || e.event === 'mail') return true
+      const href = e.href || ''
+      return e.event === 'outbound' && (href.startsWith('tel:') || href.startsWith('mailto:'))
+    })
   }
   return rows
 })
@@ -102,6 +167,19 @@ function pageName(path) {
 
 function clickName(label) {
   return CLICK_NAMES[label] || label || '—'
+}
+
+function providerName(id) {
+  return MAIL_PROVIDERS[id] || id || '—'
+}
+
+function feedLabel(ev) {
+  const name = clickName(ev.label)
+  const base = name !== '—' ? name : ev.href || ''
+  if (ev.event === 'mail' && ev.provider) {
+    return `${base} · ${providerName(ev.provider)}`
+  }
+  return base
 }
 
 function sourceName(src) {
@@ -225,21 +303,112 @@ onUnmounted(() => {
         <p class="st-kpi-val">{{ fmtNum(kpis.pageviews) }}</p>
         <p class="st-kpi-sub">отказы {{ fmtPct(kpis.bounce_rate) }}</p>
       </article>
-      <article class="st-kpi">
-        <p class="st-kpi-label">Клики</p>
-        <p class="st-kpi-val">{{ fmtNum(kpis.clicks) }}</p>
-        <p class="st-kpi-sub">звонки {{ fmtNum(kpis.tel_clicks) }} · почта {{ fmtNum(kpis.mail_clicks) }}</p>
-      </article>
       <article class="st-kpi st-kpi--acc">
         <p class="st-kpi-label">Заявки</p>
         <p class="st-kpi-val">{{ fmtNum(kpis.leads) }}</p>
         <p class="st-kpi-sub">конверсия {{ fmtPct(kpis.conversion) }}</p>
       </article>
       <article class="st-kpi">
+        <p class="st-kpi-label">Звонки</p>
+        <p class="st-kpi-val">{{ fmtNum(kpis.tel_clicks) }}</p>
+        <p class="st-kpi-sub">нажатия на телефон</p>
+      </article>
+      <article class="st-kpi">
+        <p class="st-kpi-label">Почта</p>
+        <p class="st-kpi-val">{{ fmtNum(kpis.mail_clicks) }}</p>
+        <p class="st-kpi-sub">открыли письмо или скопировали</p>
+      </article>
+      <article class="st-kpi">
+        <p class="st-kpi-label">Клики</p>
+        <p class="st-kpi-val">{{ fmtNum(kpis.clicks) }}</p>
+        <p class="st-kpi-sub">все нажатия на сайте</p>
+      </article>
+      <article class="st-kpi">
         <p class="st-kpi-label">Начали форму</p>
         <p class="st-kpi-val">{{ fmtNum(kpis.form_starts) }}</p>
         <p class="st-kpi-sub">ошибки {{ fmtNum(kpis.form_errors) }} · дожали {{ fmtNum(kpis.leads) }}</p>
       </article>
+    </div>
+
+    <div class="st-card st-card--contact">
+      <header class="st-card-h">
+        <h2>Звонки и почта</h2>
+        <p>каждое нажатие: откуда и чем открыли письмо</p>
+      </header>
+
+      <div class="st-contact-kpis">
+        <div>
+          <em>Звонки</em>
+          <strong>{{ fmtNum(kpis.tel_clicks) }}</strong>
+          <span>нажатия на номер</span>
+        </div>
+        <div>
+          <em>Почта</em>
+          <strong>{{ fmtNum(kpis.mail_clicks) }}</strong>
+          <span>выбрали Gmail, Яндекс или скопировали</span>
+        </div>
+      </div>
+
+      <ul v-if="mailProviders.length" class="st-providers">
+        <li v-for="p in mailProviders" :key="p.provider">
+          <span>{{ providerName(p.provider) }}</span>
+          <strong>{{ fmtNum(p.count) }}</strong>
+        </li>
+      </ul>
+
+      <div class="st-contact">
+        <div>
+          <h3 class="st-subh">Откуда звонили</h3>
+          <table class="st-table">
+            <thead>
+              <tr><th>Место</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in telPlaces" :key="'tel-' + p.label" :class="{ 'is-zero': !p.count }">
+                <td>{{ clickName(p.label) }}</td>
+                <td>{{ fmtNum(p.count) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3 class="st-subh">Откуда писали</h3>
+          <table class="st-table">
+            <thead>
+              <tr><th>Место</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in mailPlaces" :key="'mail-' + p.label" :class="{ 'is-zero': !p.count }">
+                <td>{{ clickName(p.label) }}</td>
+                <td>{{ fmtNum(p.count) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 class="st-subh st-subh--mt">По страницам</h3>
+      <table v-if="contactRows.length" class="st-table">
+        <thead>
+          <tr>
+            <th>Действие</th>
+            <th>Место</th>
+            <th>Страница</th>
+            <th>Чем открыли</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(r, i) in contactRows" :key="r.kind + r.label + r.path + r.provider + i">
+            <td>{{ r.kind === 'tel' ? 'Звонок' : 'Почта' }}</td>
+            <td>{{ clickName(r.label) }}</td>
+            <td>{{ pageName(r.path) }}</td>
+            <td>{{ r.provider ? providerName(r.provider) : '—' }}</td>
+            <td>{{ fmtNum(r.count) }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else class="st-empty st-empty--sm">Пока нет нажатий на телефон и почту за период</p>
     </div>
 
     <div class="st-card">
@@ -487,6 +656,8 @@ onUnmounted(() => {
               <td>
                 <strong>{{ clickName(c.label) }}</strong>
                 <small v-if="c.event === 'outbound'">внешняя</small>
+                <small v-else-if="c.event === 'tel'">звонок</small>
+                <small v-else-if="c.event === 'mail'">почта</small>
               </td>
               <td>{{ pageName(c.path) }}</td>
               <td>{{ fmtNum(c.count) }}</td>
@@ -626,7 +797,7 @@ onUnmounted(() => {
           <time>{{ fmtTime(ev.t) }}</time>
           <span class="st-ev" :data-ev="ev.event">{{ EVENT_NAMES[ev.event] || ev.event }}</span>
           <span class="st-feed-path">{{ pageName(ev.path) }}</span>
-          <span class="st-feed-label">{{ clickName(ev.label) !== '—' ? clickName(ev.label) : ev.href }}</span>
+          <span class="st-feed-label">{{ feedLabel(ev) }}</span>
           <span class="st-feed-dev">{{ DEVICE_NAMES[ev.device] || ev.device }}</span>
         </div>
       </div>
@@ -700,9 +871,68 @@ onUnmounted(() => {
 
 .st-kpis {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
+.st-contact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+.st-card--contact {
+  border-top: 3px solid var(--acc);
+}
+.st-contact-kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.st-contact-kpis div {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line-d);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.st-contact-kpis em {
+  display: block;
+  font-style: normal;
+  font-family: var(--font-m);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--w-faint);
+  margin-bottom: 6px;
+}
+.st-contact-kpis strong {
+  font-family: var(--font-d);
+  font-size: 22px;
+}
+.st-contact-kpis span {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--w-soft);
+}
+.st-subh--mt { margin-top: 22px; }
+.st-table tr.is-zero td { opacity: 0.38; }
+.st-providers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.st-providers li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 12.5px;
+  color: var(--w-soft);
+}
+.st-providers strong { color: var(--white); font-family: var(--font-m); }
 .st-kpi {
   background: var(--bg1);
   border: 1px solid var(--line-d);
@@ -1031,6 +1261,8 @@ onUnmounted(() => {
 }
 .st-ev[data-ev='form_submit'] { background: rgba(53, 201, 126, 0.16); color: var(--ok); }
 .st-ev[data-ev='outbound'] { background: var(--acc-dim); color: var(--acc-hot); }
+.st-ev[data-ev='tel'] { background: rgba(53, 201, 126, 0.16); color: var(--ok); }
+.st-ev[data-ev='mail'] { background: rgba(91, 141, 239, 0.16); color: #8eb0ff; }
 .st-ev[data-ev='click'] { color: var(--white); }
 .st-ev[data-ev='form_start'] { color: var(--ok); }
 .st-ev[data-ev='calc'] { background: rgba(91, 141, 239, 0.16); color: #8eb0ff; }
@@ -1056,7 +1288,8 @@ onUnmounted(() => {
 }
 
 @media (max-width: 1100px) {
-  .st-kpis { grid-template-columns: repeat(3, 1fr); }
+  .st-kpis { grid-template-columns: repeat(4, 1fr); }
+  .st-contact { grid-template-columns: 1fr; }
   .st-grid, .st-grid--3 { grid-template-columns: 1fr; }
   .st-grid--calc { grid-template-columns: 1fr 1fr; }
   .st-calc-kpis { grid-template-columns: 1fr 1fr; }

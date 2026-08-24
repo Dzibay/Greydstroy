@@ -1,3 +1,7 @@
+<script setup>
+import { company } from '../data/company'
+</script>
+
 <template>
   <section id="quick-call" class="qcb-wrap" aria-label="Быстрая связь">
     <div class="container">
@@ -9,7 +13,7 @@
           </p>
         </div>
 
-        <a href="tel:+79056646665" class="qcb-phone" data-track="tel-banner">+7 (905) 664-66-65</a>
+        <a :href="company.phoneHref" class="qcb-phone" data-track="tel-banner">{{ company.phone }}</a>
 
         <ul class="qcb-meta">
           <li><span class="qcb-ico">◷</span> Пн–Пт: 08:00 – 17:00 (МСК)</li>

@@ -78,11 +78,17 @@ def analytics_summary(
                 COUNT(*) FILTER (WHERE event = 'pageview') AS pageviews,
                 COUNT(DISTINCT visitor_id) AS visitors,
                 COUNT(DISTINCT session_id) AS sessions,
-                COUNT(*) FILTER (WHERE event IN ('click', 'outbound')) AS clicks,
+                COUNT(*) FILTER (WHERE event IN ('click', 'outbound', 'tel', 'mail')) AS clicks,
                 COUNT(*) FILTER (WHERE event = 'form_start') AS form_starts,
                 COUNT(*) FILTER (WHERE event = 'form_submit') AS form_ok,
-                COUNT(*) FILTER (WHERE event = 'outbound' AND href LIKE 'tel:%%') AS tel_clicks,
-                COUNT(*) FILTER (WHERE event = 'outbound' AND href LIKE 'mailto:%%') AS mail_clicks,
+                COUNT(*) FILTER (
+                    WHERE event = 'tel'
+                       OR (event = 'outbound' AND href LIKE 'tel:%%')
+                ) AS tel_clicks,
+                COUNT(*) FILTER (
+                    WHERE event = 'mail'
+                       OR (event = 'outbound' AND href LIKE 'mailto:%%')
+                ) AS mail_clicks,
                 COUNT(*) FILTER (WHERE event = 'form_error') AS form_errors
             FROM analytics_events
             WHERE occurred_at >= %s AND occurred_at < %s
@@ -112,7 +118,7 @@ def analytics_summary(
                 SELECT session_id,
                        COUNT(*) FILTER (WHERE event = 'pageview') AS pvs,
                        COUNT(*) FILTER (
-                           WHERE event IN ('click', 'outbound', 'form_start', 'form_submit', 'calc')
+                           WHERE event IN ('click', 'outbound', 'form_start', 'form_submit', 'calc', 'tel', 'mail')
                        ) AS actions
                 FROM analytics_events
                 WHERE occurred_at >= %s AND occurred_at < %s
@@ -202,7 +208,7 @@ def analytics_summary(
                 event,
                 COUNT(*) AS count
             FROM analytics_events
-            WHERE event IN ('click', 'outbound')
+            WHERE event IN ('click', 'outbound', 'tel', 'mail')
               AND occurred_at >= %s AND occurred_at < %s
               AND (label <> '' OR href <> '')
             GROUP BY 1, path, event
@@ -285,7 +291,7 @@ def analytics_summary(
 
         recent = conn.execute(
             """
-            SELECT occurred_at, event, path, label, href, device
+            SELECT occurred_at, event, path, label, href, device, props->>'provider' AS provider
             FROM analytics_events
             WHERE occurred_at >= %s AND occurred_at < %s
               AND event NOT IN ('leave', 'scroll')
@@ -420,6 +426,77 @@ def analytics_summary(
         calc_deliveries = _calc_breakdown(conn, start, end, "delivery")
         calc_regions = _calc_breakdown(conn, start, end, "region")
 
+        contact_places = conn.execute(
+            """
+            SELECT
+                CASE
+                    WHEN event IN ('tel', 'mail') THEN event
+                    WHEN href LIKE 'tel:%%' THEN 'tel'
+                    ELSE 'mail'
+                END AS kind,
+                CASE WHEN label <> '' THEN label ELSE href END AS label,
+                COUNT(*)::int AS count
+            FROM analytics_events
+            WHERE occurred_at >= %s AND occurred_at < %s
+              AND (
+                event IN ('tel', 'mail')
+                OR (event = 'outbound' AND (href LIKE 'tel:%%' OR href LIKE 'mailto:%%'))
+              )
+            GROUP BY 1, 2
+            ORDER BY count DESC
+            """,
+            (start, end),
+        ).fetchall()
+
+        mail_providers = conn.execute(
+            """
+            SELECT
+                CASE
+                    WHEN event = 'mail' THEN COALESCE(NULLIF(props->>'provider', ''), 'unknown')
+                    ELSE 'mailto'
+                END AS provider,
+                COUNT(*)::int AS count
+            FROM analytics_events
+            WHERE occurred_at >= %s AND occurred_at < %s
+              AND (
+                event = 'mail'
+                OR (event = 'outbound' AND href LIKE 'mailto:%%')
+              )
+            GROUP BY 1
+            ORDER BY count DESC
+            """,
+            (start, end),
+        ).fetchall()
+
+        contact_rows = conn.execute(
+            """
+            SELECT
+                CASE
+                    WHEN event IN ('tel', 'mail') THEN event
+                    WHEN href LIKE 'tel:%%' THEN 'tel'
+                    ELSE 'mail'
+                END AS kind,
+                CASE WHEN label <> '' THEN label ELSE href END AS label,
+                path,
+                CASE
+                    WHEN event = 'mail' THEN COALESCE(NULLIF(props->>'provider', ''), '')
+                    WHEN event = 'outbound' AND href LIKE 'mailto:%%' THEN 'mailto'
+                    ELSE ''
+                END AS provider,
+                COUNT(*)::int AS count
+            FROM analytics_events
+            WHERE occurred_at >= %s AND occurred_at < %s
+              AND (
+                event IN ('tel', 'mail')
+                OR (event = 'outbound' AND (href LIKE 'tel:%%' OR href LIKE 'mailto:%%'))
+              )
+            GROUP BY 1, 2, 3, 4
+            ORDER BY count DESC
+            LIMIT 50
+            """,
+            (start, end),
+        ).fetchall()
+
     lead_map = {r[0]: r[1] for r in lead_series}
     timeseries = []
     for bucket, visitors, pageviews in series:
@@ -523,6 +600,11 @@ def analytics_summary(
             "deliveries": calc_deliveries,
             "regions": calc_regions,
         },
+        "contact": {
+            "places": _table(["kind", "label", "count"], contact_places),
+            "mail_providers": _table(["provider", "count"], mail_providers),
+            "rows": _table(["kind", "label", "path", "provider", "count"], contact_rows),
+        },
         "funnel": [
             {"step": "visit", "label": "Визиты", "count": f_visits},
             {"step": "calculator", "label": "Калькулятор", "count": f_calc},
@@ -538,6 +620,7 @@ def analytics_summary(
                 "label": r[3],
                 "href": r[4],
                 "device": r[5],
+                "provider": r[6] or "",
             }
             for r in recent
         ],

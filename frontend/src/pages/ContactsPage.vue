@@ -1,18 +1,20 @@
 <script setup>
 import { company } from '../data/company'
+import MailLink from '../components/ui/MailLink.vue'
 
 const cards = [
   {
     label: 'Телефон',
     value: company.phone,
     href: company.phoneHref,
+    track: 'tel-contacts',
     note: company.schedule,
     icon: 'phone',
   },
   {
     label: 'Электронная почта',
     value: company.email,
-    href: `mailto:${company.email}`,
+    mail: true,
     note: 'Чертежи: PDF, DWG, DXF, STEP',
     icon: 'mail',
   },
@@ -41,10 +43,12 @@ const cards = [
 
         <div class="con-grid">
           <component
-            :is="c.href ? 'a' : 'div'"
+            :is="c.mail ? MailLink : c.href ? 'a' : 'div'"
             v-for="(c, i) in cards"
             :key="c.label"
             :href="c.href"
+            :track-label="c.mail ? 'mail-contacts' : undefined"
+            :data-track="c.track"
             class="card con-card"
             v-reveal="i * 90"
           >

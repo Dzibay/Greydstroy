@@ -1,5 +1,7 @@
 <script setup>
 import { ref } from 'vue'
+import MailLink from './ui/MailLink.vue'
+import { company } from '../data/company'
 
 const open = ref(false)
 </script>
@@ -17,7 +19,8 @@ const open = ref(false)
           расчёт по вашему чертежу за 1 рабочий день.
         </p>
 
-        <a href="tel:+79056646665" class="cew-phone" data-track="tel-widget">+7 (905) 664-66-65</a>
+        <a :href="company.phoneHref" class="cew-phone" data-track="tel-widget">{{ company.phone }}</a>
+        <MailLink class="cew-mail" track-label="mail-widget">Написать на {{ company.email }}</MailLink>
 
         <ul class="cew-list">
           <li><span>◆</span> Пн–Пт: 08:00 – 17:00 (МСК)</li>
@@ -170,6 +173,17 @@ const open = ref(false)
   color: var(--acc-hot);
   border-color: color-mix(in srgb, var(--acc) 60%, transparent);
 }
+
+.cew-mail {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  color: var(--w-soft);
+  margin: -6px 0 16px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.cew-mail:hover { color: var(--acc-hot); }
 
 .cew-list {
   display: flex;

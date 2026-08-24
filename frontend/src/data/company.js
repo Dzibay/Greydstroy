@@ -9,7 +9,7 @@ export const company = {
   postalAddress: '606000, Нижегородская область, г. Дзержинск, дорога Заревская объездная, д. 9В',
   phone: '+7 (905) 664-66-65',
   phoneHref: 'tel:+79056646665',
-  email: 'greydstroy@yandex.ru',
+  email: 'greydstroy.m@yandex.ru',
   bank: {
     name: 'ПАО «НБД-БАНК», г. Нижний Новгород',
     bik: '042202705',
@@ -51,8 +51,8 @@ export const requisiteGroups = [
     rows: [
       { label: 'Юридический адрес', value: company.legalAddress },
       { label: 'Почтовый адрес', value: company.postalAddress },
-      { label: 'Телефон', value: company.phone, mono: true, href: company.phoneHref },
-      { label: 'Электронная почта', value: company.email, href: `mailto:${company.email}` },
+      { label: 'Телефон', value: company.phone, mono: true, href: company.phoneHref, track: 'tel-requisites' },
+      { label: 'Электронная почта', value: company.email, mail: true },
     ],
   },
   {

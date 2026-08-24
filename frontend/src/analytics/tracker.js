@@ -189,6 +189,12 @@ export function track(event, extra = {}) {
   else scheduleFlush()
 }
 
+/** Сразу уходит на сервер — для tel/mail, когда страница может закрыться. */
+export function trackNow(event, extra = {}) {
+  track(event, extra)
+  flush(true)
+}
+
 function scheduleFlush() {
   if (flushTimer) return
   flushTimer = window.setTimeout(() => {
@@ -208,8 +214,7 @@ function flush(useBeacon = false) {
   try {
     if (useBeacon && typeof navigator.sendBeacon === 'function') {
       const blob = new Blob([body], { type: 'application/json' })
-      if (!navigator.sendBeacon(ENDPOINT, blob)) queue.unshift(...events)
-      return
+      if (navigator.sendBeacon(ENDPOINT, blob)) return
     }
     fetch(ENDPOINT, {
       method: 'POST',
@@ -243,16 +248,23 @@ function onClick(e) {
   if (!label && !href) return
 
   const abs = href && !href.startsWith('#') && !href.startsWith('javascript:')
-  const external =
-    href.startsWith('tel:') ||
-    href.startsWith('mailto:') ||
-    (href.startsWith('http') && hostOf(href) && hostOf(href) !== location.host)
-
-  track(external ? 'outbound' : 'click', {
+  const extra = {
     label,
     href: abs ? href : href.startsWith('tel:') || href.startsWith('mailto:') ? href : '',
     props: named && label !== textOf(el) ? { text: textOf(el) } : undefined,
-  })
+  }
+
+  if (href.startsWith('tel:')) {
+    trackNow('tel', extra)
+    return
+  }
+  if (href.startsWith('mailto:')) {
+    trackNow('mail', { ...extra, props: { ...(extra.props || {}), provider: 'mailto' } })
+    return
+  }
+
+  const external = href.startsWith('http') && hostOf(href) && hostOf(href) !== location.host
+  track(external ? 'outbound' : 'click', extra)
 }
 
 function onScroll() {

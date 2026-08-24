@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import CompanyLogo from './ui/CompanyLogo.vue'
 import { mainServices } from '../data/services'
+import { company } from '../data/company'
 
 const scrolled = ref(false)
 const progress = ref(0)
@@ -88,14 +89,14 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
             {{ item.label }}
           </RouterLink>
         </template>
-        <a href="tel:+79056646665" class="hdr-phone-m" data-track="tel-header">+7 (905) 664-66-65</a>
+        <a :href="company.phoneHref" class="hdr-phone-m" data-track="tel-header">{{ company.phone }}</a>
         <RouterLink to="/kalkulyator" class="btn hdr-calc-m" data-track="calc-header" @click="menuOpen = false">
           Рассчитать заказ
         </RouterLink>
       </nav>
 
       <div class="hdr-right">
-        <a href="tel:+79056646665" class="hdr-phone" data-track="tel-header">+7 (905) 664-66-65</a>
+        <a :href="company.phoneHref" class="hdr-phone" data-track="tel-header">{{ company.phone }}</a>
         <RouterLink to="/kalkulyator" class="btn hdr-btn" data-track="calc-header" @click="menuOpen = false">Рассчитать заказ</RouterLink>
         <button
           class="burger"
