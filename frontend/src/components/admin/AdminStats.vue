@@ -668,7 +668,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="st-grid st-grid--3">
+    <div class="st-grid">
       <div class="st-card">
         <header class="st-card-h">
           <h2>Источники</h2>
@@ -693,31 +693,6 @@ onUnmounted(() => {
 
       <div class="st-card">
         <header class="st-card-h">
-          <h2>Кампании UTM</h2>
-          <p>метки в ссылках</p>
-        </header>
-        <table v-if="data?.campaigns?.length" class="st-table">
-          <thead>
-            <tr>
-              <th>Метка</th>
-              <th>Люди</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="c in data.campaigns" :key="c.utm_source + c.utm_campaign">
-              <td>
-                <strong>{{ c.utm_source }}</strong>
-                <small>{{ [c.utm_medium, c.utm_campaign].filter(Boolean).join(' · ') || '—' }}</small>
-              </td>
-              <td>{{ fmtNum(c.visitors) }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-else class="st-empty">UTM-меток пока нет</p>
-      </div>
-
-      <div class="st-card">
-        <header class="st-card-h">
           <h2>Устройства</h2>
           <p>с чего смотрят</p>
         </header>
@@ -729,6 +704,37 @@ onUnmounted(() => {
         </ul>
         <p v-else class="st-empty">Нет данных</p>
       </div>
+    </div>
+
+    <div class="st-card">
+      <header class="st-card-h">
+        <h2>Кампании UTM</h2>
+        <p>заявки, звонки и письма с каждой метки в ссылке</p>
+      </header>
+      <table v-if="data?.campaigns?.length" class="st-table">
+        <thead>
+          <tr>
+            <th>Кампания</th>
+            <th>Люди</th>
+            <th>Заявки</th>
+            <th>Звонки</th>
+            <th>Письма</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="c in data.campaigns" :key="c.utm_source + c.utm_medium + c.utm_campaign">
+            <td>
+              <strong>{{ c.utm_source }}</strong>
+              <small>{{ [c.utm_medium, c.utm_campaign].filter(Boolean).join(' · ') || '—' }}</small>
+            </td>
+            <td>{{ fmtNum(c.visitors) }}</td>
+            <td>{{ fmtNum(c.leads) }}</td>
+            <td>{{ fmtNum(c.tel_clicks) }}</td>
+            <td>{{ fmtNum(c.mail_clicks) }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else class="st-empty">UTM-меток пока нет — они появятся, когда кто-то придёт по ссылке с utm_source</p>
     </div>
 
     <div class="st-grid">

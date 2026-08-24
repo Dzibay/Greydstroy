@@ -303,17 +303,56 @@ def analytics_summary(
 
         campaigns = conn.execute(
             """
-            SELECT utm_source, utm_medium, utm_campaign,
-                   COUNT(DISTINCT visitor_id) AS visitors,
-                   COUNT(DISTINCT session_id) AS sessions
-            FROM analytics_events
-            WHERE occurred_at >= %s AND occurred_at < %s
-              AND utm_source <> ''
-            GROUP BY 1, 2, 3
-            ORDER BY visitors DESC
-            LIMIT 12
+            WITH camp AS (
+                SELECT
+                    utm_source,
+                    utm_medium,
+                    utm_campaign,
+                    COUNT(DISTINCT visitor_id) AS visitors,
+                    COUNT(DISTINCT session_id) AS sessions,
+                    COUNT(*) FILTER (
+                        WHERE event = 'tel'
+                           OR (event = 'outbound' AND href LIKE 'tel:%%')
+                    )::int AS tel_clicks,
+                    COUNT(*) FILTER (
+                        WHERE event = 'mail'
+                           OR (event = 'outbound' AND href LIKE 'mailto:%%')
+                    )::int AS mail_clicks
+                FROM analytics_events
+                WHERE occurred_at >= %s AND occurred_at < %s
+                  AND utm_source <> ''
+                GROUP BY 1, 2, 3
+            ),
+            lead_camp AS (
+                SELECT e.utm_source, e.utm_medium, e.utm_campaign,
+                       COUNT(DISTINCT l.id)::int AS leads
+                FROM leads l
+                JOIN analytics_events e
+                  ON e.session_id = l.session_id
+                 AND e.utm_source <> ''
+                WHERE l.created_at >= %s AND l.created_at < %s
+                  AND l.session_id IS NOT NULL
+                  AND e.occurred_at >= %s AND e.occurred_at < %s
+                GROUP BY 1, 2, 3
+            )
+            SELECT
+                c.utm_source,
+                c.utm_medium,
+                c.utm_campaign,
+                c.visitors,
+                c.sessions,
+                c.tel_clicks,
+                c.mail_clicks,
+                COALESCE(l.leads, 0) AS leads
+            FROM camp c
+            LEFT JOIN lead_camp l
+              ON l.utm_source = c.utm_source
+             AND l.utm_medium = c.utm_medium
+             AND l.utm_campaign = c.utm_campaign
+            ORDER BY c.visitors DESC, leads DESC
+            LIMIT 20
             """,
-            (start, end),
+            (start, end, start, end, start, end),
         ).fetchall()
 
         pages_per_session = conn.execute(
@@ -582,7 +621,16 @@ def analytics_summary(
         "devices": _table(["device", "visitors"], devices),
         "hours": _table(["hour", "sessions"], hours),
         "campaigns": _table(
-            ["utm_source", "utm_medium", "utm_campaign", "visitors", "sessions"],
+            [
+                "utm_source",
+                "utm_medium",
+                "utm_campaign",
+                "visitors",
+                "sessions",
+                "tel_clicks",
+                "mail_clicks",
+                "leads",
+            ],
             campaigns,
         ),
         "landings": _table(["path", "sessions"], landings),
