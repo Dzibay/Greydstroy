@@ -15,6 +15,15 @@ import {
   MK_PARENT_PATH,
   MK_PARENT_LABEL,
 } from '../data/metallokonstruktsii'
+import {
+  mainServices,
+  getWorkLanding,
+  workLandingPath,
+  otherCycleLinks,
+  WORKS_PARENT_PATH,
+  WORKS_PARENT_LABEL,
+  IZG_PATH,
+} from '../data/services'
 import FaqSection from '../components/FaqSection.vue'
 import FinalCtaSection from '../components/FinalCtaSection.vue'
 import ShopGallery from '../components/ShopGallery.vue'
@@ -28,15 +37,17 @@ const props = defineProps({
 })
 
 const isMkChild = computed(() => props.hub === 'metalwork')
+const isWork = computed(() => props.hub === 'works')
 const parent = computed(() => (props.slug ? getUslugaBySlug(props.slug) : null))
 const child = computed(() => {
   if (isMkChild.value) return getMetalworkLanding(props.childSlug)
+  if (isWork.value) return getWorkLanding(props.childSlug)
   if (props.childSlug) return getLaserLanding(props.childSlug)
   return null
 })
 const usluga = computed(() => child.value || parent.value)
 const isLaserHub = computed(() => props.slug === 'lazernaya-rezka' && !props.childSlug)
-const isLaserChild = computed(() => !!props.childSlug && !isMkChild.value)
+const isLaserChild = computed(() => !!props.childSlug && !isMkChild.value && !isWork.value)
 
 const crumbs = computed(() => {
   const items = [{ name: 'Главная', to: '/' }]
@@ -45,11 +56,15 @@ const crumbs = computed(() => {
     items.push({ name: child.value.navLabel, to: '' })
     return items
   }
-  items.push({ name: 'Услуги', to: '/uslugi' })
-  if (isLaserChild.value) {
+  items.push({ name: WORKS_PARENT_LABEL, to: WORKS_PARENT_PATH })
+  if (isWork.value) {
+    items.push({ name: child.value.navLabel, to: '' })
+  } else if (isLaserChild.value) {
+    items.push({ name: 'Изготовление', to: IZG_PATH })
     items.push({ name: LASER_PARENT_LABEL, to: LASER_PARENT_PATH })
     items.push({ name: child.value.navLabel, to: '' })
   } else if (parent.value) {
+    items.push({ name: 'Изготовление', to: IZG_PATH })
     items.push({ name: parent.value.label, to: '' })
   }
   return items
@@ -67,33 +82,59 @@ const others = computed(() => {
 })
 
 const siblings = computed(() => {
+  if (isWork.value) {
+    const current = workLandingPath(props.childSlug)
+    return mainServices
+      .filter((s) => s.to !== current)
+      .map((s) => ({ to: s.to, navLabel: s.navLabel }))
+  }
   if (isMkChild.value) {
-    return metalworkLandings.filter((p) => p.slug !== props.childSlug)
+    return metalworkLandings
+      .filter((p) => p.slug !== props.childSlug)
+      .map((p) => ({ to: metalworkLandingPath(p.slug), navLabel: p.navLabel }))
   }
   if (!isLaserChild.value && !isLaserHub.value) return []
-  return laserLandings.filter((p) => p.slug !== props.childSlug)
+  return laserLandings
+    .filter((p) => p.slug !== props.childSlug)
+    .map((p) => ({ to: laserLandingPath(p.slug), navLabel: p.navLabel }))
 })
 
-const clusterParentTo = computed(() => (isMkChild.value ? MK_PARENT_PATH : LASER_PARENT_PATH))
-const clusterParentLabel = computed(() =>
-  isMkChild.value ? 'Все металлоконструкции →' : 'Вся лазерная резка →'
-)
+const clusterParentTo = computed(() => {
+  if (isWork.value) return WORKS_PARENT_PATH
+  return isMkChild.value ? MK_PARENT_PATH : LASER_PARENT_PATH
+})
+const clusterParentLabel = computed(() => {
+  if (isWork.value) return 'Все услуги →'
+  return isMkChild.value ? 'Все металлоконструкции →' : 'Вся лазерная резка →'
+})
 const clusterHeading = computed(() => {
+  if (isWork.value) return 'Другие услуги полного цикла:'
   if (isMkChild.value) return 'Другие задачи по металлоконструкциям:'
   return isLaserHub.value ? 'По задачам лазерной резки:' : 'Другие задачи лазерной резки:'
 })
-const siblingPath = (slug) =>
-  isMkChild.value ? metalworkLandingPath(slug) : laserLandingPath(slug)
 
 const pageKey = computed(() => {
+  if (isWork.value) return `work-${props.childSlug}`
   if (isMkChild.value) return `mk-${props.childSlug}`
   if (props.childSlug) return `laser-${props.childSlug}`
   return props.slug
 })
 
+const isTech = computed(() => !!parent.value && !isWork.value && !isMkChild.value)
+
+const cycleOthers = computed(() => {
+  const current = isWork.value
+    ? workLandingPath(props.childSlug)
+    : isMkChild.value
+      ? metalworkLandingPath(props.childSlug)
+      : IZG_PATH
+  return otherCycleLinks(current)
+})
+
 const tagIdx = computed(() => {
   if (isMkChild.value) return 'Металлоконструкции'
   if (isLaserChild.value) return 'Лазерная резка'
+  if (isTech.value) return 'Технологии производства'
   return 'Услуги'
 })
 
@@ -110,9 +151,11 @@ watchEffect(() => {
 
   const path = isMkChild.value
     ? metalworkLandingPath(props.childSlug)
-    : isLaserChild.value
-      ? laserLandingPath(props.childSlug)
-      : `/uslugi/${props.slug}`
+    : isWork.value
+      ? workLandingPath(props.childSlug)
+      : isLaserChild.value
+        ? laserLandingPath(props.childSlug)
+        : `/uslugi/${props.slug}`
 
   const graph = [
     {
@@ -275,7 +318,7 @@ onUnmounted(() => ldScript?.remove())
           <p class="srv-others-h">{{ clusterHeading }}</p>
           <div class="srv-others-row">
             <RouterLink
-              v-if="isLaserChild || isMkChild"
+              v-if="isLaserChild || isMkChild || isWork"
               :to="clusterParentTo"
               class="srv-other srv-other--acc"
             >
@@ -283,8 +326,27 @@ onUnmounted(() => ldScript?.remove())
             </RouterLink>
             <RouterLink
               v-for="s in siblings"
-              :key="s.slug"
-              :to="siblingPath(s.slug)"
+              :key="s.to"
+              :to="s.to"
+              class="srv-other"
+            >
+              {{ s.navLabel }} →
+            </RouterLink>
+          </div>
+        </div>
+
+        <div v-if="isTech" class="srv-others srv-cycle" v-reveal="150">
+          <p class="srv-others-h">Нужны готовые конструкции, а не только резка?</p>
+          <p class="srv-cycle-text">
+            Этот участок — часть нашего цеха. Изготовим каркас целиком, привезём
+            и смонтируем на объекте или построим здание под ключ.
+          </p>
+          <div class="srv-others-row">
+            <RouterLink :to="IZG_PATH" class="srv-other srv-other--acc">Изготовление металлоконструкций →</RouterLink>
+            <RouterLink
+              v-for="s in cycleOthers"
+              :key="s.to"
+              :to="s.to"
               class="srv-other"
             >
               {{ s.navLabel }} →
@@ -293,7 +355,7 @@ onUnmounted(() => ldScript?.remove())
         </div>
 
         <div class="srv-others" v-reveal="160">
-          <p class="srv-others-h">{{ isMkChild ? 'Участки того же цеха:' : 'Другие участки производства:' }}</p>
+          <p class="srv-others-h">{{ isMkChild ? 'Участки того же цеха:' : isWork ? 'Технологии производства на заводе:' : 'Другие участки производства:' }}</p>
           <div class="srv-others-row">
             <RouterLink
               v-for="o in others"
@@ -304,11 +366,11 @@ onUnmounted(() => ldScript?.remove())
               {{ o.label }} →
             </RouterLink>
             <RouterLink
-              v-if="!isMkChild"
+              v-if="isWork"
               to="/metallokonstruktsii"
               class="srv-other srv-other--acc"
             >
-              Металлоконструкции под ключ →
+              Каталог металлоконструкций →
             </RouterLink>
           </div>
         </div>
@@ -523,6 +585,13 @@ onUnmounted(() => ldScript?.remove())
   border: 1px solid var(--line-l);
 }
 .srv-cluster { margin-bottom: 16px; }
+.srv-cycle { margin-bottom: 16px; }
+.srv-cycle-text {
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  max-width: 640px;
+  margin-bottom: 16px;
+}
 .srv-others-h {
   font-family: var(--font-m);
   font-size: 11.5px;

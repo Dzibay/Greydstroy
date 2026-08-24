@@ -5,6 +5,7 @@ import UslugiPage from '../pages/UslugiPage.vue'
 import UslugaPage from '../pages/UslugaPage.vue'
 import MetalworkPage from '../pages/MetalworkPage.vue'
 import { uslugi } from '../data/uslugi'
+import { workLandings } from '../data/services'
 import { laserLandings } from '../data/lazernayaRezka'
 import { metalworkLandings, getMetalworkLanding } from '../data/metallokonstruktsii'
 import IzgotovleniePage from '../pages/IzgotovleniePage.vue'
@@ -75,12 +76,20 @@ const router = createRouter({
       name: 'uslugi',
       component: UslugiPage,
       meta: {
-        title: 'Услуги резки, гибки и сварки металла — Грэйдстрой | Дзержинск',
+        title: 'Металлоконструкции: изготовление, монтаж, строительство под ключ — услуги завода Грэйдстрой',
         description:
-          'Услуги металлообработки для изготовления металлоконструкций: лазерная резка до 16 мм, плазменная до 25 мм, газовая до 70 мм, гибка на ЧПУ-листогибе до 3000 мм, сварка MIG/TIG. Расчёт за 1 рабочий день, отгрузка по всей России.',
+          'Услуги завода металлоконструкций: изготовление, монтаж на объекте, бетонные работы, проектирование КМ/КМД, демонтаж и строительство зданий под ключ. Один подрядчик на весь цикл. Дзержинск, отгрузка по всей России.',
       },
     },
-    // SEO-страницы отдельных услуг (/uslugi/<slug>) — контент и мета из data/uslugi.js
+    // Услуги полного цикла (/uslugi/<slug>) — контент и мета из data/services.js
+    ...workLandings.map((p) => ({
+      path: `/uslugi/${p.slug}`,
+      name: `usluga-${p.slug}`,
+      component: UslugaPage,
+      props: { hub: 'works', childSlug: p.slug },
+      meta: { title: p.metaTitle, description: p.metaDescription },
+    })),
+    // SEO-страницы технологий производства (/uslugi/<slug>) — контент и мета из data/uslugi.js
     ...uslugi.map((u) => ({
       path: `/uslugi/${u.slug}`,
       name: `usluga-${u.slug}`,

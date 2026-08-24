@@ -7,19 +7,24 @@
       </div>
 
       <div class="draft-grid">
-        <article class="card draft-card" v-reveal>
+        <a href="#cta" class="card draft-card" v-reveal>
           <p class="draft-kicker">Вариант 1</p>
           <h3>Есть КМ</h3>
-          <p>Сразу делаем КМД и запускаем в производство — сроки минимальны.</p>
-        </article>
-        <article class="card draft-card" v-reveal="100">
+          <p>
+            Сразу делаем КМД и запускаем в производство — сроки минимальны.
+            Пришлите конструктив, посчитаем деталировку и металл в течение рабочего дня.
+          </p>
+          <span class="draft-go">Прислать КМ на расчёт →</span>
+        </a>
+        <RouterLink to="/uslugi/proektirovanie-metallokonstruktsij" class="card draft-card" v-reveal="100">
           <p class="draft-kicker">Вариант 2</p>
           <h3>Проекта нет</h3>
           <p>
             Разработаем его с нуля. Честно: это добавит времени. Но переделка потом
             всегда обходится дороже и дольше, чем нормальный чертёж сейчас.
           </p>
-        </article>
+          <span class="draft-go">К проектированию КМ / КМД →</span>
+        </RouterLink>
       </div>
 
       <div class="magnet" v-reveal="150">
@@ -53,7 +58,14 @@
   margin-bottom: 26px;
 }
 
-.draft-card { padding: 32px; }
+.draft-card {
+  display: flex;
+  flex-direction: column;
+  padding: 32px;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
 .draft-kicker {
   font-family: var(--font-m);
   font-size: 11px;
@@ -69,7 +81,19 @@
   text-transform: uppercase;
   margin-bottom: 12px;
 }
-.draft-card p { font-size: 15px; color: var(--ink-soft); }
+.draft-card p { font-size: 15px; color: var(--ink-soft); flex: 1; }
+.draft-go {
+  display: inline-flex;
+  margin-top: 18px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--acc);
+  transition: color 0.2s, transform 0.25s var(--ease);
+}
+.draft-card:hover .draft-go {
+  color: var(--acc-hot);
+  transform: translateX(4px);
+}
 
 .magnet {
   display: flex;

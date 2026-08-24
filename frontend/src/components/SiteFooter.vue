@@ -1,5 +1,6 @@
 <script setup>
 import CompanyLogo from './ui/CompanyLogo.vue'
+import { mainServices } from '../data/services'
 </script>
 
 <template>
@@ -10,15 +11,21 @@ import CompanyLogo from './ui/CompanyLogo.vue'
           <CompanyLogo variant="light" />
         </RouterLink>
         <p class="ftr-desc">
-          Изготовление металлоконструкций: резка, гибка, сварка.
-          Дзержинск, Нижегородская область — отгрузка по всей России.
+          Металлоконструкции полного цикла: проектирование, изготовление, монтаж,
+          бетонные работы и строительство под ключ. Дзержинск, Нижегородская
+          область — отгрузка по всей России.
         </p>
       </div>
+
+      <nav class="ftr-nav" aria-label="Услуги">
+        <p class="ftr-h">Услуги</p>
+        <RouterLink v-for="s in mainServices" :key="s.id" :to="s.to">{{ s.navLabel }}</RouterLink>
+        <RouterLink to="/uslugi" class="ftr-all">Все услуги →</RouterLink>
+      </nav>
 
       <nav class="ftr-nav" aria-label="Разделы сайта">
         <p class="ftr-h">Разделы</p>
         <RouterLink to="/metallokonstruktsii">Металлоконструкции</RouterLink>
-        <RouterLink to="/uslugi">Услуги</RouterLink>
         <RouterLink to="/projects">Объекты</RouterLink>
         <RouterLink to="/dostavka">Доставка</RouterLink>
         <RouterLink to="/rekvizity">Реквизиты</RouterLink>
@@ -55,8 +62,8 @@ import CompanyLogo from './ui/CompanyLogo.vue'
 
 .ftr-in {
   display: grid;
-  grid-template-columns: 1.3fr 0.8fr 1fr 1.1fr;
-  gap: 44px;
+  grid-template-columns: 1.2fr 1.1fr 0.8fr 1fr 1fr;
+  gap: 40px;
   padding-bottom: 56px;
 }
 
@@ -81,6 +88,8 @@ import CompanyLogo from './ui/CompanyLogo.vue'
   transition: color 0.2s;
 }
 .ftr-nav a:hover { color: var(--white); }
+.ftr-nav .ftr-all { color: var(--acc-hot); font-weight: 700; margin-top: 4px; }
+.ftr-nav .ftr-all:hover { color: var(--acc); }
 
 .ftr-contacts { display: flex; flex-direction: column; gap: 8px; }
 .ftr-contacts a { color: var(--w-soft); font-size: 14px; transition: color 0.2s; }

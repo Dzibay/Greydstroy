@@ -7,6 +7,8 @@ import FaqSection from '../components/FaqSection.vue'
 import FinalCtaSection from '../components/FinalCtaSection.vue'
 import ShopGallery from '../components/ShopGallery.vue'
 import { metalworkLandings, metalworkLandingPath } from '../data/metallokonstruktsii'
+import { uslugi } from '../data/uslugi'
+import { mainServices } from '../data/services'
 import { homeGallery } from '../data/shopPhotos'
 
 /* ---------- что изготавливаем (только уникальные блоки страницы) ---------- */
@@ -164,6 +166,35 @@ const products = [
             <p class="prod-price">{{ p.price }} <small>работы</small></p>
           </component>
         </div>
+
+        <div class="mk-works" v-reveal="120">
+          <p class="mk-works-h">Изготовление — не единственная услуга:</p>
+          <div class="mk-works-row">
+            <RouterLink
+              v-for="s in mainServices"
+              :key="s.id"
+              :to="s.to"
+              class="mk-work"
+              :class="{ 'mk-work--acc': s.featured }"
+            >
+              {{ s.navLabel }} →
+            </RouterLink>
+          </div>
+        </div>
+
+        <div class="mk-works mk-tech" v-reveal="160">
+          <p class="mk-works-h">Технологии производства:</p>
+          <div class="mk-works-row">
+            <RouterLink
+              v-for="u in uslugi"
+              :key="u.slug"
+              :to="`/uslugi/${u.slug}`"
+              class="mk-work"
+            >
+              {{ u.label }} →
+            </RouterLink>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -232,6 +263,37 @@ const products = [
   border-color: var(--acc);
   color: var(--white);
 }
+
+.mk-works {
+  margin-top: 28px;
+  padding: 26px 32px;
+  border-radius: var(--r);
+  border: 1px solid var(--line-d);
+  background: var(--card-d);
+}
+.mk-works-h {
+  font-family: var(--font-m);
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--acc);
+  margin-bottom: 14px;
+}
+.mk-works-row {
+  display: flex;
+  gap: 12px 28px;
+  flex-wrap: wrap;
+}
+.mk-work {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--white);
+  transition: color 0.2s;
+}
+.mk-work:hover { color: var(--acc-hot); }
+.mk-work--acc { color: var(--acc); }
+.mk-work--acc:hover { color: var(--acc-hot); }
+.mk-tech { margin-top: 16px; }
 
 .mk-stats {
   display: grid;

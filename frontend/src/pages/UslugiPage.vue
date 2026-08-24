@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { mainServices } from '../data/services'
 import { laserLandings, laserLandingPath } from '../data/lazernayaRezka'
 import ShopGallery from '../components/ShopGallery.vue'
 import { shopGallery } from '../data/shopPhotos'
@@ -22,6 +23,7 @@ const verdict = computed(() => {
     return {
       tech: 'Лазерная резка',
       tag: 'laser',
+      to: '/uslugi/lazernaya-rezka',
       spec: `${m.label.toLowerCase()} до ${m.laserMax} мм · чистая кромка · ЧПУ`,
       note:
         t <= 6
@@ -33,6 +35,7 @@ const verdict = computed(() => {
     return {
       tech: 'Плазменная резка',
       tag: 'plasma',
+      to: '/uslugi/plazmennaya-rezka',
       spec: `${m.label.toLowerCase()} до ${m.plasmaMax} мм · большие форматы`,
       note: 'На этой толщине лазеру работать уже невыгодно, а плазме — самое то. Кромка без «доп. зачистки», о которой вы не договаривались.',
     }
@@ -41,6 +44,7 @@ const verdict = computed(() => {
     return {
       tech: 'Газовая резка',
       tag: 'gas',
+      to: '/uslugi/gazovaya-rezka',
       spec: `${m.label.toLowerCase()} до ${m.gasMax} мм · сверхтолстый лист`,
       note: 'Плазма здесь уже не берёт. Кислородная резка — рабочий способ для толстой чёрной стали под сварку.',
     }
@@ -48,6 +52,7 @@ const verdict = computed(() => {
   return {
     tech: 'Нужен расчёт технолога',
     tag: 'custom',
+    to: '/kalkulyator',
     spec: m.gasMax
       ? `${m.label.toLowerCase()} свыше ${m.gasMax} мм`
       : `${m.label.toLowerCase()} свыше ${m.plasmaMax} мм`,
@@ -143,6 +148,14 @@ const toggleService = (i) => {
 /* ---------- FAQ ---------- */
 const faq = [
   {
+    q: 'Вы только изготавливаете конструкции или и монтируете?',
+    a: 'И то и другое. Изготавливаем в своём цехе в Дзержинске, монтируем своими бригадами по Нижегородской области и соседним регионам. Монтируем и конструкции чужого производства — по вашим чертежам и схемам сборки.',
+  },
+  {
+    q: 'Строите ли здания под ключ?',
+    a: 'Да, ведём полный цикл: проектирование, земляные и бетонные работы, изготовление каркаса, монтаж, кровля и фасад. Один договор, платежи по закрытым этапам. Подробности — на странице «Строительство под ключ».',
+  },
+  {
     q: 'Какую толщину металла вы режете?',
     a: 'Лазером — сталь до 16 мм, нержавейку до 12 мм, алюминий до 8 мм. Плазмой — до 25 мм. Газовой резкой — чёрную сталь до 70 мм. Если толщина больше — пришлите чертёж, технолог предложит способ.',
   },
@@ -178,25 +191,60 @@ const toggleFaq = (i) => {
       <div class="container">
         <RouterLink to="/" class="page-back" v-reveal>← На главную</RouterLink>
         <div class="sec-head" v-reveal="60">
-          <p class="sec-tag"><span class="idx">Производство</span> Услуги</p>
-          <h1 class="page-title">Резка, гибка и сварка металла — <em>на одной площадке</em></h1>
+          <p class="sec-tag"><span class="idx">Полный цикл</span> Услуги</p>
+          <h1 class="page-title">Изготовление, монтаж и строительство <em>под ключ</em></h1>
           <p class="page-desc">
-            Услуги металлообработки для
-            <RouterLink to="/metallokonstruktsii" class="page-desc-link">изготовления металлоконструкций</RouterLink>:
-            лазерная, плазменная и газовая резка, гибка на ЧПУ-листогибе, сварка. Один договор, один
-            контакт, одна ответственность — от чертежа до отгрузки по всей России.
+            Основа — собственный завод
+            <RouterLink to="/metallokonstruktsii" class="page-desc-link">металлоконструкций</RouterLink>
+            в Дзержинске. Изготовим конструкции по вашему проекту, привезём и смонтируем на
+            объекте, зальём фундаменты — или построим здание целиком. Один подрядчик
+            и один договор на весь цикл.
           </p>
         </div>
 
         <div class="usl-anchor-row" v-reveal="140">
           <RouterLink
-            v-for="(s, i) in services"
-            :key="s.title"
-            :to="`/uslugi/${s.slug}`"
+            v-for="(s, i) in mainServices"
+            :key="s.id"
+            :to="s.to"
             class="usl-anchor"
           >
             <span class="ua-num">{{ String(i + 1).padStart(2, '0') }}</span>
-            {{ s.title.replace(' металла', '').replace(' металлоконструкций', '') }}
+            {{ s.short }}
+          </RouterLink>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ОСНОВНЫЕ УСЛУГИ ============ -->
+    <section id="uslugi-main" class="sec sec--deep">
+      <div class="container">
+        <div class="sec-head" v-reveal>
+          <p class="sec-tag"><span class="idx">Что делаем</span> Шесть услуг</p>
+          <h2 class="sec-title">От проекта и фундамента <em>до готового здания</em></h2>
+          <p class="sec-sub">
+            Каждую услугу выполняем и отдельно, и в связке. Чем больше этапов в одном
+            договоре — тем меньше стыков между подрядчиками остаётся на вашей стороне.
+          </p>
+        </div>
+
+        <div class="ms-grid">
+          <RouterLink
+            v-for="(s, i) in mainServices"
+            :key="s.id"
+            :to="s.to"
+            class="card ms-card"
+            :class="{ 'ms-card--featured': s.featured }"
+            v-reveal="i * 70"
+          >
+            <div class="ms-top">
+              <span class="ms-num">{{ String(i + 1).padStart(2, '0') }}</span>
+              <span v-if="s.featured" class="ms-flag">Полный цикл</span>
+            </div>
+            <h3>{{ s.title }}</h3>
+            <p class="ms-text">{{ s.text }}</p>
+            <p class="ms-spec">{{ s.spec }}</p>
+            <span class="ms-more">Подробнее об услуге →</span>
           </RouterLink>
         </div>
       </div>
@@ -206,11 +254,12 @@ const toggleFaq = (i) => {
     <section id="tech-picker" class="sec sec--deep usl-picker-sec">
       <div class="container">
         <div class="sec-head" v-reveal>
-          <p class="sec-tag">Подбор технологии</p>
-          <h2 class="sec-title">Какой рез нужен <em>вашей детали</em></h2>
+          <p class="sec-tag"><span class="idx">Производство</span> Технологии</p>
+          <h2 class="sec-title">Технологии производства: <em>резка, гибка, сварка</em></h2>
           <p class="sec-sub">
-            Выберите материал и толщину — покажем, какая технология подойдёт
-            и почему. Это те же правила, по которым считает наш технолог.
+            Участки, на которых делаются наши конструкции. Нужна только металлообработка —
+            заказывайте отдельно: от одной детали. Выберите материал и толщину — покажем,
+            какая резка подойдёт и почему.
           </p>
         </div>
 
@@ -296,7 +345,10 @@ const toggleFaq = (i) => {
               <p class="verdict-spec">{{ verdict.spec }}</p>
             </div>
             <p class="verdict-note">{{ verdict.note }}</p>
-            <RouterLink to="/kalkulyator" class="btn verdict-btn">Рассчитать мою деталь</RouterLink>
+            <div class="verdict-actions">
+              <RouterLink v-if="verdict.tag !== 'custom'" :to="verdict.to" class="btn">Подробнее о технологии</RouterLink>
+              <RouterLink to="/kalkulyator" class="btn" :class="{ 'btn--ghost': verdict.tag !== 'custom' }">Рассчитать мою деталь</RouterLink>
+            </div>
           </div>
         </div>
       </div>
@@ -315,7 +367,7 @@ const toggleFaq = (i) => {
       <div class="container">
         <div class="sec-head" v-reveal>
           <p class="sec-tag"><span class="idx">Подробно</span> Пять участков</p>
-          <h2 class="sec-title">Один подрядчик <em>вместо трёх</em></h2>
+          <h2 class="sec-title">Резка, гибка и сварка — <em>на одной площадке</em></h2>
           <p class="sec-sub">
             Пока деталь пересылают между цехом резки, гибочным участком и сварочным постом —
             время теряется на каждой пересылке. У нас всё происходит на одной площадке.
@@ -455,6 +507,83 @@ const toggleFaq = (i) => {
   font-size: 11px;
   color: var(--acc);
 }
+
+/* ============ основные услуги ============ */
+.ms-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.ms-card {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 26px;
+  color: inherit;
+  text-decoration: none;
+}
+.ms-card--featured {
+  border-color: rgba(255, 90, 31, 0.45);
+  background:
+    radial-gradient(ellipse at top right, rgba(255, 90, 31, 0.12), transparent 60%),
+    var(--card-d);
+}
+.ms-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.ms-num {
+  font-family: var(--font-d);
+  font-size: 22px;
+  font-weight: 900;
+  color: transparent;
+  -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.22);
+  transition: -webkit-text-stroke-color 0.3s;
+}
+.ms-card:hover .ms-num { -webkit-text-stroke-color: var(--acc); }
+.ms-flag {
+  font-family: var(--font-m);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--acc-hot);
+  border: 1px solid rgba(255, 90, 31, 0.45);
+  border-radius: 4px;
+  padding: 4px 10px;
+}
+.ms-card h3 {
+  font-family: var(--font-d);
+  font-size: 15.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.3;
+  margin-bottom: 10px;
+}
+.ms-text {
+  font-size: 14px;
+  color: var(--w-soft);
+  flex: 1;
+}
+.ms-spec {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line-d);
+  font-family: var(--font-m);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--acc-hot);
+}
+.ms-more {
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--acc);
+  transition: color 0.2s;
+}
+.ms-card:hover .ms-more { color: var(--acc-hot); }
 
 /* ============ подбор технологии ============ */
 .usl-picker-sec { padding-top: 96px; }
@@ -675,6 +804,11 @@ const toggleFaq = (i) => {
   color: var(--w-soft);
   max-width: 640px;
   margin-bottom: 20px;
+}
+.verdict-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 /* ============ аккордеон услуг ============ */
@@ -909,6 +1043,7 @@ const toggleFaq = (i) => {
 
 /* ============ адаптив ============ */
 @media (max-width: 900px) {
+  .ms-grid { grid-template-columns: 1fr 1fr; }
   .picker-controls { grid-template-columns: 1fr; gap: 28px; }
   .acc-head { grid-template-columns: 40px 1fr 32px; }
   .acc-chips { display: none; }
@@ -918,6 +1053,7 @@ const toggleFaq = (i) => {
 }
 
 @media (max-width: 640px) {
+  .ms-grid { grid-template-columns: 1fr; }
   .picker { padding: 26px 20px 30px; }
   .scale { --lw: 70px; }
   .scale-row { grid-template-columns: 60px 1fr; gap: 10px; }

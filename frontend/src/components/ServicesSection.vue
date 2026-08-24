@@ -1,83 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { mainServices } from '../data/services'
 
-const services = [
-  {
-    slug: 'lazernaya-rezka',
-    title: 'Лазерная резка',
-    short: 'Лазер',
-    text: 'Сложный контур сегодня — деталь для сборки без доработки напильником.',
-    spec: 'до 16 мм · чистая кромка · ЧПУ',
-    chips: ['до 16 мм', 'ЧПУ', 'DXF / DWG'],
-    points: [
-      'Чистая кромка — сразу в сборку или на покраску',
-      'Отверстия, пазы и маркировка за один установ',
-    ],
-    fit: 'Детали под сборку · серия · сложный контур',
-    icon: 'laser',
-    tone: 'laser',
-  },
-  {
-    slug: 'plazmennaya-rezka',
-    title: 'Плазменная резка',
-    short: 'Плазма',
-    text: 'Толстый металл и большие объёмы — кромка под сварку без «доп. зачистки».',
-    spec: 'до 25 мм · чёрный металл',
-    chips: ['до 25 мм', 'чёрный металл', 'крупный формат'],
-    points: [
-      'Выгоднее лазера на толщинах от 16 мм',
-      'Фланцы, косынки, закладные, основания',
-    ],
-    fit: 'Толстый лист · закладные · крупный раскрой',
-    icon: 'plasma',
-    tone: 'plasma',
-  },
-  {
-    slug: 'gazovaya-rezka',
-    title: 'Газовая резка',
-    short: 'Газ',
-    text: 'Сверхтолстая чёрная сталь — плиты, закладные и основания до 70 мм.',
-    spec: 'до 70 мм · чёрная сталь',
-    chips: ['до 70 мм', 'чёрная сталь', 'плиты'],
-    points: [
-      'Там, где лазер и плазма уже не берут',
-      'Кромка под сварку металлоконструкций',
-    ],
-    fit: 'Плиты и основания · толстые фланцы',
-    icon: 'gas',
-    tone: 'gas',
-  },
-  {
-    slug: 'gibka-metalla',
-    title: 'Гибка на листогибе',
-    short: 'Гибка',
-    text: 'Деталь №50 гнётся под тем же углом, что и деталь №1 — на том же участке, сразу после резки.',
-    spec: 'ЧПУ · до 6 мм · до 3000 мм',
-    chips: ['до 6 мм', 'до 3000 мм', 'ЧПУ'],
-    points: [
-      'Повторяемый угол без подгонки на объекте',
-      'Короба, кожухи, лотки и нестандартный профиль',
-    ],
-    fit: 'Короба · лотки · панели · профиль',
-    icon: 'bend',
-    tone: 'bend',
-  },
-  {
-    slug: 'svarka',
-    title: 'Сварка',
-    short: 'Сварка',
-    text: 'От одного шва до объекта под ключ. В Нижегородской области — с монтажом.',
-    spec: 'MIG/MAG · TIG · РДС',
-    chips: ['MIG/MAG', 'TIG', 'РДС'],
-    points: [
-      'Паспорт на изделие — швы проверяются до отгрузки',
-      'Резка, гибка и сборка на одной площадке',
-    ],
-    fit: 'Каркасы · ёмкости · узлы · под ключ',
-    icon: 'weld',
-    tone: 'weld',
-  },
-]
+const services = mainServices
 
 const active = ref(0)
 const current = computed(() => services[active.value])
@@ -106,21 +31,21 @@ const onKey = (e, i) => {
       <div class="srv-head" v-reveal>
         <div>
           <p class="sec-tag"><span class="idx">/ 03</span> Что мы делаем</p>
-          <h2 class="sec-title">Один подрядчик <em>вместо трёх</em></h2>
+          <h2 class="sec-title">От чертежа до здания <em>под ключ</em></h2>
         </div>
         <p class="sec-sub srv-lead">
-          Пока деталь пересылают между цехом резки, гибочным участком и сварочным постом —
-          время теряется на каждой пересылке. У нас всё на одной площадке:
-          один договор, один контакт, одна ответственность.
+          Основа — собственный завод металлоконструкций в Дзержинске. Изготовим,
+          привезём и смонтируем на объекте, зальём фундаменты — или построим здание
+          целиком: один договор, один контакт, одна ответственность.
         </p>
       </div>
 
       <div class="srv-ex" v-reveal="80">
-        <div class="srv-rail" role="tablist" aria-label="Участки производства">
+        <div class="srv-rail" role="tablist" aria-label="Услуги компании">
           <button
             v-for="(s, i) in services"
             :id="'srv-tab-' + i"
-            :key="s.slug"
+            :key="s.id"
             type="button"
             role="tab"
             class="srv-tab"
@@ -149,33 +74,28 @@ const onKey = (e, i) => {
           role="tabpanel"
           :aria-labelledby="'srv-tab-' + active"
         >
-          <Transition name="srv-swap" mode="out-in">
-            <div :key="current.slug" class="srv-stage-in">
-              <span class="srv-ghost" aria-hidden="true">{{ String(active + 1).padStart(2, '0') }}</span>
-
+          <span class="srv-ghost" aria-hidden="true">{{ String(active + 1).padStart(2, '0') }}</span>
+          <Transition name="srv-swap">
+            <div :key="current.id" class="srv-stage-in">
               <div class="srv-stage-top">
                 <span class="srv-icon" aria-hidden="true">
-                  <svg v-if="current.icon === 'laser'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 3h8l-2 6h-4l-2-6z" /><path d="M14 9v4h4V9" /><path d="M16 13v6" />
-                    <path d="m16 19-6 8m6-8 6 8m-6-8v9" stroke-dasharray="2.5 3" />
+                  <svg v-if="current.icon === 'fab'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 26V11l8 5v-5l8 5v-5l8 5v10" /><path d="M4 26h24" /><path d="M9 21h3m4 0h3m4 0h3" />
                   </svg>
-                  <svg v-else-if="current.icon === 'plasma'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M11 3h10l-3 7h-4l-3-7z" /><path d="M16 10v5" />
-                    <path d="M16 15c-2 3-5 4-5 8m5-8c2 3 5 4 5 8m-5-8v10" stroke-dasharray="3 2.5" />
-                    <path d="M6 29h20" />
+                  <svg v-else-if="current.icon === 'mount'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7 28h12" /><path d="M13 28V9" /><path d="M4 9h24" /><path d="M13 6v3m0-3 12 3M13 6 6 9" /><path d="M24 9v6" /><path d="M21.5 15h5l-2.5 3.5z" />
                   </svg>
-                  <svg v-else-if="current.icon === 'gas'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M16 28V14" /><path d="M12 28h8" />
-                    <path d="M16 14c-3-4-1-8 0-10 1 2 3 6 0 10z" />
-                    <path d="M13 18h6" stroke-dasharray="2 2.5" />
+                  <svg v-else-if="current.icon === 'concrete'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="20" width="24" height="6" rx="1" /><path d="M9 20v-5m7 5v-5m7 5v-5" /><path d="M5 10c2-2.2 5-2.2 7 0s5 2.2 7 0 5-2.2 7 0" />
                   </svg>
-                  <svg v-else-if="current.icon === 'bend'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 24 16 12l12 12" /><path d="M16 12V4" /><path d="M9 4h14" />
-                    <circle cx="16" cy="24" r="2.6" />
+                  <svg v-else-if="current.icon === 'turnkey'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 27V14l9-7 9 7v13" /><path d="M3 27h18" /><path d="M9 27v-6h6v6" /><circle cx="25" cy="11" r="3" /><path d="M25 14v8m0 0h3m-3-3.5h2" />
+                  </svg>
+                  <svg v-else-if="current.icon === 'design'" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="5" width="24" height="22" rx="1.5" /><path d="M4 12h24M11 12v15" /><path d="M15.5 21.5 20 15l3.5 5" /><path d="M6.5 8.5h3" />
                   </svg>
                   <svg v-else viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 20 14 11l7 7-9 9z" /><path d="m14 11 5-5 3-1 4 4-1 3-4 4" />
-                    <path d="m22 18 5 5" stroke-dasharray="2.5 3" /><circle cx="9" cy="24" r="1" fill="currentColor" />
+                    <path d="M5 27l9-9" /><path d="M13 8l5-5 7 7-5 5z" /><path d="M16 11l-2.5 2.5" /><path d="M24 20l4 4m-4 0 4-4" stroke-dasharray="2.5 3" />
                   </svg>
                 </span>
                 <div class="srv-chips">
@@ -184,7 +104,7 @@ const onKey = (e, i) => {
               </div>
 
               <h3 class="srv-stage-title">
-                <RouterLink :to="`/uslugi/${current.slug}`">{{ current.title }}</RouterLink>
+                <RouterLink :to="current.to">{{ current.title }}</RouterLink>
               </h3>
               <p class="srv-stage-text">{{ current.text }}</p>
 
@@ -195,7 +115,7 @@ const onKey = (e, i) => {
               <p class="srv-fit"><span>Подходит для</span> {{ current.fit }}</p>
 
               <div class="srv-actions">
-                <RouterLink :to="`/uslugi/${current.slug}`" class="btn">
+                <RouterLink :to="current.to" class="btn">
                   Подробнее об услуге
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M5 12h14m-6-6 6 6-6 6" />
@@ -209,8 +129,8 @@ const onKey = (e, i) => {
       </div>
 
       <div class="srv-foot" v-reveal="140">
-        <p>Пять участков — один договор и один контакт.</p>
-        <RouterLink to="/uslugi" class="srv-all">Все услуги и подбор технологии →</RouterLink>
+        <p>Шесть услуг — один подрядчик и один договор на весь цикл.</p>
+        <RouterLink to="/uslugi" class="srv-all">Все услуги и технологии →</RouterLink>
       </div>
     </div>
   </section>
@@ -234,7 +154,7 @@ const onKey = (e, i) => {
   grid-template-columns: minmax(280px, 0.88fr) 1.32fr;
   gap: 20px;
   align-items: stretch;
-  min-height: 440px;
+  min-height: 560px;
 }
 
 .srv-rail {
@@ -252,7 +172,8 @@ const onKey = (e, i) => {
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 18px 20px;
+  flex: 1;
+  padding: 16px 20px;
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--line-d);
@@ -273,11 +194,12 @@ const onKey = (e, i) => {
   padding-left: 24px;
 }
 
-.srv-tab--laser { --tone: #ff5a1f; }
-.srv-tab--plasma { --tone: #4f8dff; }
-.srv-tab--gas { --tone: #3dd68c; }
-.srv-tab--bend { --tone: #ffb020; }
-.srv-tab--weld { --tone: #ff7d3f; }
+.srv-tab--fab { --tone: #ff5a1f; }
+.srv-tab--mount { --tone: #4f8dff; }
+.srv-tab--concrete { --tone: #9aa7b8; }
+.srv-tab--turnkey { --tone: #ffb020; }
+.srv-tab--design { --tone: #38bdf8; }
+.srv-tab--demolition { --tone: #ff4d6d; }
 
 .srv-tab-num {
   font-family: var(--font-d);
@@ -302,7 +224,7 @@ const onKey = (e, i) => {
 .srv-tab-title,
 .srv-tab-short {
   font-family: var(--font-d);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.01em;
@@ -337,20 +259,23 @@ const onKey = (e, i) => {
 
 .srv-stage {
   --tone: var(--acc);
+  --stage-pad-y: 32px;
+  --stage-pad-x: 36px;
   position: relative;
   overflow: hidden;
-  min-height: 440px;
-  padding: 36px 38px 34px;
+  min-width: 0;
+  min-height: 560px;
   border: 1px solid var(--line-d);
   border-radius: var(--r);
   background: var(--card-d);
   isolation: isolate;
 }
-.srv-stage--laser { --tone: #ff5a1f; }
-.srv-stage--plasma { --tone: #4f8dff; }
-.srv-stage--gas { --tone: #3dd68c; }
-.srv-stage--bend { --tone: #ffb020; }
-.srv-stage--weld { --tone: #ff7d3f; }
+.srv-stage--fab { --tone: #ff5a1f; }
+.srv-stage--mount { --tone: #4f8dff; }
+.srv-stage--concrete { --tone: #9aa7b8; }
+.srv-stage--turnkey { --tone: #ffb020; }
+.srv-stage--design { --tone: #38bdf8; }
+.srv-stage--demolition { --tone: #ff4d6d; }
 
 .srv-stage::before {
   content: '';
@@ -367,20 +292,23 @@ const onKey = (e, i) => {
 }
 
 .srv-stage-in {
-  position: relative;
+  position: absolute;
+  inset: var(--stage-pad-y) var(--stage-pad-x);
   z-index: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 368px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .srv-ghost {
   position: absolute;
-  top: -18px;
-  right: -8px;
+  top: 12px;
+  right: 20px;
+  z-index: 1;
   font-family: var(--font-d);
-  font-size: clamp(96px, 14vw, 168px);
+  font-size: clamp(80px, 11vw, 140px);
   font-weight: 900;
   line-height: 1;
   color: transparent;
@@ -393,9 +321,10 @@ const onKey = (e, i) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 28px;
+  margin-bottom: 18px;
+  flex-shrink: 0;
 }
 
 .srv-icon {
@@ -430,12 +359,13 @@ const onKey = (e, i) => {
 
 .srv-stage-title {
   font-family: var(--font-d);
-  font-size: clamp(22px, 3vw, 32px);
+  font-size: clamp(20px, 2.6vw, 28px);
   font-weight: 700;
   text-transform: uppercase;
   line-height: 1.15;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   max-width: 18ch;
+  overflow-wrap: anywhere;
 }
 .srv-stage-title a {
   background-image: linear-gradient(var(--tone), var(--tone));
@@ -450,17 +380,17 @@ const onKey = (e, i) => {
 }
 
 .srv-stage-text {
-  font-size: 16px;
+  font-size: 15.5px;
   color: var(--w-soft);
   max-width: 520px;
-  margin-bottom: 22px;
+  margin-bottom: 14px;
 }
 
 .srv-points {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 22px;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 .srv-points li {
   position: relative;
@@ -482,7 +412,7 @@ const onKey = (e, i) => {
   font-size: 12px;
   letter-spacing: 0.04em;
   color: var(--w-faint);
-  margin-bottom: 28px;
+  margin-bottom: 18px;
 }
 .srv-fit span {
   color: var(--tone);
@@ -496,6 +426,7 @@ const onKey = (e, i) => {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: auto;
+  flex-shrink: 0;
 }
 .srv-actions .btn svg {
   width: 18px;
@@ -506,8 +437,10 @@ const onKey = (e, i) => {
 .srv-swap-leave-active {
   transition: opacity 0.28s var(--ease), transform 0.28s var(--ease);
 }
-.srv-swap-enter-from { opacity: 0; transform: translateY(14px); }
-.srv-swap-leave-to { opacity: 0; transform: translateY(-10px); }
+.srv-swap-leave-active { z-index: 1; }
+.srv-swap-enter-active { z-index: 2; }
+.srv-swap-enter-from { opacity: 0; transform: translateY(10px); }
+.srv-swap-leave-to { opacity: 0; transform: translateY(-8px); }
 
 .srv-foot {
   display: flex;
@@ -540,7 +473,7 @@ const onKey = (e, i) => {
   .srv-ex { grid-template-columns: 1fr; min-height: 0; }
   .srv-rail {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     overflow: hidden;
   }
   .srv-tab {
@@ -550,12 +483,13 @@ const onKey = (e, i) => {
     text-align: center;
     gap: 6px;
     padding: 14px 8px;
-    border-bottom: none;
+    border-bottom: 1px solid var(--line-d);
     border-right: 1px solid var(--line-d);
     border-left: none;
     border-top: 3px solid transparent;
   }
-  .srv-tab:last-child { border-right: none; }
+  .srv-tab:nth-child(3n) { border-right: none; }
+  .srv-tab:nth-child(n + 4) { border-bottom: none; }
   .srv-tab.active {
     padding-left: 8px;
     border-top-color: var(--tone, var(--acc));
@@ -566,17 +500,19 @@ const onKey = (e, i) => {
   .srv-tab-short { display: block; font-size: 12px; }
   .srv-tab-spec,
   .srv-tab-go { display: none; }
-  .srv-stage { min-height: 0; padding: 28px 24px; }
-  .srv-stage-in { min-height: 0; }
+  .srv-stage {
+    --stage-pad-y: 26px;
+    --stage-pad-x: 24px;
+    min-height: 520px;
+  }
 }
 
 @media (max-width: 560px) {
-  .srv-rail { grid-template-columns: repeat(6, 1fr); }
-  .srv-tab { grid-column: span 2; border-bottom: 1px solid var(--line-d); }
-  .srv-tab:nth-child(3) { border-right: none; }
-  .srv-tab:nth-child(4) { grid-column: 1 / span 3; border-bottom: none; }
-  .srv-tab:nth-child(5) { grid-column: 4 / span 3; border-bottom: none; border-right: none; }
-  .srv-ghost { font-size: 92px; right: -4px; }
+  .srv-rail { grid-template-columns: repeat(2, 1fr); }
+  .srv-tab { border-right: 1px solid var(--line-d); border-bottom: 1px solid var(--line-d); }
+  .srv-tab:nth-child(2n) { border-right: none; }
+  .srv-tab:nth-child(n + 5) { border-bottom: none; }
+  .srv-ghost { font-size: 92px; right: 16px; top: 10px; }
   .srv-stage-title { max-width: none; }
   .srv-actions .btn { width: 100%; }
 }

@@ -8,6 +8,7 @@ import {
   MK_PARENT_LABEL,
 } from '../data/metallokonstruktsii'
 import { uslugi } from '../data/uslugi'
+import { otherCycleLinks, IZG_PATH } from '../data/services'
 import DetailPreview from '../components/calc/DetailPreview.vue'
 import FaqSection from '../components/FaqSection.vue'
 import FinalCtaSection from '../components/FinalCtaSection.vue'
@@ -18,6 +19,7 @@ const SITE = 'https://greydstroy.ru'
 const page = getMetalworkLanding('izgotovlenie')
 
 const siblings = metalworkLandings.filter((p) => p.slug !== 'izgotovlenie')
+const cycleOthers = otherCycleLinks(IZG_PATH)
 const seoParagraphs = Array.isArray(page.seoText) ? page.seoText : [page.seoText]
 
 /* тарифы как в калькуляторе */
@@ -473,6 +475,20 @@ onUnmounted(() => ldScript?.remove())
           </article>
         </div>
 
+        <div class="srv-others srv-cluster">
+          <p class="srv-others-h">Нужен монтаж, фундамент или здание целиком?</p>
+          <div class="srv-others-row">
+            <RouterLink
+              v-for="s in cycleOthers"
+              :key="s.to"
+              :to="s.to"
+              class="srv-other"
+              :class="{ 'srv-other--acc': s.featured }"
+            >
+              {{ s.navLabel }} →
+            </RouterLink>
+          </div>
+        </div>
         <div class="srv-others srv-cluster">
           <p class="srv-others-h">Другие задачи по металлоконструкциям:</p>
           <div class="srv-others-row">

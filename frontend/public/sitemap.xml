@@ -16,7 +16,7 @@
     <loc>https://greydstroy.ru/metallokonstruktsii/izgotovlenie</loc>
     <lastmod>2026-08-23</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://greydstroy.ru/metallokonstruktsii/proizvodstvo</loc>
@@ -26,9 +26,9 @@
   </url>
   <url>
     <loc>https://greydstroy.ru/metallokonstruktsii/montazh</loc>
-    <lastmod>2026-08-23</lastmod>
+    <lastmod>2026-08-24</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.75</priority>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://greydstroy.ru/metallokonstruktsii/sborka</loc>
@@ -80,15 +80,39 @@
   </url>
   <url>
     <loc>https://greydstroy.ru/uslugi</loc>
-    <lastmod>2026-08-20</lastmod>
+    <lastmod>2026-08-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://greydstroy.ru/uslugi/stroitelstvo-pod-klyuch</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://greydstroy.ru/uslugi/betonnye-raboty</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://greydstroy.ru/uslugi/proektirovanie-metallokonstruktsij</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://greydstroy.ru/uslugi/demontazh-metallokonstruktsij</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://greydstroy.ru/uslugi/lazernaya-rezka</loc>
     <lastmod>2026-08-23</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://greydstroy.ru/uslugi/lazernaya-rezka/listovogo-metalla</loc>
@@ -124,25 +148,25 @@
     <loc>https://greydstroy.ru/uslugi/plazmennaya-rezka</loc>
     <lastmod>2026-08-20</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://greydstroy.ru/uslugi/gazovaya-rezka</loc>
     <lastmod>2026-08-20</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://greydstroy.ru/uslugi/gibka-metalla</loc>
     <lastmod>2026-08-19</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://greydstroy.ru/uslugi/svarka</loc>
     <lastmod>2026-08-19</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://greydstroy.ru/kalkulyator</loc>

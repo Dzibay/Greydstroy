@@ -1,4 +1,5 @@
 import { uslugi } from '../data/uslugi'
+import { workLandings, workLandingPath } from '../data/services'
 import { laserLandings, laserLandingPath } from '../data/lazernayaRezka'
 import { metalworkLandings, metalworkLandingPath } from '../data/metallokonstruktsii'
 import { projects } from '../data/projects'
@@ -16,6 +17,9 @@ const PATH_NAMES = {
 
 for (const u of uslugi) {
   PATH_NAMES[`/uslugi/${u.slug}`] = u.label
+}
+for (const w of workLandings) {
+  PATH_NAMES[workLandingPath(w.slug)] = w.navLabel
 }
 for (const p of laserLandings) {
   PATH_NAMES[laserLandingPath(p.slug)] = `Лазер · ${p.navLabel}`
