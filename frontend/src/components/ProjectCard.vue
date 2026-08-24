@@ -5,10 +5,6 @@ defineProps({
   project: { type: Object, required: true },
   revealDelay: { type: Number, default: 0 },
 })
-
-function formatPeriod(p) {
-  return `${p.dateStart} — ${p.dateEnd}`
-}
 </script>
 
 <template>
@@ -28,10 +24,11 @@ function formatPeriod(p) {
     </div>
     <div class="case-body">
       <p class="case-meta">
-        {{ project.location }} · {{ formatPeriod(project) }}
+        {{ project.sector || project.location }} · {{ project.location }}
       </p>
       <h3>{{ project.title }}</h3>
       <p class="case-client">{{ project.client }}</p>
+      <p v-if="project.lead" class="case-lead">{{ project.lead }}</p>
       <p class="case-cost">{{ project.cost }} ₽</p>
       <span class="case-link">Подробнее о проекте →</span>
     </div>
@@ -98,8 +95,18 @@ function formatPeriod(p) {
 .case-client {
   font-size: 13px;
   color: var(--ink-faint);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   line-height: 1.45;
+}
+.case-lead {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin-bottom: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .case-cost {
   font-family: var(--font-m);

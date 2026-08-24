@@ -27,6 +27,7 @@ const period = computed(() => {
           <div class="project-hero-text" v-reveal="60">
             <p class="sec-tag">
               <span class="idx">Объект</span>
+              <span v-if="project.sector" class="project-sector">{{ project.sector }}</span>
               <span v-if="project.status === 'ongoing'" class="project-badge">В работе</span>
             </p>
             <h1 class="project-title">{{ project.title }}</h1>
@@ -63,15 +64,26 @@ const period = computed(() => {
         />
 
         <article class="card project-detail" v-reveal="80">
-          <h2>Предмет договора</h2>
-          <p>{{ project.subject }}</p>
+          <p class="project-lead">{{ project.lead }}</p>
+
+          <p v-for="(para, i) in project.story" :key="i">{{ para }}</p>
+
+          <dl v-if="project.facts?.length" class="project-facts">
+            <div v-for="f in project.facts" :key="f.label">
+              <dt>{{ f.label }}</dt>
+              <dd>{{ f.value }}</dd>
+            </div>
+          </dl>
 
           <template v-if="project.workItems?.length">
-            <h3>Выполненные виды работ</h3>
+            <h2>Что сделали</h2>
             <ul class="work-list">
               <li v-for="(item, i) in project.workItems" :key="i">{{ item }}</li>
             </ul>
           </template>
+
+          <h2>Предмет договора</h2>
+          <p class="project-subject">{{ project.subject }}</p>
         </article>
 
         <div class="project-cta" v-reveal="120">
@@ -115,6 +127,15 @@ const period = computed(() => {
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.project-sector {
+  margin-left: 12px;
+  font-family: var(--font-m);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--w-soft);
 }
 
 .project-title {
@@ -178,12 +199,17 @@ const period = computed(() => {
 .project-detail {
   padding: 36px 40px;
 }
+.project-detail:hover,
+.project-stats:hover {
+  transform: none;
+  box-shadow: none;
+}
 .project-detail h2 {
   font-family: var(--font-d);
   font-size: 18px;
   font-weight: 700;
   text-transform: uppercase;
-  margin-bottom: 16px;
+  margin: 28px 0 16px;
 }
 .project-detail h3 {
   font-family: var(--font-d);
@@ -196,6 +222,45 @@ const period = computed(() => {
   font-size: 16px;
   color: var(--ink-soft);
   line-height: 1.7;
+  margin-bottom: 16px;
+}
+.project-detail p:last-child { margin-bottom: 0; }
+.project-lead {
+  font-size: 18px !important;
+  font-weight: 600;
+  color: var(--ink) !important;
+  line-height: 1.55 !important;
+  margin-bottom: 22px !important;
+}
+.project-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 8px 0 28px;
+}
+.project-facts div {
+  padding: 14px 16px;
+  border-radius: var(--r-sm);
+  background: var(--paper2);
+  border: 1px solid var(--line-l);
+}
+.project-facts dt {
+  font-family: var(--font-m);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 6px;
+}
+.project-facts dd {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.project-subject {
+  font-size: 14.5px !important;
+  color: var(--ink-faint) !important;
 }
 
 .work-list {
@@ -240,5 +305,6 @@ const period = computed(() => {
 @media (max-width: 900px) {
   .project-hero-grid { grid-template-columns: 1fr; }
   .project-detail { padding: 28px 24px; }
+  .project-facts { grid-template-columns: 1fr; }
 }
 </style>
