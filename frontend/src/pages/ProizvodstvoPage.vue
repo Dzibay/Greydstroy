@@ -31,8 +31,8 @@ const stations = [
     text: 'Чистый контур, отверстия и пазы за один установ. Деталь с поста идёт в гибку или сразу в сборку.',
     to: '/uslugi/lazernaya-rezka',
     tone: 'laser',
-    photo: '/img/hero-laser.png',
-    photoAlt: 'Лазерная резка металла в цехе Грэйдстрой',
+    photo: '/img/hero-laser.jpg',
+    photoAlt: 'Волоконный лазер для резки металла в цехе Грэйдстрой',
   },
   {
     id: 'plasma',
@@ -53,8 +53,8 @@ const stations = [
     text: 'Плиты, закладные, основания. Пост берёт то, что лазер и плазма уже не берут.',
     to: '/uslugi/gazovaya-rezka',
     tone: 'gas',
-    photo: '/img/shop/shop-37.jpg',
-    photoAlt: 'Раскрой толстого листа с отверстиями',
+    photo: '/img/shop/shop-45.jpg',
+    photoAlt: 'Закладные и шпильки после изготовления в цехе',
   },
   {
     id: 'bend',
@@ -64,7 +64,7 @@ const stations = [
     text: 'ЧПУ-листогиб рядом с резкой: развёртку считаем сами, угол не «подгоняют на объекте».',
     to: '/uslugi/gibka-metalla',
     tone: 'bend',
-    photo: '/img/press-brake.png',
+    photo: '/img/press-brake.jpg',
     photoAlt: 'ЧПУ-листогиб на производстве Грэйдстрой',
   },
   {
@@ -75,8 +75,8 @@ const stations = [
     text: 'Узлы и каркасы на стапеле. Швы проверяем до накладной, паспорт — на изделие.',
     to: '/uslugi/svarka',
     tone: 'weld',
-    photo: '/img/shop/shop-31.jpg',
-    photoAlt: 'Колонны с опорными пластинами после грунта',
+    photo: '/img/shop/shop-43.jpg',
+    photoAlt: 'Сварка металлоконструкций в цехе Грэйдстрой',
   },
   {
     id: 'ship',

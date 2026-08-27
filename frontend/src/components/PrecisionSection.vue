@@ -40,7 +40,7 @@ const stats = [
         </div>
 
         <figure class="prc-media" v-reveal="200">
-          <img src="/img/press-brake.png" alt="Листогибочный пресс с ЧПУ гнёт деталь" loading="lazy" />
+          <img src="/img/press-brake.jpg" alt="Листогибочный пресс с ЧПУ гнёт деталь" loading="lazy" />
           <figcaption>
             <span class="cap-line"></span>
             Листогибочный пресс с ЧПУ · рабочая зона 3000 × 1500 мм

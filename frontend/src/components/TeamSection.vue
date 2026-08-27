@@ -3,7 +3,7 @@
     <div class="container">
       <div class="team-grid">
         <figure class="team-media" v-reveal>
-          <img src="/img/team-shop.png" alt="Сварщик за работой в цеху Грэйдстрой" loading="lazy" />
+          <img src="/img/team-shop.jpg" alt="Сварщик за работой в цеху Грэйдстрой" loading="lazy" />
           <figcaption>
             <span class="cap-line"></span>
             Наш цех · рабочая смена

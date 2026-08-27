@@ -53,22 +53,52 @@ export const shop = {
     src: '/img/shop/shop-08.jpg',
     alt: 'Монтаж металлических узлов на объекте',
   },
+  fiberLaser: {
+    src: '/img/shop/shop-41.jpg',
+    alt: 'Волоконный лазер SENFENG для резки листового металла в цехе Грэйдстрой',
+  },
+  pressBrake: {
+    src: '/img/shop/shop-42.jpg',
+    alt: 'ЧПУ-листогиб SENFENG: гибка листового металла',
+  },
+  welding: {
+    src: '/img/shop/shop-43.jpg',
+    alt: 'Сварка металлоконструкций в цехе Грэйдстрой',
+  },
+  profileSaw: {
+    src: '/img/shop/shop-44.jpg',
+    alt: 'Отрезной станок режет металлический профиль',
+  },
+  threadedRods: {
+    src: '/img/shop/shop-45.jpg',
+    alt: 'Партия закладных и шпилек после изготовления в цехе',
+  },
+  profileMill: {
+    src: '/img/shop/shop-46.jpg',
+    alt: 'Станок обработки профиля в цехе металлоконструкций',
+  },
+  copyRouter: {
+    src: '/img/shop/shop-47.jpg',
+    alt: 'Копировально-фрезерный станок: обработка металлического профиля',
+  },
 }
 
 export const homeGallery = [
-  shop.hangarFrame,
-  shop.cncHead,
+  shop.fiberLaser,
+  shop.pressBrake,
+  shop.welding,
+  shop.threadedRods,
+  shop.profileSaw,
   shop.columnsPainted,
-  shop.canopy,
-  shop.platforms,
-  shop.hangarInside,
 ]
 
 export const shopGallery = [
-  shop.cncTable,
-  shop.cncConsole,
-  shop.cncHead,
-  shop.columnsPainted,
+  shop.fiberLaser,
+  shop.pressBrake,
+  shop.profileSaw,
+  shop.copyRouter,
+  shop.welding,
+  shop.threadedRods,
 ]
 
 export const montageGallery = [
@@ -79,8 +109,8 @@ export const montageGallery = [
 ]
 
 export const izgotovlenieGallery = [
-  shop.columnsPainted,
-  shop.cncTable,
-  shop.hangarInside,
-  shop.tankNode,
+  shop.fiberLaser,
+  shop.pressBrake,
+  shop.welding,
+  shop.threadedRods,
 ]

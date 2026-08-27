@@ -1,5 +1,5 @@
 const SITE_URL = 'https://greydstroy.ru'
-const DEFAULT_IMAGE = `${SITE_URL}/img/hero-laser.png`
+const DEFAULT_IMAGE = `${SITE_URL}/img/hero-laser.jpg`
 
 const DEFAULT_META = {
   title: 'Грэйдстрой — завод металлоконструкций: изготовление, монтаж, строительство под ключ',

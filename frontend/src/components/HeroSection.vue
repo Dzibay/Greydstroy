@@ -16,7 +16,7 @@ const marquee = [
 <template>
   <section id="top" class="hero">
     <div class="hero-bg">
-      <img src="/img/hero-laser.png" alt="Изготовление металлоконструкций — лазерная резка металла" fetchpriority="high" />
+      <img src="/img/hero-laser.jpg" alt="Изготовление металлоконструкций — лазерная резка металла" fetchpriority="high" />
     </div>
     <div class="hero-grid-lines" aria-hidden="true"></div>
 
