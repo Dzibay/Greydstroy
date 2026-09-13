@@ -1,7 +1,6 @@
 <script setup>
 import HeroSection from '../components/HeroSection.vue'
 import QuickCallBanner from '../components/QuickCallBanner.vue'
-import CallExpertWidget from '../components/CallExpertWidget.vue'
 import PainsSection from '../components/PainsSection.vue'
 import ServicesSection from '../components/ServicesSection.vue'
 import ProcessSection from '../components/ProcessSection.vue'
@@ -22,7 +21,9 @@ import { homeGallery } from '../data/shopPhotos'
 <template>
   <main>
     <HeroSection />
-    <QuickCallBanner />
+    <div class="qcb-standalone">
+      <QuickCallBanner />
+    </div>
     <PainsSection />
     <ServicesSection />
     <ProcessSection />
@@ -44,6 +45,12 @@ import { homeGallery } from '../data/shopPhotos'
     <TeamSection />
     <FaqSection />
     <FinalCtaSection />
-    <CallExpertWidget />
   </main>
 </template>
+
+<style scoped>
+/* Hide standalone banner when it fits inside the hero */
+@media (min-width: 1100px) and (min-height: 820px) {
+  .qcb-standalone { display: none; }
+}
+</style>

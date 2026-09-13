@@ -20,7 +20,31 @@ const open = ref(false)
         </p>
 
         <a :href="company.phoneHref" class="cew-phone" data-track="tel-widget">{{ company.phone }}</a>
-        <MailLink class="cew-mail" track-label="mail-widget">Написать на {{ company.email }}</MailLink>
+
+        <div class="cew-mail-cta">
+          <MailLink track-label="mail-widget">
+            <span class="cew-mail-ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M3.5 7.2h17c.8 0 1.5.7 1.5 1.5v9.6c0 .8-.7 1.5-1.5 1.5h-17c-.8 0-1.5-.7-1.5-1.5V8.7c0-.8.7-1.5 1.5-1.5Z"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="m3.8 8.6 8.2 6 8.2-6"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span class="cew-mail-copy">
+              <span class="cew-mail-label">Написать письмо</span>
+              <span class="cew-mail-addr">{{ company.email }}</span>
+            </span>
+          </MailLink>
+        </div>
 
         <ul class="cew-list">
           <li><span>◆</span> Пн–Пт: 08:00 – 17:00 (МСК)</li>
@@ -40,7 +64,7 @@ const open = ref(false)
           />
         </svg>
       </span>
-      <span class="cew-fab-label">Прямая связь с инженером</span>
+      <span class="cew-fab-label">Позвонить инженеру</span>
     </button>
   </div>
 </template>
@@ -166,7 +190,7 @@ const open = ref(false)
   background: rgba(255, 255, 255, 0.04);
   border-radius: var(--r-sm);
   padding: 14px 10px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   transition: border-color 0.2s, color 0.2s;
 }
 .cew-phone:hover {
@@ -174,16 +198,71 @@ const open = ref(false)
   border-color: color-mix(in srgb, var(--acc) 60%, transparent);
 }
 
-.cew-mail {
-  display: block;
-  text-align: center;
-  font-size: 13px;
-  color: var(--w-soft);
-  margin: -6px 0 16px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.cew-mail-cta {
+  margin-bottom: 16px;
 }
-.cew-mail:hover { color: var(--acc-hot); }
+.cew-mail-cta :deep(a) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  text-decoration: none;
+  color: var(--white);
+  border: 1.5px solid color-mix(in srgb, var(--acc) 45%, transparent);
+  background:
+    linear-gradient(135deg, rgba(255, 90, 31, 0.16), transparent 60%),
+    rgba(255, 255, 255, 0.03);
+  border-radius: var(--r-sm);
+  transition: border-color 0.25s, background 0.25s, transform 0.25s;
+}
+.cew-mail-cta :deep(a:hover) {
+  border-color: var(--acc);
+  background:
+    linear-gradient(135deg, rgba(255, 90, 31, 0.24), transparent 60%),
+    rgba(255, 90, 31, 0.08);
+  transform: translateY(-1px);
+}
+
+.cew-mail-ico {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--acc);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(255, 90, 31, 0.35);
+}
+.cew-mail-ico svg {
+  width: 17px;
+  height: 17px;
+}
+
+.cew-mail-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+.cew-mail-label {
+  font-family: var(--font-m);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.cew-mail-addr {
+  font-size: 11.5px;
+  color: var(--w-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cew-mail-cta :deep(a:hover) .cew-mail-addr {
+  color: var(--acc-hot);
+}
 
 .cew-list {
   display: flex;

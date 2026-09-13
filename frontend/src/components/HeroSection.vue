@@ -1,5 +1,6 @@
 <script setup>
 import LeadForm from './ui/LeadForm.vue'
+import QuickCallBanner from './QuickCallBanner.vue'
 
 const marquee = [
   'Изготовление металлоконструкций',
@@ -28,13 +29,13 @@ const marquee = [
         </p>
 
         <h1 class="hero-title" v-reveal="80">
-          Изготовление <em>металлоконструкций</em> — до обьекта под ключ
+          Металлоконструкции: от изготовления до объекта <em>«Под ключ»</em>
         </h1>
 
         <p class="hero-sub" v-reveal="160">
-          Собственное производство в Дзержинске: изготовим конструкции по вашему
-          проекту, смонтируем на объекте, зальём фундаменты — или построим здание
-          целиком. От одной детали до промышленного объекта.
+          Собственное производство: изготовим конструкции по вашему
+          проекту, смонтируем, зальём фундаменты — построим здание
+          целиком. От рассчета цены до промышленного объекта.
         </p>
 
         <ul class="hero-trust" v-reveal="240">
@@ -50,11 +51,17 @@ const marquee = [
       </div>
 
       <div class="hero-form" v-reveal="300">
-        <div class="hero-form-head">
-          <span class="hf-num">01</span>
-          <p>Быстрый расчёт<br /><small>займёт 20 секунд</small></p>
-        </div>
+        <div class="hero-form-filter" role="note">
+          <p class="hff-lead">Заказы от 50&nbsp;м²</p>
+          <p class="hff-warn">
+            Если меньший объём —
+            закройте страницу, мы его не возьмём. Работаем с коммерческими объектами.
+          </p></div>
         <LeadForm button-text="Рассчитать стоимость" />
+      </div>
+
+      <div class="hero-qcb" v-reveal="360">
+        <QuickCallBanner embedded />
       </div>
     </div>
 
@@ -205,33 +212,35 @@ const marquee = [
   padding: 30px 28px;
   box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
 }
-.hero-form-head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 22px;
+
+.hero-form-filter {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line-d);
 }
-.hf-num {
-  font-family: var(--font-d);
-  font-size: 30px;
-  font-weight: 900;
-  color: transparent;
-  -webkit-text-stroke: 1.5px var(--acc);
-}
-.hero-form-head p {
+.hff-lead {
   font-family: var(--font-d);
   font-size: 15px;
   font-weight: 700;
   text-transform: uppercase;
-  line-height: 1.3;
+  color: var(--white);
+  margin-bottom: 8px;
 }
-.hero-form-head small {
+.hff-warn {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--w-soft);
+}
+.hff-cta {
   font-family: var(--font-m);
-  font-size: 10.5px;
-  font-weight: 400;
-  color: var(--w-faint);
-  text-transform: none;
-  letter-spacing: 0.06em;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--acc-hot);
+}
+
+.hero-qcb {
+  display: none;
+  grid-column: 1 / -1;
 }
 
 .hero-marquee {
@@ -270,6 +279,12 @@ const marquee = [
 }
 @keyframes marquee {
   to { transform: translateX(-50%); }
+}
+
+/* Wide enough for 2-col hero + banner under content */
+@media (min-width: 1100px) and (min-height: 820px) {
+  .hero-qcb { display: block; }
+  .hero { padding-bottom: 110px; }
 }
 
 @media (max-width: 980px) {

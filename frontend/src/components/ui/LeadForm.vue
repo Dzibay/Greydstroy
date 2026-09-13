@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, nextTick } from 'vue'
+import { reactive, ref, nextTick, computed } from 'vue'
 import { applyPhoneInput, applyPhonePaste, isValidRuPhone } from '../../utils/phone'
 import { getIds, track } from '../../analytics/tracker'
 import { company } from '../../data/company'
@@ -16,8 +16,8 @@ const form = reactive({
   name: '',
   phone: '',
   comment: '',
-  drawing: 'yes',
-  agree: true,
+  drawing: 'no',
+  agree: false,
   fileName: '',
   website: '',
 })
@@ -28,6 +28,10 @@ const error = ref('')
 const phoneRef = ref(null)
 const fileRef = ref(null)
 const formStarted = ref(false)
+
+const needsFile = computed(() => form.drawing === 'yes')
+const hasFile = computed(() => Boolean(form.fileName))
+const canSubmit = computed(() => form.agree && (!needsFile.value || hasFile.value))
 
 function onFormStart() {
   if (formStarted.value) return
@@ -108,8 +112,12 @@ async function submit() {
     error.value = 'Укажите телефон полностью — без него мы не сможем прислать расчёт.'
     return
   }
-  if (props.extended && !form.agree) {
-    error.value = 'Нужно согласие на обработку данных.'
+  if (!form.agree) {
+    error.value = 'Нужно согласие на обработку персональных данных.'
+    return
+  }
+  if (needsFile.value && !hasFile.value) {
+    error.value = 'Прикрепите чертёж или эскиз — или выберите «Нет чертежа».'
     return
   }
   error.value = ''
@@ -218,22 +226,13 @@ async function submit() {
           </label>
         </transition>
 
-        <template v-if="extended">
-          <textarea
-            v-model="form.comment"
-            class="field lf-textarea"
-            rows="3"
-            placeholder="Комментарий (необязательно)"
-          ></textarea>
-
-          <label class="lf-agree">
-            <input type="checkbox" v-model="form.agree" />
-            <span>
-              Согласен на
-              <a href="/docs/privacy-policy.html" target="_blank" rel="noopener">обработку персональных данных</a>
-            </span>
-          </label>
-        </template>
+        <textarea
+          v-if="extended"
+          v-model="form.comment"
+          class="field lf-textarea"
+          rows="3"
+          placeholder="Комментарий (необязательно)"
+        ></textarea>
 
         <p v-if="error" class="lf-error">
           <template v-if="error === 'submit-failed'">
@@ -243,10 +242,23 @@ async function submit() {
           <template v-else>{{ error }}</template>
         </p>
 
-        <button class="btn btn--block" type="submit" data-track="lead-submit" :disabled="sending">
+        <button
+          class="btn btn--block"
+          type="submit"
+          data-track="lead-submit"
+          :disabled="sending || !canSubmit"
+        >
           {{ sending ? 'Отправляем…' : buttonText }}
         </button>
-        <p class="btn-note lf-note"><slot>Отвечаем в течение рабочего дня. Ни к чему не обязывает.</slot></p>
+
+        <label class="lf-agree lf-agree--after">
+          <input type="checkbox" v-model="form.agree" />
+          <span>
+            Нажимая кнопку, вы соглашаетесь с
+            <a href="/docs/privacy-policy.html" target="_blank" rel="noopener">политикой конфиденциальности</a>
+            и обработкой персональных данных
+          </span>
+        </label>
       </form>
     </transition>
   </div>
@@ -326,15 +338,26 @@ async function submit() {
 
 .lf-agree {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 9px;
   font-family: var(--font-m);
   font-size: 11px;
   color: var(--w-faint);
   margin-bottom: 14px;
   cursor: pointer;
+  line-height: 1.45;
 }
-.lf-agree input { accent-color: var(--acc); width: 15px; height: 15px; }
+.lf-agree--after {
+  margin: 12px 0 0;
+  text-align: left;
+}
+.lf-agree input {
+  accent-color: var(--acc);
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
 .lf-agree a {
   color: var(--w-soft);
   text-decoration: underline;
@@ -353,7 +376,11 @@ async function submit() {
   text-underline-offset: 2px;
 }
 
-.lf-note { text-align: center; }
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 
 .lf-success {
   text-align: center;

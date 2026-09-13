@@ -6,10 +6,20 @@ import GeoSection from '../components/GeoSection.vue'
 import FaqSection from '../components/FaqSection.vue'
 import FinalCtaSection from '../components/FinalCtaSection.vue'
 import ShopGallery from '../components/ShopGallery.vue'
+import LeadForm from '../components/ui/LeadForm.vue'
+import QuickCallBanner from '../components/QuickCallBanner.vue'
 import { metalworkLandings, metalworkLandingPath } from '../data/metallokonstruktsii'
 import { uslugi } from '../data/uslugi'
 import { mainServices } from '../data/services'
 import { homeGallery } from '../data/shopPhotos'
+import { company } from '../data/company'
+
+const stats = [
+  { b: '3000 м²', s: 'своё производство' },
+  { b: '1500+', s: 'проектов' },
+  { b: 'с 2013', s: 'года на рынке' },
+  { b: '1 день', s: 'на расчёт сметы' },
+]
 
 /* ---------- что изготавливаем (только уникальные блоки страницы) ---------- */
 const products = [
@@ -72,47 +82,72 @@ const products = [
 <template>
   <main>
     <!-- ============ HERO ============ -->
-    <section id="mk-hero" class="sec sec--dark page-hero mk-hero">
+    <section id="mk-hero" class="sec sec--dark page-hero mk-hero mk-hero--split">
       <div class="container">
         <nav class="crumbs" aria-label="Навигация" v-reveal>
           <RouterLink to="/">Главная</RouterLink>
           <span class="crumbs-sep" aria-hidden="true">/</span>
           <span aria-current="page">Металлоконструкции</span>
         </nav>
-        <div class="sec-head" v-reveal="60">
-          <p class="sec-tag"><span class="idx">Производство</span> Металлоконструкции</p>
-          <h1 class="page-title">Металлоконструкции <em>на заказ</em></h1>
-          <p class="page-desc">
-            Свой цех 3000 м² в Дзержинске: резка, гибка, сварка и покрытие на одной
-            площадке. От закладной детали до каркаса здания. Смета за 1 рабочий день,
-            отгрузка по всей России.
-          </p>
-        </div>
 
-        <div class="mk-hero-cta" v-reveal="140">
-          <RouterLink to="/kalkulyator" class="btn">Рассчитать стоимость в калькуляторе</RouterLink>
-          <a href="#cta" class="btn btn--ghost">Прислать чертёж на расчёт</a>
-        </div>
+        <div class="hero-in">
+          <div class="hero-left">
+            <p class="hero-kicker" v-reveal>
+              <span class="dot"></span>
+              Звоните прямо сейчас, чтобы получить расчёт цены
+            </p>
 
-        <nav class="mk-cluster" aria-label="Посадочные металлоконструкций" v-reveal="170">
-          <RouterLink
-            v-for="s in metalworkLandings"
-            :key="s.slug"
-            :to="metalworkLandingPath(s.slug)"
-            class="mk-chip"
-          >
-            {{ s.navLabel }}
-          </RouterLink>
-        </nav>
+            <h1 class="hero-title" v-reveal="80">
+              Металлоконструкции <em>на заказ</em>
+            </h1>
 
-        <div class="mk-stats" v-reveal="200">
-          <div class="mk-stat"><b>3000 м²</b><span>своё производство</span></div>
-          <div class="mk-stat"><b>1500+</b><span>выполненных проектов</span></div>
-          <div class="mk-stat"><b>с 2013</b><span>года на рынке</span></div>
-          <div class="mk-stat"><b>1 день</b><span>на расчёт сметы</span></div>
+            <p class="hero-sub" v-reveal="160">
+              Свой цех в Дзержинске: от закладной до каркаса здания.
+              Смета за день, отгрузка по России.
+            </p>
+
+            <ul class="hero-trust" v-reveal="240">
+              <li v-for="st in stats" :key="st.b + st.s">{{ st.b }} {{ st.s }}</li>
+            </ul>
+
+            <div class="hero-cta" v-reveal="320">
+              <RouterLink to="/kalkulyator" class="btn" data-track="calc-mk">Калькулятор цены</RouterLink>
+              <p class="btn-note">Ориентир цены и срока — сразу.<br />Точный расчёт по чертежу.</p>
+            </div>
+
+            <nav class="mk-cluster" aria-label="Посадочные металлоконструкций" v-reveal="360">
+              <RouterLink
+                v-for="s in metalworkLandings"
+                :key="s.slug"
+                :to="metalworkLandingPath(s.slug)"
+                class="mk-chip"
+              >
+                {{ s.navLabel }}
+              </RouterLink>
+            </nav>
+          </div>
+
+          <div class="hero-form" v-reveal="300">
+            <div class="hero-form-filter" role="note">
+              <p class="hff-lead">Заказы от 50&nbsp;м²</p>
+              <p class="hff-warn">
+                Если меньший объём —
+                закройте страницу, мы его не возьмём. Работаем с коммерческими объектами.
+              </p>
+            </div>
+            <LeadForm button-text="Рассчитать стоимость" />
+          </div>
+
+          <div class="hero-qcb" v-reveal="380">
+            <QuickCallBanner embedded />
+          </div>
         </div>
       </div>
     </section>
+
+    <div class="qcb-standalone">
+      <QuickCallBanner />
+    </div>
 
     <!-- ============ ЧТО ИЗГОТАВЛИВАЕМ ============ -->
     <section id="products" class="sec sec--deep">
@@ -124,6 +159,15 @@ const products = [
             Цены указаны за работы без металла — ориентир, который уточняется по чертежу.
             С металлом и покрытием посчитает калькулятор.
           </p>
+        </div>
+
+        <div class="feat-cta" v-reveal="40">
+          <a
+            :href="company.phoneHref"
+            class="btn"
+            data-track="tel-mk-engineer"
+          >Позвонить инженеру</a>
+          <p class="feat-cta-note">Сориентируем по срокам и цене прямо во время разговора</p>
         </div>
 
         <div class="prod-grid">
@@ -219,6 +263,7 @@ const products = [
 <style scoped>
 /* ============ hero ============ */
 .mk-hero { padding-bottom: 64px; }
+.mk-hero--split { padding-bottom: 90px; }
 
 .crumbs {
   display: flex;
@@ -237,18 +282,139 @@ const products = [
 .crumbs [aria-current="page"] { color: var(--white); }
 .crumbs-sep { color: var(--w-faint); opacity: 0.55; }
 
-.mk-hero-cta {
+.hero-in {
+  display: grid;
+  grid-template-columns: 1.35fr 0.75fr;
+  gap: 64px;
+  align-items: center;
+}
+
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-m);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--w-soft);
+  border: 1px solid var(--line-d);
+  padding: 8px 16px;
+  border-radius: 40px;
+  margin-bottom: 30px;
+  background: rgba(11, 14, 17, 0.5);
+  max-width: 100%;
+  line-height: 1.4;
+}
+.hero-kicker .dot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--acc);
+  box-shadow: 0 0 12px var(--acc);
+  animation: mk-pulse 2s infinite;
+}
+@keyframes mk-pulse {
+  50% { opacity: 0.4; }
+}
+
+.hero-title {
+  font-family: var(--font-d);
+  font-size: clamp(24px, 4.6vw, 38px);
+  font-weight: 900;
+  line-height: 1.08;
+  text-transform: uppercase;
+  letter-spacing: -0.015em;
+  margin-bottom: 28px;
+}
+.hero-title em {
+  font-style: normal;
+  color: var(--acc);
+  text-shadow: 0 0 44px rgba(255, 90, 31, 0.45);
+}
+
+.hero-sub {
+  font-size: clamp(15px, 1.5vw, 18px);
+  color: var(--w-soft);
+  max-width: 560px;
+  margin-bottom: 30px;
+}
+
+.hero-trust {
   display: flex;
-  gap: 14px;
   flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 38px;
+}
+.hero-trust li {
+  font-family: var(--font-m);
+  font-size: 12px;
+  color: var(--white);
+  border: 1px solid var(--line-d);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 15px;
+  border-radius: 6px;
+  backdrop-filter: blur(6px);
+}
+.hero-trust li::before {
+  content: '▸ ';
+  color: var(--acc);
+}
+
+.hero-cta {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.hero-cta .btn-note { margin-top: 0; }
+
+.hero-form {
+  background: rgba(17, 21, 26, 0.86);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--line-d);
+  border-top: 3px solid var(--acc);
+  border-radius: var(--r);
+  padding: 30px 28px;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+}
+
+.hero-form-filter {
   margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line-d);
+}
+.hff-lead {
+  font-family: var(--font-d);
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+.hff-warn {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--w-soft);
+}
+
+.hero-qcb {
+  display: none;
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 1100px) and (min-height: 820px) {
+  .hero-qcb { display: block; }
+  .mk-hero--split { padding-bottom: 110px; }
+  .qcb-standalone { display: none; }
 }
 
 .mk-cluster {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 48px;
 }
 .mk-chip {
   padding: 10px 16px;
@@ -262,6 +428,19 @@ const products = [
 .mk-chip:hover {
   border-color: var(--acc);
   color: var(--white);
+}
+
+.feat-cta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.feat-cta-note {
+  font-size: 14px;
+  color: var(--w-soft);
+  max-width: 320px;
 }
 
 .mk-works {
@@ -294,29 +473,6 @@ const products = [
 .mk-work--acc { color: var(--acc); }
 .mk-work--acc:hover { color: var(--acc-hot); }
 .mk-tech { margin-top: 16px; }
-
-.mk-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-  padding-top: 34px;
-  border-top: 1px solid var(--line-d);
-}
-.mk-stat b {
-  display: block;
-  font-family: var(--font-d);
-  font-size: clamp(20px, 2.4vw, 28px);
-  font-weight: 900;
-  color: var(--acc-hot);
-  margin-bottom: 4px;
-}
-.mk-stat span {
-  font-family: var(--font-m);
-  font-size: 11.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--w-faint);
-}
 
 /* ============ каталог ============ */
 .prod-grid {
@@ -367,8 +523,9 @@ const products = [
 @media (max-width: 1060px) {
   .prod-grid { grid-template-columns: repeat(2, 1fr); }
 }
-@media (max-width: 900px) {
-  .mk-stats { grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 980px) {
+  .hero-in { grid-template-columns: 1fr; gap: 44px; }
+  .hero-form { max-width: 460px; }
 }
 @media (max-width: 560px) {
   .prod-grid { grid-template-columns: 1fr; }
