@@ -123,6 +123,13 @@ const marquee = [
   grid-template-columns: 1.35fr 0.75fr;
   gap: 64px;
   align-items: center;
+  min-width: 0;
+  width: 100%;
+}
+.hero-left,
+.hero-form {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .hero-kicker {
@@ -154,12 +161,15 @@ const marquee = [
 
 .hero-title {
   font-family: var(--font-d);
-  font-size: clamp(24px, 4.6vw, 38px);
+  font-size: clamp(22px, 7vw, 38px);
   font-weight: 900;
-  line-height: 1.08;
+  line-height: 1.12;
   text-transform: uppercase;
   letter-spacing: -0.015em;
   margin-bottom: 28px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
 }
 .hero-title em {
   font-style: normal;
@@ -291,6 +301,7 @@ const marquee = [
   .hero { padding: 120px 0 110px; }
   .hero-in { grid-template-columns: 1fr; gap: 44px; }
   .hero-bg img { object-position: 70% center; }
-  .hero-form { max-width: 460px; }
+  .hero-form { max-width: 100%; }
+  .hero-title { font-size: clamp(20px, 8.2vw, 30px); }
 }
 </style>

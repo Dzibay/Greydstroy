@@ -287,6 +287,13 @@ const products = [
   grid-template-columns: 1.35fr 0.75fr;
   gap: 64px;
   align-items: center;
+  min-width: 0;
+  width: 100%;
+}
+.hero-left,
+.hero-form {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .hero-kicker {
@@ -321,12 +328,15 @@ const products = [
 
 .hero-title {
   font-family: var(--font-d);
-  font-size: clamp(24px, 4.6vw, 38px);
+  font-size: clamp(22px, 7vw, 38px);
   font-weight: 900;
-  line-height: 1.08;
+  line-height: 1.12;
   text-transform: uppercase;
   letter-spacing: -0.015em;
   margin-bottom: 28px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
 }
 .hero-title em {
   font-style: normal;
@@ -415,6 +425,7 @@ const products = [
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  max-width: 100%;
 }
 .mk-chip {
   padding: 10px 16px;
@@ -424,6 +435,7 @@ const products = [
   font-weight: 600;
   color: var(--w-soft);
   transition: border-color 0.2s, color 0.2s;
+  max-width: 100%;
 }
 .mk-chip:hover {
   border-color: var(--acc);
@@ -525,7 +537,8 @@ const products = [
 }
 @media (max-width: 980px) {
   .hero-in { grid-template-columns: 1fr; gap: 44px; }
-  .hero-form { max-width: 460px; }
+  .hero-form { max-width: 100%; }
+  .hero-title { font-size: clamp(20px, 8.2vw, 30px); }
 }
 @media (max-width: 560px) {
   .prod-grid { grid-template-columns: 1fr; }

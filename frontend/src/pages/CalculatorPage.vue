@@ -2,11 +2,13 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import LeadForm from '../components/ui/LeadForm.vue'
+import MailLink from '../components/ui/MailLink.vue'
 import BuildingPreview from '../components/calc/BuildingPreview.vue'
 import DetailPreview from '../components/calc/DetailPreview.vue'
 import SnowRegionPicker from '../components/calc/SnowRegionPicker.vue'
 import { SNOW_REGIONS, DEFAULT_REGION } from '../data/snowRegions'
 import { track } from '../analytics/tracker'
+import { company } from '../data/company'
 
 /* =====================================================
    Тарифы — «примерные параметры», правятся в одном месте
@@ -557,23 +559,62 @@ watch(mode, () => nextTick(scheduleSketchPin))
     <section id="calc-hero" class="sec sec--dark page-hero clc-hero">
       <div class="container">
         <RouterLink to="/" class="page-back" v-reveal>← На главную</RouterLink>
-        <div class="sec-head" v-reveal="60">
-          <p class="sec-tag"><span class="idx">Онлайн</span> Калькулятор</p>
-          <h1 class="page-title">Калькулятор стоимости <em>металло&shy;конструкций</em></h1>
-          <p class="page-desc">
-            Два режима: отдельные детали по массе или каркас объекта по габаритам.
-            Соберите конфигурацию — получите ориентир цены и срока без звонка.
-            Точный расчёт по чертежу технолог сделает бесплатно за 1 рабочий день.
-          </p>
-        </div>
 
-        <div class="clc-hero-cta" v-reveal="140">
-          <a href="#calculator" class="btn" data-notrack :class="{ 'btn--ghost': mode === 'object' }" @click="setMode('details')">
-            Детали и конструкции
-          </a>
-          <a href="#calculator" class="btn" data-notrack :class="{ 'btn--ghost': mode === 'details' }" @click="setMode('object')">
-            Объект целиком
-          </a>
+        <div class="clc-hero-in">
+          <div class="clc-hero-main">
+            <div class="sec-head" v-reveal="60">
+              <p class="sec-tag"><span class="idx">Онлайн</span> Калькулятор</p>
+              <h1 class="page-title">Калькулятор стоимости <em>металло&shy;конструкций</em></h1>
+              <p class="page-desc">
+                Два режима: отдельные детали по массе или каркас объекта по габаритам.
+                Соберите конфигурацию — получите ориентир цены и срока без звонка.
+                Точный расчёт по чертежу технолог сделает бесплатно за 1 рабочий день.
+              </p>
+            </div>
+
+            <div class="clc-hero-cta" v-reveal="140">
+              <a href="#calculator" class="btn" data-notrack :class="{ 'btn--ghost': mode === 'object' }" @click="setMode('details')">
+                Детали и конструкции
+              </a>
+              <a href="#calculator" class="btn" data-notrack :class="{ 'btn--ghost': mode === 'details' }" @click="setMode('object')">
+                Объект целиком
+              </a>
+            </div>
+          </div>
+
+          <aside class="clc-contact" v-reveal="120" aria-label="Связаться с нами">
+            <p class="clc-contact-kicker">Свяжитесь с нами</p>
+            <p class="clc-contact-text">
+              Поможем рассчитать стоимость и назовём сроки производства
+            </p>
+            <a :href="company.phoneHref" class="clc-contact-phone" data-track="tel-calc-hero">
+              {{ company.phone }}
+            </a>
+            <div class="clc-contact-mail">
+              <MailLink track-label="mail-calc-hero">
+                <span class="clc-mail-ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M3.5 7.2h17c.8 0 1.5.7 1.5 1.5v9.6c0 .8-.7 1.5-1.5 1.5h-17c-.8 0-1.5-.7-1.5-1.5V8.7c0-.8.7-1.5 1.5-1.5Z"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    />
+                    <path
+                      d="m3.8 8.6 8.2 6 8.2-6"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span class="clc-mail-copy">
+                  <span class="clc-mail-label">Написать письмо</span>
+                  <span class="clc-mail-addr">{{ company.email }}</span>
+                </span>
+              </MailLink>
+            </div>
+          </aside>
         </div>
       </div>
     </section>
@@ -1254,11 +1295,122 @@ watch(mode, () => nextTick(scheduleSketchPin))
 <style scoped>
 /* ============ hero ============ */
 .clc-hero { padding-bottom: 56px; }
+
+.clc-hero-in {
+  display: grid;
+  grid-template-columns: 1.35fr 0.75fr;
+  gap: 40px 56px;
+  align-items: start;
+  min-width: 0;
+}
+.clc-hero-main { min-width: 0; }
+.clc-hero-main .sec-head {
+  max-width: none;
+  margin-bottom: 8px;
+}
 .clc-hero-cta {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
   margin-top: 8px;
+}
+
+.clc-contact {
+  border: 1.5px solid color-mix(in srgb, var(--acc) 45%, transparent);
+  background:
+    repeating-linear-gradient(-45deg, transparent 0 18px, rgba(255, 90, 31, 0.04) 18px 36px),
+    rgba(17, 21, 26, 0.86);
+  border-radius: var(--r);
+  padding: 24px 22px;
+  backdrop-filter: blur(12px);
+  min-width: 0;
+}
+.clc-contact-kicker {
+  font-family: var(--font-m);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--acc-hot);
+  margin-bottom: 10px;
+}
+.clc-contact-text {
+  font-size: 14.5px;
+  color: var(--w-soft);
+  line-height: 1.55;
+  margin-bottom: 18px;
+}
+.clc-contact-phone {
+  display: block;
+  font-family: var(--font-m);
+  font-size: clamp(20px, 2.4vw, 26px);
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 14px;
+  transition: color 0.2s;
+  overflow-wrap: anywhere;
+}
+.clc-contact-phone:hover { color: var(--acc-hot); }
+
+.clc-contact-mail :deep(a) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  text-decoration: none;
+  color: var(--white);
+  border: 1.5px solid color-mix(in srgb, var(--acc) 45%, transparent);
+  background:
+    linear-gradient(135deg, rgba(255, 90, 31, 0.16), transparent 60%),
+    rgba(255, 255, 255, 0.03);
+  border-radius: var(--r-sm);
+  transition: border-color 0.25s, background 0.25s, transform 0.25s;
+}
+.clc-contact-mail :deep(a:hover) {
+  border-color: var(--acc);
+  background:
+    linear-gradient(135deg, rgba(255, 90, 31, 0.24), transparent 60%),
+    rgba(255, 90, 31, 0.08);
+  transform: translateY(-1px);
+}
+.clc-mail-ico {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--acc);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(255, 90, 31, 0.35);
+}
+.clc-mail-ico svg { width: 17px; height: 17px; }
+.clc-mail-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+.clc-mail-label {
+  font-family: var(--font-m);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.clc-mail-addr {
+  font-size: 11.5px;
+  color: var(--w-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.clc-contact-mail :deep(a:hover) .clc-mail-addr { color: var(--acc-hot); }
+
+@media (max-width: 900px) {
+  .clc-hero-in { grid-template-columns: 1fr; gap: 28px; }
+  .clc-contact { max-width: 460px; }
 }
 
 /* ============ режимы ============ */
